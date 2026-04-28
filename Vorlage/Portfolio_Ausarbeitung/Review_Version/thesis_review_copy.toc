@@ -12,6 +12,6 @@
 \contentsline {section}{\nonumberline Anhang A: [Titel des Anhangs]}{8}{section*.5}%
 \contentsline {section}{\nonumberline Anhang B: Deklaration über den Einsatz von Künstlicher Intelligenz}{8}{section*.6}%
 \contentsline {chapter}{Literatur}{10}{section*.8}%
-\contentsline {chapter}{\nonumberline Eidesstattliche Erklärung}{11}{chapter*.10}%
-\contentsline {chapter}{\nonumberline Zustimmung zur Plagiatsüberprüfung}{12}{chapter*.11}%
+\contentsline {chapter}{\nonumberline Eidesstattliche Erklärung}{10}{chapter*.9}%
+\contentsline {chapter}{\nonumberline Zustimmung zur Plagiatsüberprüfung}{11}{chapter*.10}%
 \providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 

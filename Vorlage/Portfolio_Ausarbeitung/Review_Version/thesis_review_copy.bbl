@@ -16,41 +16,5 @@
   {}
 \endgroup
 
-
-\refsection{0}
-  \datalist[entry]{none/global//global/global}
-    \entry{memduhoglu2026ml}{article}{}
-      \name{author}{1}{}{%
-        {{hash=cf3b7880b9b05f5f67d30f7f6eda0a7d}{%
-           family={Memduhoğlu},
-           familyi={M\bibinitperiod},
-           given={Abdulkadir},
-           giveni={A\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {John Wiley \& Sons Ltd}%
-      }
-      \strng{namehash}{cf3b7880b9b05f5f67d30f7f6eda0a7d}
-      \strng{fullhash}{cf3b7880b9b05f5f67d30f7f6eda0a7d}
-      \strng{bibnamehash}{cf3b7880b9b05f5f67d30f7f6eda0a7d}
-      \strng{authorbibnamehash}{cf3b7880b9b05f5f67d30f7f6eda0a7d}
-      \strng{authornamehash}{cf3b7880b9b05f5f67d30f7f6eda0a7d}
-      \strng{authorfullhash}{cf3b7880b9b05f5f67d30f7f6eda0a7d}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{journaltitle}{Transactions in GIS}
-      \field{title}{Machine Learning Classification of {AI}-Generated and Human-Mapped Buildings in {OpenStreetMap} Using Morphometric Analysis}
-      \field{volume}{30}
-      \field{year}{2026}
-      \field{pages}{e70227}
-      \range{pages}{-1}
-      \verb{doi}
-      \verb 10.1111/tgis.70227
-      \endverb
-    \endentry
-  \enddatalist
-\endrefsection
 \endinput
 

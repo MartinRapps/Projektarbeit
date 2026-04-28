@@ -1,15 +1,17 @@
 [0] Config.pm:307> INFO - This is Biber 2.19
-[0] Config.pm:310> INFO - Logfile is 'thesis_review_copy.blg'
-[336] biber-MSWIN64:340> INFO - === 
-[484] Biber.pm:419> INFO - Reading 'thesis_review_copy.bcf'
-[646] Biber.pm:979> INFO - Found 1 citekeys in bib section 0
-[681] Biber.pm:4419> INFO - Processing section 0
-[726] Biber.pm:4610> INFO - Looking for bibtex file 'literatur.bib' for section 0
-[800] bibtex.pm:1713> INFO - LaTeX decoding ...
-[827] bibtex.pm:1519> INFO - Found BibTeX data source 'literatur.bib'
-[933] UCollate.pm:68> INFO - Overriding locale 'de-DE' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[933] UCollate.pm:68> INFO - Overriding locale 'de-DE' defaults 'variable = shifted' with 'variable = non-ignorable'
-[934] Biber.pm:4239> INFO - Sorting list 'none/global//global/global' of type 'entry' with template 'none' and locale 'de-DE'
-[934] Biber.pm:4245> INFO - No sort tailoring available for locale 'de-DE'
-[935] bbl.pm:660> INFO - Writing 'thesis_review_copy.bbl' with encoding 'UTF-8'
-[937] bbl.pm:763> INFO - Output to thesis_review_copy.bbl
+[1] Config.pm:310> INFO - Logfile is 'thesis_review_copy.blg'
+[309] biber-MSWIN64:340> INFO - === 
+[426] Biber.pm:419> INFO - Reading 'thesis_review_copy.bcf'
+[745] Biber.pm:979> INFO - Found 1 citekeys in bib section 0
+[783] Biber.pm:4419> INFO - Processing section 0
+[814] Biber.pm:4610> INFO - Looking for bibtex file 'literatur.bib' for section 0
+[945] bibtex.pm:1713> INFO - LaTeX decoding ...
+[1005] bibtex.pm:1519> INFO - Found BibTeX data source 'literatur.bib'
+[1037] UCollate.pm:68> INFO - Overriding locale 'de-DE' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[1038] UCollate.pm:68> INFO - Overriding locale 'de-DE' defaults 'variable = shifted' with 'variable = non-ignorable'
+[1038] Biber.pm:4239> INFO - Sorting list 'none/global//global/global' of type 'entry' with template 'none' and locale 'de-DE'
+[1038] Biber.pm:4245> INFO - No sort tailoring available for locale 'de-DE'
+[1039] bbl.pm:660> INFO - Writing 'thesis_review_copy.bbl' with encoding 'UTF-8'
+[1040] bbl.pm:763> INFO - Output to thesis_review_copy.bbl
+[1040] Biber.pm:131> WARN - I didn't find a database entry for 'memduhoglu2026ml' (section 0)
+[1041] Biber.pm:133> INFO - WARNINGS: 1
