@@ -1,0 +1,18 @@
+=== Schritt 1: Formale & Sprachliche Prüfung ===
+1. Sprachstil anpassen:
+- "Die Wahl dieses Papers basiert auf meinem ausgeprägten Interesse..." (Zeile 221) -> Die Ich-Form ("meinem") muss entfernt werden (z. B. "Die Auswahl der Publikation begründet sich durch...").
+- "...völlig gescheitert" (Zeile 244) -> Wertende Umgangssprache entfernen (z. B. "Die Integration stagnierte").
+- "Es verdeutlicht bildhaft, dass..." (Zeile 252) -> Objektiver formulieren (z. B. "Die Analyse illustriert...").
+
+2. KI-Transparenz ergänzen:
+- Es fehlt ein Anhang "Anhang B: Deklaration über den Einsatz von Künstlicher Intelligenz" mit Dokumentation aller verwendeten Prompts, KI-Version, Modell und Datum gemäß den THWS-Richtlinien.
+
+=== Schritt 3: Analyse Teil B (Forschungsplan) ===
+- OPTIONAL: Derzeit existiert kein Teil B (Forschungsplan) in der Abgabe. Dieser muss vor der Finalisierung noch erstellt werden. 
+- Gem�� den Vorgaben muss ein Forschungsplan mit eigener �berpr�fbarer Hypothese, einem Datenerhebungs-Zeitplan (ausgelegt auf 3 Monate) und korrekten signifikanten Stellen bei Messwerten (z.B. GPS-Daten) zwingend erg�nzt werden.
+
+=== Schritt 4: Zitierweise & Quellen ===
+- FALSCHER ZITIERSTIL: Aktuell wird der numerische Zitierstil (IEEE-�hnlich) mit [1] verwendet. Gem�� Vorgaben (Harvard) muss auf Autor-Jahr-Stil umgestellt werden (z.B. style=authoryear in biblatex).
+- Internetquellen: Die im Verzeichnis hinterlegte Internetquelle (shiny1) enth�lt vorbildlich URL und Abrufdatum (urldate).
+
+

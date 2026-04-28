@@ -1,0 +1,17 @@
+\babel@toc {ngerman}{}\relax 
+\contentsline {chapter}{\nonumberline Zusammenfassung}{ii}{chapter*.1}%
+\contentsline {chapter}{\numberline {1}Relevanz \& wissenschaftlicher Kontext}{1}{chapter.1}%
+\contentsline {chapter}{\numberline {2}Synthese \& Struktur}{2}{chapter.2}%
+\contentsline {chapter}{\numberline {3}Hypothese \& ML-Methodik}{3}{chapter.3}%
+\contentsline {chapter}{\numberline {4}Visualisierungs-Audit}{4}{chapter.4}%
+\contentsline {chapter}{\numberline {5}Limitationen \& Methodische Konvergenz}{5}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Metadaten \& Provenienz}{6}{chapter.6}%
+\contentsline {chapter}{\numberline {7}Reviewer-Gutachten}{7}{chapter.7}%
+\contentsline {chapter}{Verzeichnisse}{8}{chapter*.4}%
+\def \@chapapp {\appendixname }
+\contentsline {chapter}{\nonumberline Anhänge}{9}{chapter*.5}%
+\contentsline {section}{\nonumberline Anhang A: Verwendete Matrix der Merkmale}{9}{section*.6}%
+\contentsline {chapter}{Literatur}{11}{section*.9}%
+\contentsline {chapter}{\nonumberline Eidesstattliche Erklärung}{12}{chapter*.11}%
+\contentsline {chapter}{\nonumberline Zustimmung zur Plagiatsüberprüfung}{13}{chapter*.12}%
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 

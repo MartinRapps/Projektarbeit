@@ -1,0 +1,327 @@
+\RequirePackage{expl3}
+\ExplSyntaxOn
+\cs_generate_variant:Nn \tl_if_eq:nnT { VnT }
+\cs_generate_variant:Nn \tl_if_eq:nnF { VnF }
+\cs_generate_variant:Nn \tl_if_eq:nnTF { VnTF }
+\ExplSyntaxOff
+
+\documentclass[12pt,twoside=false,a4paper,parskip]{scrbook}
+% use the following line instead of the class above if you want double-sided printing
+% don't remove openright as it looks better in case of double-sided print
+% \documentclass[12pt,twoside,a4paper,parskip,openright]{scrbook} 
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{csquotes}
+\usepackage[ngerman]{babel}
+% \usepackage{floatflt}
+\usepackage{subcaption} % modern alternative to subfigure
+\usepackage[pdftex]{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{amssymb}
+\usepackage{textcomp}
+\usepackage{nicefrac}
+% \usepackage{scrhack}
+\usepackage{pdfpages}
+\usepackage{float}
+\usepackage{pdflscape}
+\usepackage[verbose]{placeins}
+\usepackage[markcase=ignoreuppercase,headsepline,plainfootsepline]{scrlayer-scrpage}
+\usepackage{listings}
+\usepackage{caption}
+% \usepackage{epstopdf}
+\usepackage{longtable}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage[style=numeric,backend=biber,sorting=none]{biblatex}
+\bibliography{literatur}
+\usepackage[htt]{hyphenat} % texttt do line breaks
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{enumitem}
+
+
+%%%%%%%%%%%%%%%%%%%
+%% definitions
+%%%%%%%%%%%%%%%%%%%
+\def\BaAuthor{Dein Name}
+\def\BaAuthorStudyProgram{Geovisualisierung} 
+\def\BaType{Projektarbeit} 
+\def\BaTitle{[Titel der Projektarbeit]}
+\def\BaSupervisorOne{[Name des Erstprüfers]}
+\def\BaDeadline{[Abgabedatum]}
+
+\def\iswithfullname{1} % uncomment this to create non-anonymous version
+\ifdefined\iswithfullname
+  \def\ShowBaAuthor{\BaAuthor}
+\else
+  \def\ShowBaAuthor{N.~N.}
+\fi
+
+\hypersetup{
+pdfauthor={\ShowBaAuthor},
+pdftitle={\BaTitle},
+pdfsubject={Subject},
+pdfkeywords={Keywords}
+}
+
+%%%%%%%%%%%%%%%%%%%
+%% configs to include
+%%%%%%%%%%%%%%%%%%%
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+
+\definecolor{pblue}{rgb}{0.13,0.13,1}
+\definecolor{pgreen}{rgb}{0,0.5,0}
+\definecolor{pred}{rgb}{0.9,0,0}
+\definecolor{pgrey}{rgb}{0.46,0.45,0.48}
+
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  showstringspaces=false,
+  commentstyle=\color{gray}\upshape
+  linewidth=\textwidth
+}
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    backgroundcolor=\color{background},
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
+\lstset{language=xml,
+  morestring=[b]",
+  morestring=[s]{>}{<},
+  morecomment=[s]{<?}{?>},
+  stringstyle=\color{black},
+  numbers=left,
+  numberstyle=\scriptsize,
+  stepnumber=1,
+  numbersep=8pt,
+  identifierstyle=\color{darkblue},
+  keywordstyle=\color{cyan},
+  backgroundcolor=\color{background},
+  morekeywords={xmlns,version,type}% list your attributes here
+}
+
+\lstset{language=Java,
+  showspaces=false,
+  showtabs=false,
+  tabsize=4,
+  breaklines=true,
+  keepspaces=true,
+  numbers=left,
+  numberstyle=\scriptsize,
+  stepnumber=1,
+  numbersep=8pt,
+  showstringspaces=false,
+  breakatwhitespace=true,
+  commentstyle=\color{pgreen},
+  keywordstyle=\color{pblue},
+  stringstyle=\color{pred},
+  basicstyle=\ttfamily,
+  backgroundcolor=\color{background},
+%  moredelim=[il][\textcolor{pgrey}]{$$},
+%  moredelim=[is][\textcolor{pgrey}]{\%\%}{\%\%}
+}
+
+\newcommand*{\forcetwosidetitle}[1][1]{%
+ \begingroup
+   \cleardoubleoddpage
+   \KOMAoptions{titlepage=true}% useful e.g. for scrartcl
+   \csname @twosidetrue\endcsname
+   \maketitle[{#1}]
+ \endgroup
+}
+
+
+\begin{document}
+
+
+%%%%%%%%%%%%%%%%%%%
+%% Titelseite
+%%%%%%%%%%%%%%%%%%%
+
+
+\frontmatter
+\titlehead{%  {\centering Seitenkopf}
+  {Technische Hochschule Würzburg-Schweinfurt\\
+    Fakultät Kunststofftechnik und Vermessung}}
+\subject{\BaType}
+\title{\BaTitle\\[15mm]}
+\subtitle{\normalsize{vorgelegt an der Technischen Hochschule W\"{u}rzburg-Schweinfurt in der Fakult\"{a}t Kunststofftechnik und Vermessung zum Abschluss des Moduls Wissenschaftliches Arbeiten im Studiengang \BaAuthorStudyProgram}}
+\author{\ShowBaAuthor}
+\date{\normalsize{Eingereicht am: \BaDeadline}}
+\publishers{
+  % Uncomment the following line if you want the QR code to be placed on the title page
+  %\centering\includegraphics[width=4cm]{barcode_default}\\[1cm]
+  \normalsize{Erstprüfer: \BaSupervisorOne}\\
+}
+
+\forcetwosidetitle
+
+
+%%%%%%%%%%%%%%%%%%%
+%% abstract
+%%%%%%%%%%%%%%%%%%%
+
+\addchap{Kurzfassung / Abstract}
+
+[Hier kommt eine kurze Zusammenfassung (ca. halbe bis ganze Seite) der Motivation, Methodik und wichtigsten Ergebnisse deiner Projektarbeit rein.]
+
+
+%%%%%%%%%%%%%%%%%%%
+%% Inhaltsverzeichnis
+%%%%%%%%%%%%%%%%%%%
+\tableofcontents
+
+
+
+%%%%%%%%%%%%%%%%%%%
+%% Main part of the thesis
+%%%%%%%%%%%%%%%%%%%
+\mainmatter
+
+
+\chapter{Einleitung} \label{sec:einleitung}
+
+[Hier beschreibst du die Motivation und die Problemstellung deiner Arbeit. Was ist das Ziel der Projektarbeit und wie ist die Arbeit aufgebaut?]
+
+Ein Beispiel für ein Zitat aus der Bibliographie: Wie in der Vorlage gezeigt, kann man Quellen zitieren \cite{memduhoglu2026ml}.
+
+
+\chapter{Grundlagen / Stand der Technik} \label{sec:grundlagen}
+
+[Theoretischer Hintergrund, e.g. eingesetzte Algorithmen, verwendete Frameworks und Vorstellung der Datengrundlage.]
+
+
+\chapter{Konzeption / Methodik} \label{sec:methodik}
+
+[Lösungsansatz ("Plan") und Begründung für die Wahl der Werkzeuge/Software.]
+
+
+\chapter{Umsetzung / Realisierung} \label{sec:umsetzung}
+
+[Praktische Durchführung der Projektarbeit (z.B. Programmierung, Datenerfassung, Berechnungen). Aufgetretene Probleme und deren Lösung.]
+
+
+\chapter{Ergebnisse und Evaluation} \label{sec:ergebnisse}
+
+[Vorstellung der finalen Ergebnisse. Kritische Diskussion und Bewertung: Hat es funktioniert? Wo liegen die Grenzen?]
+
+
+\chapter{Zusammenfassung und Ausblick} \label{sec:fazit}
+
+[Kurzes Fazit der Arbeit und mögliche Weiterentwicklungen in der Zukunft, eventuell auch schon im Hinblick auf die anstehende Bachelorarbeit.]
+
+
+
+\backmatter
+%%%%%%%%%%%%%%%%%%%
+%% create figure list
+%%%%%%%%%%%%%%%%%%%
+
+\listoffigures
+\addcontentsline{toc}{chapter}{Verzeichnisse}
+
+%%%%%%%%%%%%%%%%%%%
+%% create appendix
+%%%%%%%%%%%%%%%%%%%
+
+
+\appendix
+\addchap{Anhänge}
+
+\addsec{Anhang A: [Titel des Anhangs]} \label{appendix:beispiel}
+
+[Hier können übergroße Pläne, Code-Snippets, umfangreiche Datentabellen oder sonstige ergänzende Materialien eingefügt werden.]
+
+\addsec{Anhang B: Deklaration über den Einsatz von Künstlicher Intelligenz} \label{appendix:ki_deklaration}
+
+[Hier entsprechend den Vorgaben der Prüfenden den Prompt, Name/Version des KI-Werkzeugs, Betreiber und Datum angeben.]
+\begin{itemize}
+  \item \textbf{Verwendetes KI-System:} [z.B. Gemini 3.1 Pro]
+  \item \textbf{Verwendete Entwicklungsumgebung:} [z.B. Antigravity IDE]
+  \item \textbf{Datum der Nutzung:} \today
+  \item \textbf{Wesentliche Prompts (Auszug):}
+        \begin{itemize}
+          \item \enquote{[Dein Prompt hier]}
+        \end{itemize}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%
+%% create tables list
+%%%%%%%%%%%%%%%%%%%
+\listoftables
+
+%%%%%%%%%%%%%%%%%%%
+%% create listings list
+%%%%%%%%%%%%%%%%%%%
+%\lstlistoflistings
+%\addcontentsline{toc}{chapter}{Listings}
+
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{Literatur}
+\printbibliography
+
+%%%%%%%%%%%%%%%%%%%
+%% declaration on oath
+%%%%%%%%%%%%%%%%%%%
+
+\addchap{Eidesstattliche Erklärung}
+
+Hiermit versichere ich, dass ich die vorliegende Arbeit eigenständig verfasst und keine anderen als die angegebenen Quellen und Hilfsmittel verwendet habe.
+
+Alle übernommenen Inhalte sowie mit Unterstützung von KI generierten Inhalte wurden entsprechend den anerkannten wissenschaftlichen Grundsätzen oder entsprechend der Regelungen zur Kennzeichnung von KI-Inhalten kenntlich gemacht. Ausgenommen von der Kenntlichmachung sind orthografische oder grammatikalische Korrekturen, Übersetzungen sowie nicht-sinnverändernde Verbesserungen von Formulierungen. Ich bin mir bewusst, dass mit KI generierte Texte keine Garantie für die Qualität von Inhalten und Text bieten. Daher erkläre ich, dass ich KI-Werkzeuge lediglich als Hilfsmittel genutzt habe, die von KI generierten Inhalte kritisch überprüft habe und mein eigenständiger kognitiver sowie kreativer Einfluss in dieser Arbeit überwiegt. Ich versichere, dass ich die Inhalte meiner Arbeit vollständig verstanden habe und selbstständig vertreten kann.
+
+\vspace{20pt}
+\begin{flushright}
+  $\overline{~~~~~~~~~~~~~~~~~\mbox{\ShowBaAuthor, am \today}~~~~~~~~~~~~~~~~~}$
+\end{flushright}
+
+\addchap{Zustimmung zur Plagiatsüberprüfung}
+
+Hiermit willige ich ein, dass zum Zwecke der Überprüfung auf Plagiate meine vorgelegte Arbeit in digitaler Form an PlagScan (www.plagscan.com) übermittelt und diese vorübergehend (max. 5~Jahre) in der von PlagScan geführten Datenbank gespeichert wird sowie persönliche Daten, die Teil dieser Arbeit sind, dort hinterlegt werden.
+
+\begin{small}
+  Die Einwilligung ist freiwillig. Ohne diese Einwilligung kann unter Entfernung aller persönlichen Angaben und Wahrung der urheberrechtlichen Vorgaben die Plagiatsüberprüfung nicht verhindert werden. Die Einwilligung zur Speicherung und Verwendung der persönlichen Daten kann jederzeit durch Erklärung gegenüber der Fakultät widerrufen werden.
+\end{small}
+
+\vspace{20pt}
+\begin{flushright}
+  $\overline{~~~~~~~~~~~~~~~~~\mbox{\ShowBaAuthor, am \today}~~~~~~~~~~~~~~~~~}$
+\end{flushright}
+
+\end{document}

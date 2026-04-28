@@ -1,0 +1,1184 @@
+  
+  
+ 
+ 
+ 
+Ausarbeitung von   
+Projekt - und Bachelorarbeiten  
+ 
+Studienbereich Geo  
+ 
+ 
+ 
+ 
+ 
+ 
+Version: 3.01 
+Würzburg, April 2025  
+ 
+ 
+  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 1 von 32 
+ Vorwort  
+Die nachstehende Zusammenstellung ist keine  Anleitung zur Erstellung von Projekt - oder Ba-
+chelorarbeiten. Vielmehr werden wichtige (Mindest -) Anforderungen in Bezug auf Form und Inhalt 
+von Projekt - und Bachelorarbeiten zusammengestellt.  
+Ferner sollen kurze Anmerkungen und Tipps die Studierenden bei der Erstellung ihrer Arbeit un-
+terstützen und „Lust auf mehr“ wecken. Eine sehr gute Quelle für weitergehende Informationen 
+ist das Buch „Wissenschaftliches Arbeiten“ (Balzert et al., 20081), welches auch in der Hochschul-
+bibliothek (Standort Würzburg) zu finden ist.  
+ 
+ 
+ 
+Weitere verbindliche Dokumente  
+ 
+• eLearning Kurs „Geo – Dokumente für Studierende“, Sektion „ Prüfungskommission “ → „Pro-
+jektarbeit / Bachelorarbeit“  
+o Link zum Antragsformular für Projektarbeit / Bachelorarbeit  
+https://form.jotform.com/242331845754055   
+o Plakatvorlage (Bachelorarbeit)  
+o Präsentations vorlage für Vorträge  (MS PowerPoint)  
+• Studien - und Prüfungsordnung en (SPO) für die Studiengänge „Vermessung und Geoinforma-
+tik“ bzw. „Geovisualisierung“ (zu finden auf den Webs eiten des Studienbereichs)  und die All-
+gemeine Prüfungsordnung (APO) der T HWS (zu finden auf den Webseiten der Hochschule) 
+in der jeweils gültigen Fassung.  
+  
+ 
+1 Balzert, H.; Schäfer C.; Schröder, M., Kern, U. (2008): Wissenschaftliches Arbeiten. Wissen schaft, 
+Quellen, Artefakte, Organisation , Präsentation . W3L- Verlag, Herdecke, Witten  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 2 von 32 
+ Inhalt  
+Vorwort  
+Weitere verbindliche Dokumente  
+1 Projekt - und Bachelorarbeit – Was ist das?  ................................ ................................ ...........  3 
+1.1 Voraussetzungen  ................................ ................................ ................................ ............  3 
+1.2 Bearbeitungsdauer  ................................ ................................ ................................ ..........  4 
+1.3 Antragstellung  ................................ ................................ ................................ .................  4 
+1.4 Termin überschreitung / Fristverl ängerung  ................................ ................................ ....... 4 
+1.5 Notenfeststellung  ................................ ................................ ................................ ............  5 
+1.6 Bewertungskriterien  ................................ ................................ ................................ ........  5 
+2 Inhaltliche Anforderungen  ................................ ................................ ................................ ...... 6 
+2.1 Wie viel? (Umfang der Arbeit)  ................................ ................................ .........................  6 
+2.2 Wie und was? (Inhalt)  ................................ ................................ ................................ ..... 6 
+2.3 Aufbau der Arbeit (Gliederung)  ................................ ................................ .....................  11 
+2.4 Anlagen ................................ ................................ ................................ .........................  13 
+3 Formale Anforderungen  ................................ ................................ ................................ ....... 14 
+3.1 Sprachliche Aufbereitung  ................................ ................................ ..............................  14 
+3.2 Angabe von Messwerten  ................................ ................................ ...............................  15 
+3.3 Abbildungen und Tabellen  ................................ ................................ ............................  16 
+3.4 Recherche und Zitate  ................................ ................................ ................................ .... 16 
+3.5 Nutzung von KI  ................................ ................................ ................................ .............  19 
+3.6 Layout  ................................ ................................ ................................ ...........................  19 
+3.7 Abgabe der Arbeit  ................................ ................................ ................................ .........  20 
+4 Gestaltung von Pl änen ................................ ................................ ................................ .........  22 
+5 Sonstiges  ................................ ................................ ................................ .............................  24 
+5.1 Präsentation der Projekt - und Bachelorarbeit in einem m ündlichen Vortrag  ..................  24 
+5.2 Präsentation der Bachelorarbeit als Plakat  ................................ ................................ .... 24 
+5.3 Arbeiten im Team  ................................ ................................ ................................ ..........  24 
+5.4 Kontakt zum Betreuer/Pr üfer ................................ ................................ .........................  25 
+5.5 Last but not least  ................................ ................................ ................................ ...........  26 
+ 
+Anlage  
+Anlage 1: Checkliste  
+Anlage 2: Musterdeckblatt  
+Anlage 3: Erklärung zur Projekt - oder Bachelorarbeit  
+Anlage 4: Einwilligung zur Überprüfung mittels PlagAware  
+Anlage  5: Angabe des Abgabedatums der Bachelorarbeit  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 3 von 32 
+ 1 Projekt - und Bachelorarbeit – Was ist das?  
+In der Allgemeinen Prüfungsordnung (APO) bzw. in den Studien - und Prüfungsordnung en (SPO) 
+der Studiengänge ist die Pr ojektarbeit wie folgt definiert:  
+Eine Projektarbeit ist eine semesterbegleitende Studienleistung mit komplexem Inhalt 
+und offenem Lösungsweg und dient dem Nachweis sowohl theoretisch -wissenschaftli-
+cher, fachlicher und kreativer Fähigkeiten als auch von Vermittlungskompetenzen .  
+Für die Bachelorarbeit heißt e s: 
+Die Bachelora rbeit soll zeigen, dass die/der Studierende in der Lage ist, ein Problem aus 
+dem Fachgebiet des Studiengangs selbstständig auf wissenschaftlicher Grundlage zu 
+bearbeiten . 
+ 
+Zusätzliche Ausführungen innerhalb der SPO definieren Umfang (Workload), notwendige Vor -
+aussetzungen und Regularien in Bezug auf einzuhaltende Fristen.  
+Wert gelegt wird auf:  
+• Selbstständigkeit  
+• Wissenschaftliche Arbeitsweise  
+• Fachliche Fähigkeiten  
+• Kreativität  
+• Vermittlungskompetenz.  
+ 
+Diese Kriterien sind bei der Benotung der Arbeit entsprechend zu berücksichtigen. Selbständig-
+keit und Kreativität können bereits im Vorfeld der Arbeit einsetzen: eigene Ideen in Bezug auf 
+mögli che Themen / Aufgabenstellungen, vor allem in Zusammenarbeit mit Verwaltung, Institutio-
+nen und Unternehmen, werden gerne aufgenommen.  
+ 
+1.1 Voraussetzungen  
+Für die Bearbeitung der Projektarbeit  gibt es keine formellen Voraussetzungen. Prinzipiell ist die 
+Projektarbeit im 6. Semester angesiedelt.  Die Projektarbeit kann nicht während des Praxissemes-
+ters erstellt werden.  
+Mit der Bearbeitung der Bachelorarbeit  kann frühestens begonnen werden, wenn  
+• das Praxismodul  und die Projektarbeit  erfolgreich abgeschlossen wurden und  
+• mindestens 150 CP  erreicht sind.  
+ 
+  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 4 von 32 
+ 1.2 Bearbeitungsdauer  
+Die effektive Bearbeitungsdauer  der Projektarbeit , auch als Nettobearbeitungsdauer bezeichnet, 
+beträgt 4 Wochen . Der gesamte Workload kann innerhalb eines Zeitraums (Bruttobearbeitungs-
+dauer) von maximal 3 Monaten  erbracht werden.  
+Die effektive Bearbeitungsdauer  der Bachelorarbeit , auch als Nettobearbeitungsdauer bezeich-
+net, beträgt 10 Wochen . Der gesamte Workload kann innerhalb eines Zeitraums (Bruttobearbei-
+tungsdauer) von maximal 5 Monaten  erbracht werden.  
+ 
+1.3 Antragstellung  
+Thema, Bearbeitungszeitraum und weitere Festlegungen ( z.B. externe Einrichtung, in der die Ar-
+beit durchgeführt wurde ) sind gemeinsam mit dem Betreuer /Prüfer  der Projekt - oder Bachelorar-
+beit zu vereinbaren und schriftlich im Antragsformular festzuhalten. Die Antragstellung erfolgt 
+über ein Formular unter folgendem Link: https://form.jotform.com/242331845754055 . Der Link 
+kann auch im eLearning -Kurs „Geo – Dokumente für Studierende “ abgerufen werden . Nach der 
+Genehmigung durch die Prüfungskommission erhält die antragstellende Person eine Bestäti-
+gungsmail.  
+ 
+1.4 Terminüberschreitung / Fristverlä ngerung  
+Gemäß SPO wird bei einer Terminüberschreitung die Arbeit als "nicht ausreichend" gewertet. Im 
+Falle einer nicht selbst verschuldete n Verzögerung ist unverzüglich der zuständige Betreuer /Prü-
+fer zu informieren. Eine Verlängerung der Abgabefrist ist innerhalb der Bearbeitungsfrist bei der 
+Prüfungskommission zu beantragen und zu begründen. Ein schriftlicher Nachweis zum Verzöge-
+rungsgrund ist zu erbringen (bei längerer Krankheit z.B. ein Attest; bei Problemen bei der Durch-
+führung, z. B. infolge Messkampagnenunte rbrechung wegen Gerätedefekts oder witterungsbe-
+dingt, Bestätigung des Projektpartners).  
+Die Verlängerungsanträge mit Angabe der beantragten Verlängerungsdauer sind an die Prü-
+fungskommission unverzüglich nach Eintritt desjenigen Ereignisses zu stellen, das den Grund für 
+eine Verlängerung darstellt, spätestens jedoch zwei Wochen vor dem Abgabet ermin. Über Frist-
+verlängerungen entscheidet die Prüfungskommission. In jedem Fall ist eine Fristverlängerung 
+erst dann genehmigt, wenn dem Studierenden ein schriftlicher Bescheid der Prüfungskommission 
+vorliegt.  
+Bei einer Fristverlängerung ist wie folgt vorzugehen:  
+• Formloser2 Antrag an den Betreuer /Prüfer  mit Angabe der Gründe und der Verlängerungs-
+dauer ; 
+• Betreuer /Prüfer  lehnt die Fristverlängerung ab oder stimmt dieser zu und leitet den Antrag 
+mit seiner Stellungnahme an die Prüfungskommission weiter ; 
+• Prüfungskommission (Vorsitzende) entscheidet umgehend und teilt dem Studierenden so-
+wie dem Betreuer /Prüfer  die Entscheidung schriftlich mit.  
+ 
+2  „formlos“ bedeutet: es gibt kein Formblatt, formlos bedeutet nicht: Verzicht auf Umgangsformen („Hallo 
+Herr/Frau xxx, ich brauch ‘ne Verlängerung für meine Arbeit“ ist keine gute Einleitung)  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 5 von 32 
+ 1.5 Notenfeststellung  
+Die Begutachtung und Benotung der Arbeit soll en in der Regel vier Wochen nicht überschreiten. 
+Die Notenfeststellung erfolgt durch die Prüfungskommission. Die Notenfeststellung wird über ein 
+Formular beantragt.  Nach der Notenfeststellung wird die Note an den Hochschulservice Studium 
+weitergeleitet.  
+ 
+1.6 Bewertungskriterien  
+Folgende Kriterien werden bei der Bewertung einer Projekt - oder Bachelorarbeit angewendet:  
+Inhaltliche Bearbeitung  
+• Fachliche Bearbeitung (Motivation, Problemerfassung, Aufgabenlösung, Umsetzung der 
+Aufgabenstellung ) 
+• Nutzung von Fachwissen und Methodik ( Einsatz Fachwissen, Methodenvielfalt, aufgaben-
+angemessene Werkzeuge, kritische Reflexion, wirtschaftliches Denken, zielgerichtetes 
+systematisches Vorgehen)  
+• Wissenschaftliches Arbeiten (Bewertung der Ergebnisse, Qualität der Lösung, schlüssige  
+Argumentation, nachvollziehbare Schlussfolgerungen, umfassende Literaturrecherche, 
+zitierfähige Quellen, aktuelle Literaturstellen inhaltlich integriert ) 
+• Selbstständigkeit, Eigeninitiative (Fleiß, Einsatzbereitschaft)  
+• Aufgabenspezifische Kreativität  
+Darstellung der Ergebnisse  
+• Strukturierung der Arbeit (Gliederung)  
+• Präse ntation (ansprechende Grafiken und Tabellen , Satzbau, Grammatik und Recht-
+schreibung, Arbeit mit Literaturquellen ) 
+• Abgegebene Daten  
+Poster / Vortrag  
+• Einhaltung der Zeitvorgabe  
+• Freie Vortragsweise  
+• Verwendbarkeit des Posters  
+Über die Gewichtung der einzelnen Kriterien entscheiden die Prüfer individuell.   
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 6 von 32 
+ 2 Inhaltliche Anforderungen  
+2.1 Wie viel? (Umfang der Arbeit)  
+Eine immer wiederkehrende Frage ist „wie viele Seiten sollte eine Projektarbeit / Bachelorarbeit 
+haben“. Eine generelle Antwort ist nicht oder nur sehr schwer möglich – dafür unterscheiden sich 
+die Arbeiten zu sehr. Generell gilt:  
+• der Umfang der Arbeit ist nicht das oberste Kriterium und bemisst sich nicht nur in der 
+Anzahl der Seiten3 
+• maßgeblich ist die Qualität und nicht die Quantität. In diesem Zusammenhang wird immer 
+wieder und gerne auf die Dissertation von Albert Einstein  verwiesen: dieses Werk umfasst 
+genau 17 (!!) Seiten.  
+• eine grobe Richtschnur (für den reinen Textteil, ohne Abbildungen) könnte sein:  
+Projektarbeit:  ca. 15-25 Seiten (1 Bearbeiter), 20-40 Seiten (2 Bearbeiter)  
+Bachelorarbeit:  ca. 40 -80 Seiten (1 Bearbeiter), 60 -100 Seiten (2 Bearbeiter).  
+Die Spannweite ist bewusst weit gewählt (siehe Fußnote 3) und auch nicht als absoluter 
+Grenzwert zu betrachten. Des Weiteren ist zu berücksichtigen, dass evtl. Daten, Abbil-
+dungen und Auswertungen auch in den Anlagen (vgl. auch Kap. 2.4) zu finden sind , die 
+nicht in den oben genannten Richtgrößen enthalten sind . 
+ 
+2.2 Wie und was? (Inhalt)  
+ 
+Wissenschaftliches Arbeiten  
+Wissenschaftliches Arbeiten wird in der SPO als Merkmal einer Bachelorarbeit definiert. Aber: 
+was ist das? Eine entsprechende Eingabe („Wissenschaftliches Arbeiten“) in Google führt auf ca. 
+750.000 Treffer. Im Rahmen des vorliegenden Dokuments kann dieser Begriff nicht methodisch 
+erarbeitet werden. Nachstehend werden einige allgemeine Grundsätze aufgelistet und für Arbei-
+ten im Studienbereich Geo  angepasst:  
+• Wissenschaftliches Arbeiten ist eine methodisch -systematische Vorgehensweise, bei der 
+die Ergebnisse für eine fachkundige Person4 objektiv nachvollziehbar oder wiederholbar 
+sind. Sehr wichtig sind Quellenangaben und Zitate (vgl. auch Kap. 3.4); 
+• Die Arbeit muss überprüfbar sein. Dazu müssen Nachweise (z.B. Messdaten, Zwischen-
+ergebnisse , Datenbanken, Quellcodes ) in Form von Anlagen (vgl. auch Kap. 2.4) einge-
+fügt werden;  
+• Alle Inhalte  müssen in eine Struktur gebracht werden.  
+ 
+3  Eine Arbeit mit Softwareentwicklung enthält eine Vielzahl von Programmzeilen und ist anders zu be-
+werten als eine Arbeit mit Schwerpunkt Literaturrecherche.  
+Anderes Beispiel: Generierung von Planwerken (z.B. Grund -, Längs - und Querschnitte im Rahmen 
+einer Architekturvermessung): Hier ist ggfs. das Planwerk „Kern“ der Arbeit und wird entsprechend ho-
+noriert.  
+4  Als „fachkundige Person“ soll jemand verstanden werden, der einen Abschluss im Bereich der 
+Vermessung, Geoinformatik, Geovisualisierung oder vergleichbarer Fachdisziplin erworben hat.  
+ 
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 7 von 32 
+ Überprüfbarkeit und Nachvollziehbarkeit sind zentrale wissenschaftliche Qualitätskriterien. Die in 
+der Arbeit beschrittene Vorgehensweise muss dem Leser transparent gemacht werden, Hypo-
+thesen sind zu begründen. Die abgeleiteten Ergebnisse (z.B. Planwerk) m üssen rekonstruiert 
+werden können (z.B. ausgehend von den erhobenen Daten oder aufgrund der durchgeführten 
+Messungen).  
+ 
+Recherchieren und Zitieren  
+Das Recherchieren von Quellen, die Bewertung einer Quelle und das richtige Zitieren5 von Quel-
+len ist ein wesentliches Element einer wissenschaftlichen Arbeit. Auch bei Projekt - und Bachelor-
+arbeiten kann die (Literatur -) Recherche ein wesentliches Element der Arbeit sein.  
+Vielfach unterschätzt wird die Quellenauswahl: Quellen mit wissenschaftlichen Inhalt en bzw. 
+Fachthemen sind nicht automatisch zitierwürdig. Welches Werk als Quelle genutzt werden darf 
+und welches nicht, ist nicht einfach zu entscheiden. Ein gutes Beispiel hierfür ist die Nutzung von 
+Wikipedia: dort sind sowohl wissenschaftlich fundierte, ab er vielfach eben auch grob vereinfa-
+chende Beiträge zu finden.  Zitierwürdige Quellen sind insbesondere gedruckte Bücher oder auch 
+verlegte e -books, Beiträge in Journals un d auf Konferenzen. Dennoch muss bei aktuellen The-
+men in Ermangelung von Büchern u.ä. oftmals auf Webseiten zurückgegriffen werden.  
+ 
+Verfahrensbeschreibungen, Algorithmen und Formeln  
+Grundsätzlich kann davon ausgegangen werden, dass der Leser der Arbeit ein e fachkundige 
+Person ist (vgl. auch Fußnote 4). Die Beschreibung der angewandten Verfahren und Methoden 
+ist so auszulegen, dass er den Ausführungen folgen kann. Gegenstand der Arbeit ist nicht die 
+Erstellung eines Lehrbuchs, die Abhandlung muss nicht für jede Person  verständlich sein. Das 
+gilt sinngemäß  auch für die Fragestellung, inwie weit Formeln und Algorithmen darzustellen sind.  
+• • • 
+ 
+Die zuvor geschilderten Grundsätze sollen durch fiktive Beispiele (Aufgabenstellungen bzw. Teil-
+aufgaben) verdeutlicht werden:  
+ 
+Beispiel 1: Netzprogose bei der Anlage eines Geodätischen Netzes  
+Aufgabenstellung:  Anlage eines hochpräzisen Netzes.  
+Teilaufgabe:   Netzprognose zur Beurteilung der Netzqualität.  
+ 
+Frage:       Welche Angaben sind erforderlich, wie ist die Aufteilung Hauptteil / Anlagenteil?  
+ 
+In der Arbeit (Hauptteil) werden aufgeführt : 
+• zugrunde gelegte Genauigkeiten für die Messelemente, ggfs. mit Begründung (woher, wie 
+viele Sätze ); 
+• Angaben über Netzdatum (Festpunkte, ggfs. Freie Netzausgleichung, Weiches Datum 
+etc.);  
+ 
+5  Formale Anforderungen zum „richtigen Zitieren“ werden im Kap. 3.4 behandelt.  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 8 von 32 
+ • sonstige Angaben, die in diesem Zusammenhang wichtig sind, z.B. gewählte Sicherheits-
+wahrscheinlichkeit für die Konfidenzellipsen ; 
+• Angaben über die verwendete Software (wenn dies aus den vorangegangen Ausführun-
+gen nicht ersichtlich ist ); 
+• Ergebnis: Netzplan mit Konfidenzellipsen (inklusive Maßstabsleiste für Grundriss und 
+Konfidenzellipsen);  
+• Verweis auf Anlagenteil mit detaillierten Angaben zum Auffinden der Daten, z.B. in der 
+Form „siehe digitale Anlagen, Verzeichnis \Anlagen \Netzprognosen \Grundlagennetz“. Ein 
+allgemeiner Verweis „siehe Anlagen auf CD“ ist wenig hilfreich . 
+ 
+In den (digitalen) Anlagenteil gehören:  
+• alle (Input - und Steuer -) Dateien, damit die Berechnung erneut durchlaufen werden kann ; 
+• Ausgabedateien (wichtig: eindeutige Benennung).  
+ 
+Wird eine Netzprognose mit Hilfe eines (im Studium verwendeten Softwarepakets – z.B. „Cap -
+lan“-Software) durchgeführt, so kann dies vom Leser ohne zusätzliche Erläuterungen nachvoll-
+zogen und geprüft werden.  Alle getroffenen Entscheidungen in der Anwendung der Software 
+müssen dokumentiert werden.  
+Wird dagegen ein Softwarepaket genutzt , welches im Studium nicht verwendet wird (Beispiel: 
+„Panda“), so sind grundlegende Angaben über Programmaufbau und Bedienung angebracht6.  
+Eine Beschreibung der Formeln und Algorithmen (hier: Prognoseausgleichung nach der Methode 
+der kleinsten Quadrate) ist nicht erforderlich.  
+Wird statt der Netzprognose eine Netzausgleichung berechnet, müssen zusätzlich  
+• die (originären) Messdaten dokumentiert werden (in einem geeigneten Format , Anlagen-
+teil); 
+• Daten, die als „fehlerhaft“ erkannt wurden, gekennzeichnet werden (Anhang oder Haupt-
+teil). 
+ 
+Beispiel 2: Entwicklung einer kartographischen Web -Applikation  
+ 
+Frage:       Welche Angaben sind erforderlich, wie ist die Aufteilung Hauptteil / Anlagenteil?  
+ 
+Im Hauptteil der Arbeit werden beschrieben:  
+• Konzept der Web -Applikation: I m Vorfeld der Realisierung werden grundlegende Eigen-
+schaften der Applikation, wie Anwendungsbereich, Nutzer, Datengrundlagen, Technolo-
+gie, Funktionalitäten etc. theoretisch festgelegt. Dies stellt eine „Richtschnur“ für die Rea-
+lisierung dar. Ideen zum „Look and Feel “ der Anwendung sollten skizzenhaft enthalten 
+sein. Eine Auseinandersetzung mit alternativen Lösungsmöglichkeiten („Plan B“  oder 
+ 
+6  die Verwendung von „Screenshots“  kann hilfreich sein, sollte aber nicht überstrapaziert wer-
+den. 
+ 
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 9 von 32 
+ technisch nicht in Frage kommende Lösungen ) ist ebenfalls Teil des Konzepts . Es ist 
+wichtig darzustellen, dass alle Möglichkeiten erkannt und auf Umsetzbarkeit geprüft wur-
+den; 
+• Beschreibung der verwendeten Technologie und Softwarekomponenten;  
+• Beschreibung des kartographischen Konzeptes (verwendete graphische Variablen, karto-
+graphische Darstellungsmethoden, Signaturen, Legende, Einsatz von Farbe, Typogra-
+phie etc.);  
+• Beschreibung der verwendeten Datengrundlagen (Format, Struktur, Informationsgehalt, 
+Verfügbarkeit etc.) ; Wenn nur ein Auszug eines Datenbestandes verwendet wird, muss 
+dieser definiert und die Auswahl begründet werden (z.B. Zur Realisierung einer Routing -
+Funktion wird der Objektbereich „Verkehr“ aus dem ATKIS -Basis -DLM verwendet, andere 
+Objektbereiche werden ni cht verwendet);  
+• Auflistung  der erstellten Web -Services (ggf. mit Beschreibung der vorgenommenen Ein-
+stellungen , Besonderheiten, verwendeter Symbologie  etc.); 
+• Erstellung der  Applikation; insbesondere  das Einbinden der Web -Services und Funktio-
+nen, ggf. mit Dokumentation der durchgeführten Einstellungen;  
+• Ergebnis: Link zur Web -Applikation und Impressionen der Web -Applikation; ein Leser der 
+Arbeit soll auch ohne Aufruf der Web -Applikation Eindruck von dieser bekommen. Die 
+wichtigsten Funktionen können mit Hilfe von  Screenshots präsentiert werden;  
+• Verweis auf Anlagenteil mit detaillierten Angaben zum Auffinden der Daten, z.B. in der 
+Form „siehe digitale Anlagen, Verzeichnis \Datengrundlagen \Geobasisdaten \“. Ein allge-
+meiner Verweis „siehe Anlagen auf CD“ ist wenig hilfreich.  
+ 
+In den (digitalen) Anlagenteil gehören:  
+• Alle Datengrundlagen  
+• Alle Projektdateien  
+• Vollständiger Quellcode  
+ 
+Hinweis:  Wenn während der Realisierung aufgrund von technischen Schwierigkeiten von dem 
+ursprünglichen Konzept abgewichen werden muss, ist dies kein „Beinbruch“. Wichtig ist es, die 
+Probleme zu dokumentieren und zu beschreiben. Prinzipiell gilt: In die Arbeit soll nicht nur das 
+beschr ieben werden, was funktioniert hat, sondern auch was nicht  funktioniert hat. Dadurch kann 
+der Prüfer  erkennen, dass Probleme nicht „unter den Tisch gekehrt“, sondern erkannt und gelöst 
+wurden.    
+ 
+Beispiel 3: Erstellung eines Netzausgleichungsprogramms und Impl ementation auf  Controller 
+CS20  
+ 
+Frage:     Inwieweit  muss auf Algorithmen und Formeln eingegangen werden ? 
+ 
+In der Arbeit werden Algorithmen direkt umgesetzt. Auch wenn der „Fachmann“ mit den Algorith-
+men vertraut ist, sollten in diesem Fall der  Formelapparat  „Methode der kleinsten Quadrate“, die 
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 10 von 32 
+ Ansätze zur  Berechnung der Gewichte, der Aufbau der Designmatrix etc. dargestellt werden . Nur 
+so ist die Programmierung im Detail nachvollziehbar.  
+ 
+Beispiel 4: Deformationsanalyse im Rutschungsnetz Stein mit Programmsystem Panda  
+ 
+Frage:  Inwie weit ist das hier verwendete Verfahren „Deformationsanalyse“ zu beschreiben?  
+ Inwie weit muss auf Algorithmen und Formeln eingegangen werden?  
+ 
+Da die Realisierung mit Hilfe eines professionellen Softwarepakets erfolgt, muss auf grundle-
+gende Algorithmen (z.B. „Methode der kleinsten Quadrate“) nicht zwangsläufig eingegangen wer-
+den.  
+Im Bereich „Deformationsanalyse“ werden im Studium Grundlagen vermittelt, Details wie z.B. 
+Algorithmen und detaillierter Ablauf gehen über Inhalt des Studiums hinaus. Daher sind die Ar-
+beitsschritte einer Deformationsanalyse und die verwendeten Fachausdrück e zu erläutern. Wird 
+z.B. – wie im Programmsystem Panda – ein sogenannter „Kongruenztest“ zur Bewertung der 
+Koordinatendifferenzen („Verschiebung signifikant“ / „Verschiebung nicht nachweisbar“) ange-
+wendet, ist der „Kongruenztest“ darzustellen. Im vorliege nden Fall ist eine entsprechende 
+Formeldarstellung unumgänglich.  
+ 
+• • • 
+ 
+Wie detailliert auf Verfahrensabläufe eingegangen wird und in wieweit Formeln und Algorithmen 
+dargestellt werden, kann im Zweifel mit dem Betreuer /Prüfer  geklärt werden (vgl. auch Kap.5.4).  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 11 von 32 
+ 2.3 Aufbau der Arbeit (Gliederung)  
+Der Aufbau einer Projekt - oder Bachelorarbeit kann wie folgt aussehen:  
+ 
+Deckblatt  (siehe Anlage 2)  
+Erklärung zur Projekt - / Bach elorarbeit (siehe Anlage 3 ) 
+evtl. Sperrvermerk (wenn erforderlich)  
+Kurzfassung / Abstract  
+Inhaltsverzeichnis  
+Textteil  
+1. Einleitung  
+2. Kapitel 2  
+2.1. Kapitel 2.1  
+2.2. Kapitel 2.2  
+• • • 
+n. Kapitel n  
+n+1. Zusammenfassung / Fazit / Ausblick  
+Literatur -/Quellen verzeichnis  (vgl. Kap. 3.4) 
+Abbildungsverzeichnis (nicht zwingend erforderlich , bei mehr als drei Abbildungen ) 
+Tabellenverzeichnis (nicht zwingend erforderlich , bei mehr als drei Tabellen ) 
+Anlagen (wenn nicht extern in einem Anlagenband , dann Verweis auf Anlagenband ) 
+Einwilligung zur Überprüfung mit PlagAware  (siehe Anlage 4)  
+Fest / sicher eingeklebter digitaler Datenträger  
+ 
+ 
+  
+• Sperrvermerk  Projekt - und Bachelorarbeiten können mit einem Sperrvermerk 
+versehen werden. Dies wird von externen Beteiligten i.d.R. 
+dann gefordert, wenn die Arbeit vertrauliche Informationen ent-
+hält, die der Allgemeinheit nicht zugänglich gemacht werden 
+dürfen, Beispiel: unternehme nsinterne Daten . 
+ 
+ 
+  
+• Kurzfassung / Abstract  In der Kurzfassung wird ein kurzer Überblick über den Inhalt der 
+Arbeit gegeben. Die wesentlichen Ergebnisse werden zusam-
+mengefasst. Tipp: Schreiben Sie zu jedem Kapitel einen Satz. 
+Die Kurzfassung muss unabhängig vom Text lesbar sein.  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 12 von 32 
+  
+Das Lesen der Kurzfassung entscheidet evtl. darüber, ob der In-
+teressent weiterliest.  
+Abstract: Übersetzung der Kurzfassung ins Englische  
+(Anmerkung: nicht zwingend erforderlich).  
+ 
+• Inhaltsverzeichnis  Die Übersichtlichkeit des Inhaltsverzeichnisse s kann dadurch 
+gesteigert werden, dass Unterkapitel entsprechend eingerückt 
+werden (siehe oben) .  
+  
+• Textteil  Bei der Gliederung ist zu beachten:  
+• die Gliederungstiefe sollte max. 3 -4 Gliederungsebenen 
+aufweisen ; 
+• die einzelnen Kapitel sollten – wenn möglich – gleich 
+„stark“ sein und idealerweise die gleiche Gliede-
+rungstiefe aufweisen. Das ist nicht immer zu erreichen 
+(z.B. Einleitung und Zusammenfassung ist i.d.R. kürzer 
+als die sonstigen Kapitel) ; 
+• bei Unterkapiteln muss die unterste Gliederungsebene 
+mindestens 2 Einträge aufweisen. Beispiel: ein Kap. 
+„4.1.1“ ist nur sinnvoll, wenn es auch ein Kap. „4.1.2“ 
+gibt;  
+• in der ersten Gliederungsebene ist es evtl. für den Le-
+ser hilfreich, wenn der Zweck des Kapitels einleitend 
+kurz aufgezeigt wird7. 
+• Der Textteil beginnt (Kap. 1) mit einer „Einleitung“  inkl. 
+der Motivation, der Ziele und des Mehrwerts des Pro-
+jekts. 
+• Die Kapitelüberschriften müssen den roten Faden durch 
+das Dokument erkennbar werden lassen. Das gleiche 
+gilt für die Abschnitttitel in den Kapiteln und darunterlie-
+gende Strukturen.  
+• (Optional) Nutzen Sie bei der Erstellung der Kapitel-
+struktur eine Mindmap (Graphische Strukturübersicht) 
+und fügen Sie diese Mindmap dem Dokument (nach der 
+Kurzfassung) ein.  
+  
+ 
+Zu beachten:  „Kurzfassung“,  „Einleitung“ und „Zusammenfassung /  Fazit  / Ausblick “ sind eigen-
+ständige Komponenten. Die Kurzfassung (vor „Inhalts verzeichnis “) beinhaltet 
+Ausführungen zur Aufgabenstellung, die verwendete Methode zur Lösung der 
+Aufgabe sowie wesentliche Ergebnisse oder Erkenntnisse. In der Einleitung (ers-
+tes Kapitel ) wird die Aufgabenstellung ausführlich motiviert, erläutert und der Le-
+ser auf die folgenden Kapitel hingeführt. In der „Zusammenfassung“ bzw. im „Fa-
+zit“ (letztes Kapitel) werden die we sentlichen Ergebnisse zusammengestellt bzw. 
+mögliche Ansätze für weiterführende Untersuchungen etc. dargestellt.  
+ 
+ 
+7  dadurch treten ggfs. Textwiederholungen auf, z.B. mit „Einleitung“ oder „Zusammenfassung“. Dies ist 
+durchaus gewollt.  
+ 
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 13 von 32 
+  
+Tipp:  
+• In Textverarbeitungssystemen (z.B. MS -Word, LaTeX ) 
+o können Inhalts -, Tabellen - und Abbildungs verzeichnisse automatisiert er-
+stellt werden . 
+o können Abbildungen, Tabellen etc. automatisiert beschriftet und entspre-
+chende Querverweise generiert werden . 
+o Bei der Erstellung von Literaturverzeichnissen empfiehlt die Hochschule 
+die Verwendung von  ZOTERO (www.zotero.org)  
+ 
+ 
+2.4 Anlagen  
+ 
+In den Anlagenteil gehören:  
+• Sämtliche Messdaten8 und ggfs. Zwischenergebnisse, die nicht in den Hauptteil aufge-
+nommen werden. Dies könnten z.B. auch Excel -Datei en sein, mit denen Graphiken gene-
+riert werden. Sonstige relevante Informationen, z.B. von dritten Stellen erhobene Daten 
+(Beispiel: SAPOS GPPS Rinex -Daten zur Auswertung von GNSS -Messungen ) Kalibrier-
+parameter (z.B. im Instrument hinterlegte Daten) etc.  
+• Datenbestände (z.B. in Datenbanken) und Projektdateien (z.B. dwg -Datei in CAD, mxf -
+Datei in GIS), die die Ergebnisse der Arbeit nachvollziehbar machen und für eine Weiter-
+verwendung zur Verfügung stehen . 
+• Ergebnisse, die entsprechende Ausführungen im Hauptteil ergänzen.  
+Beispiel: Im Rahmen einer Bachelorarbeit ist ein Tunnelaus bau zu dokumentieren. Dazu 
+werden ca. 30 Tunnelquerschnitte angelegt, Über - und Unterprofil werden graphisch dar-
+gestellt  (z.B. ein Profil pro Seite) .  
+Einige typische Profile werden in den Hauptteil aufgenommen  (z.B. zur Beschreibung von 
+Unter - und Überprofil) . Aber: 30 Seiten Profildarstellung im Hauptteil erschweren das Le-
+sen der Arbeit.  
+Beispiel: Anlage eines Grundlagennetzes . Im Rahmen der Bearbeitung sind auch Einmes-
+sungsskizzen zu erstellen.  
+Im Hauptteil der Arbeit wird eine Einmessungsskizze exemplarisch vorgestellt, z.B. um 
+Einträge zu erläutern. Zur Dokumentation des Netzes werden sämtliche Einmessungs-
+skizzen in den Anhang aufgenommen.  
+• Ergebnisse, die im Hauptteil nicht integrierbar sind (z.B. Quellcodes, Pläne in Formaten 
+größer DIN A4)  
+• Die Projekt - oder Bachelorarbeit als pdf -Dokument (ausschließlich digital , digital lesbar 
+und nicht als Scan ). 
+• Das Plakat zur Bachelorarbeit als Publisher - und pdf -Dokument (ausschließlich digital , 
+vgl. auch Kap. 5.2). 
+ 
+8  „Messdaten“ können auch z.B. im Tachymeter generierte (abgeleitete) Koordinaten sein  
+
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 14 von 32 
+ 3 Formale Anforderungen  
+ 
+Die Anforderungen an den Aufbau einer Projekt - oder Bachelorarbeit sind im Abschnitt 2.3 be-
+schrieben worden. Hinzu kommen einige  formale Anforderungen, die in diesem Abschnitt erläu-
+tert werden.  
+ 
+3.1 Sprachliche Aufbereitung  
+Ein wesentliches Kriterium bei der Benotung einer Projekt - und/oder Bachelorarbeit  ist die sprach-
+liche Aufbereitung: Ist es dem Kandidaten gelungen, die Aussagen in einer sprachlich angemes-
+senen Form zu vermitteln? Dazu zählen sowohl logische  als auch formale und ästhetische Anfor-
+derungen. Unabdingbar ist die Beachtung von Rechtschreibung und Grammatik.  
+ 
+Tipp:    
+• Rechtschreib - und Grammatikprüfung in MS -Word unbedingt nutzen, nicht er-
+kannte Begriffe „ler nen“ (Hinzufügen zum Wörterbuch ). 
+ 
+ 
+ 
+Nachstehend einige Hinweise bezüglich Satzbildung:   
+• Schachtelsätze vermeiden (besser: kurze, klare  und strukturierte  Sätze) , 
+• präzise formulieren, insbesondere Bezüge beachten , 
+• logische Brüche (innerhalb eines Satzes) vermeiden . 
+unbedingt einzuhalten.  
+ 
+Generell gilt: die Schriftsprache unterscheidet sich von der Umgangssprache. Dazu ein Beispiel:  
+nicht gut:   der Haken bei „Messung automatisch speicher n“ wurde entfernt  
+besser:   das Optionsfeld „Messung automatisch speichern“ wurde deaktiviert . 
+ 
+Weitere Regeln / Tipps:  
+• Etablierte e nglische Fachausdrücke müssen nicht  (zwingend) übersetz t werden – eine 
+Eindeutschung kann zu Verfremdungen führen;  
+• Passiv -Form verwenden, die „ich/wir “-Form sollte – wenn überhaupt – auf Ausnahmen 
+besch ränkt sein;  
+• Aktive Zeiten in Sätzen verwenden;  
+• Es sind grundsätzlich nur die projektrelevante n Sachverhalte zu beschreiben.  
+• Wortwiederholungen vermeiden9, allerdings nicht um jeden Preis. Bei Fachtermini sollte 
+derselbe Sachverhalt immer mit demselben Terminus  bezeichnet werden.  
+ 
+ 
+ 
+Bei technischen und wissenschaftlichen Arbeiten sind einige „Schlüsselwörter“ mit bestimmten 
+Handlungsanweisungen verknüpft:  
+ 
+9  hier kann z.B. ein Thesaurus helfen, ähnliche Begriffe zu finden .  
+ 
+
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 15 von 32 
+  
+ bedeutet : 
+diskutieren  Sie die Differenzen ...  Differenzen bilden und aufführen  
+Differenzen bewerten (z.B. Ursachen analysieren, Ver-
+gleich mit Herstellerangaben etc.)  
+evtl. systematische Abweichungen analysieren  
+ 
+Vergleichen Sie die Ergebnisse der Mes-
+sungen mit Archivkoordinaten  Messergebnisse aufführen, Archivkoordinaten aufführen  
+Differenzen bilden, evtl. Mittelwerte berechnen  
+ 
+ 
+Eine technisch wissenschaftliche Abhandlung ist kein Roman. Das heißt aber nicht, dass ein wis-
+senschaftlicher Stil sich in einer spröden und umständlichen Sprache niederzuschlagen hat und 
+schwer verständlich sein muss . Im Gegenteil : ein flüssiger, anschaulicher und abwechslungsrei-
+cher Stil hilft , Informationen verständlich und prägnant zu vermitteln und erleichtert das Lesen.  
+ 
+3.2 Angabe von Messwerten  
+Im Ingenieurwesen sollte bei der Angabe von Messwerten die Anzahl der signifikanten Stellen 
+mit der Genauigkeit des Messwertes abgestimmt werden. Es gilt z.B.:  
+ 
+3.1 = 3.10 = 3.100  
+ 
+Zahlen-
+wert Wertebereich  
+3.1 3.05xx - 3.14xx  
+3.10 3.095xx - 3.104xx  
+3.100  3.0995xx - 3.1004xx  
+ 
+Bei der Ausgabe von Ergebnislisten etc. ist die Anzahl der Nachkommastellen entsprechend 
+anzupassen:  
+ 
+ 
+Beispiel:  Mit GPS -Phasenmessungen  können Genauigkeiten im Millimeter - bis Zentimeterbe-
+reich erreicht werden. Eine Angabe auf 4 Nachkommastellen (entspricht dem 1/ 10 
+mm!) würde eine nicht vorhandene Genauigkeit suggerieren.  
+ → mit 3 (fixen) Nachkommastellen ausgeben.  
+ 
+ 
+ 
+  
+
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 16 von 32 
+ 3.3 Abbildungen und Tabellen  
+Die Abbildungen und Tabellen müssen prägnant beschriftet werden.  
+Beispiele:  Tabelle 1: Ausgangskoordinaten im UTM -System (East, North)  
+  Abbildung  4: Parameter der Funktion „Verschneiden“ (Arc GIS pro ) 
+  Abbildung 7: Differenzen der Höhen („gemessen“ - „gegeben“).  
+ 
+Ein Verweis auf die entsprechenden Abbildungen und Tabellen im Fließtext der Arbeit ist unbe-
+dingt notwendig. Hilfreich ist auch eine Erläuterung/Interpretation der Informationen , die in Abbil-
+dungen und Tabellen präsentiert werden.  
+ 
+Tipp:  
+• Mit MS -Word  
+o können Abbildungen, Tabellen etc. automatisiert beschriftet und entspre-
+chende Querverweise generiert werden.  
+ 
+3.4 Recherche und Zitate  
+Inhaltliche Anforderungen für Recherche und Zitate wurden zuvor bereits im Kap. 2.2 diskutiert. 
+Für Zitierregeln gibt es eine eigene „Zitiernorm“ (DIN 1505 -210). Ausführliche Erläuterungen fin-
+den sich in allen Abhandlungen über „Wissenschaftliches Arbeiten“. Innerhalb des vorliegenden 
+Dokuments kann nur eine (von vielen) Möglichkeiten11 zum „richtigen Zitieren“ stichpunktartig für 
+ein Beispiel wiedergegeben werden. Dabei wird davon ausgegangen, dass am Ende der Arbeit 
+ein Quellenverzeichnis eingerichtet wird (Alternative bei nur sehr wenigen Literaturstellen: Quel-
+lenangabe z.B. in Form e iner Fußnote, vgl. Zitat unter „Vorwort“ in diesem Dokument ). 
+Im Quellenverzeichnis wird (z.B.) aufgeführt:  
+• Autor (in der Form Nachname, Vorname nur Initiale)  
+• Jahr der Veröffentlichung  
+• Titel 
+• Verlag, Ort  
+Im Textteil wird der Autor (nur Nachname) und die Jahreszahl angesprochen.  
+ 
+Beispiel1:  
+Zitat: Abbildungsgleichungen für konische, azimutale und zylindrische Abbildungen können 
+z.B. aus Großmann (1976) entnommen werden . 
+ 
+Quellenverzeichnis:  
+Großmann, W. (1976): Geodätische Rechnungen und Abbildungen. Wittwer Verlag, Stutt-
+gart. 
+ 
+Wird eine spezielle Aussage aus einem umfangreichen Werk zitiert, so wird sinnvollerweise noch 
+eine Seitenzahl im Zitat angegeben:  
+ 
+10  wird ersetzt durch ISO 690 
+ 
+11  nachstehend wird auf die „Harvard Zitierweise“ zurückgegriffen  
+
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 17 von 32 
+  
+Beispiel 2:  
+Zitat: Algorithmen zur Umrechnung zwischen sphärisch geographischen und Parallel koor-
+dinaten finden sich in Großmann (1976, S. 174)  
+ 
+Quellenverzeichnis: wie Beispiel (1)  
+ 
+Die Zitierregeln werden wesentlich durch die Art der Quelle (Buch, Sammelwerk, Fachzeitschrift, 
+Internetquelle, Hochschulschrift, „graue Lit eratur“, persönliche Mitteilung  etc.) beeinflusst. Die 
+entsprechenden Regeln können hier nicht im Einzelnen wiedergegeben werden. Nachstehend 
+wichtige Grundsätze (ohne Anspruch auf Vollständigkeit):  
+• mehr als ein Autor  
+o bei 2 Autoren werden im Zitat beide Autoren benannt ;  
+o bei mehr als 2 Autoren wird nur der zuerst aufgeführte Autor benannt und ein „et 
+al.“ (Bedeutung: und andere) hinzugefügt ;  
+o im Quellenverzeichnis werden alle Autoren aufgeführt;  
+• bei Zitat aus (Hochschul -) Skripten  
+o anstelle des Verlages  wird die Hochschule angegeben ; 
+o evtl. mit Zusatz „unveröffentlicht“;  
+• bei mehr als einer Veröffentlichung im Jahr wird die Jahreszahl im Zitat und im Quellen-
+verzeichnis durch „a“, „b“ etc. ergänzt. Grundsatz: Das Zitat muss im Quellenverzeichnis 
+eindeutig zu identifizieren sein;  
+• ins Quellenverzeichnis werden nur Quellen übernommen, die im Textteil auch tatsächlich 
+zitiert werden;  
+• Akademische Grade werden beim Zitieren nicht angegeben.  
+In MS -Word stehen eine Vielzahl von Zitiervorlagen zur Verfügung, die DIN 1505 wird leider von 
+keiner Vorlage korrekt umgesetzt.  
+ 
+Zitieren von Internetquellen  
+Das Zitieren von Internetquellen stellt eine besondere Herausforderung dar: vielfach fehlen An-
+gaben (z.B. Autor, Jahreszahl der Veröffentlichung usw.) . Zudem ist die wissenschaftliche Serio-
+sität nicht immer im gleichen Maße gegeben wie bei Printquellen.  
+Prinzi piell gelten die gleichen Zitierregeln wie für die anderen Quellen. Zusätzlich angegeben 
+werden sollte die URL -Adresse sowie der letzte Aufruf der Quelle  („letzter Aufruf: dd.mm.yyyy “). 
+Viele Internetquellen sind nach einigen Jahren nicht mehr zugänglich.  
+Nachstehend werden Möglichkeiten vorgestellt, wie fehlende Angaben (s.o.) behandelt werden 
+können.  
+  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 18 von 32 
+ Internetquelle ohne Autor  
+ 
+Im Literaturverzeichnis:  der Autor entfällt, das Datum wird nach dem Titel angegeben , das Feh-
+len des Autors wird vielfach durch den Zusatz „s.n.“12 gekennzeichnet 
+(nach dem Datum ). 
+Im Textteil:  Statt des Autors wird der Titel zitiert  
+ 
+Internetquelle ohne Datum  
+Im Literaturverzeichnis:  Statt der Jahreszahl wird „o.D.“ ( ohne Datum) angegeben : Autor (o.D.)  
+Im Textteil:  ebenfalls  Autor  (o.D.) angeben  
+ 
+Internetquelle ohne  Titel 
+Im Literaturverzeichnis:  Statt des Titels wird eine prägnante Beschreibung des Inhalts angege-
+ben und der selbst definierte Titel in [ ] gesetzt . 
+Im Textteil:  wie bei anderen Quellen : Autor und Jahr  
+ 
+Internetquelle ohne Autor und Titel  
+Im Literaturverzeichnis:  der Autor entfällt, das Datum wird nach dem selbstdefinierten [Titel] an-
+gegeben, das Fehlen des Autors durch den Zusatz „s.n.“ gekennzeich-
+net (nach dem Datum).  
+ 
+Im Textteil:  (selbstdefinierter)  Titel und Jahr  
+ 
+Anmerkung:   in einigen Abhandlungen zum „Wissenschaftlichen Arbeiten“ bzw. „Zitieren“ wird 
+zwischen „Literaturverzeichnis“ und „Qu ellenverzeichnis“ unterschieden, z.B. 
+Quellenverzeichnis beinhaltet Primärliteratur (die im Textteil auch zitiert wird), Li-
+teraturverzeichnis beinhaltet Sekundärliteratur (alle zur Erstellung der Arbeit be-
+nutzten Quellen).  
+ Um die Anzahl an Verzeichnissen klein zu halten, soll bei Abschlussarbeiten im 
+Studienbereich Geo:  
+• nur ein Verzeichnis erstellt werden (Name: „Quellenverzeichnis“ oder „Litera-
+tur- und Quellenverzeichnis“)  
+• nur „Primärliteratur“ (im o.g. Sinne) aufgenommen werden . 
+ 
+ 
+12 s.n.: sine nomine, lat.: ohne Namensangabe  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 19 von 32 
+ 3.5 Nutzung von KI  
+Die Zulässigkeit von KI -Werkzeugen wird mit den Prüfenden im Vorfeld transparent (z.B. Doku-
+mentation im Expos e, eMail -Verkehr ) festgelegt. Dementsprechend wurde auch die Eigenstän-
+digkeitserklärung zur Nutzung und Umfang des KI -Einsatzes angepasst  (siehe Anlage 3).  
+KI-generierte Inhalte sind keine zitierfähige Literatur . Es besteht dennoch Kennzeichnungspflicht 
+von KI -generierten Inhalten im separaten Anhang der Arbeit . Folgende Informationen sind zu 
+führen:  
+• Angabe relevanter Prompts / Eingaben in die KI: ein Prompt samt der zugehörigen KI -
+Antwort ist dann relevant, wenn er zum Ergebnis der wissenschaftlichen Arbeit bzw. der 
+Prüfungsanforderung beiträgt.  
+• Name und Version  des verwendeten KI-Werkzeugs  (einzelne Versionssprünge können 
+bereits einen großen Funktionszuwachs aufweisen)  
+• Anbieter oder Betreiber des KI -Werkzeugs  
+• Datum , an dem die Inhalte generiert wurden  
+Anbei einige Hilfreiche Links, die die  Kennzeichnungspflicht von KI -generierten Inhalten, behan-
+deln:  
+• https ://style.mla.org/citing -generative -ai/  (Stand vom 08.04.2025)  
+• https://www.uni -bremen.de/fileadmin/user_upload/sites/qm/Leitfaden_KI_De_ 
+Eng___1_. pdf  (Stand vom 08.04.2025)  
+• https://llm -literacy.de /  (Stand vom 08.04.2025)  
+• https://www.youtube.com/watch?v=ixw_2_ u9eD0   (Stand vom 08.04.2025)  
+• https://www.apa.org/pubs/journals/resources/publishing -policies?tab= 3 (Stand vom 
+08.04.2025)  
+Die Studierende tragen die volle Verantwortung für KI -basierte Inhalte . 
+3.6 Layout  
+ 
+Kopf- und Fußzeilen  
+Kopf- und Fußzeilen prägen das Erscheinungsbild einer Seite und beinhalten z.B. Autor, Titel der 
+Arbeit, Seitenzahl und weitere Angaben. Zur Kopf - oder Fußzeile kann auch ein „lebender Titel“ 
+gehören (z.B. Überschrift der ersten Gliederungsebene).  
+ 
+Schriftart, Schriftgröße und Zeilenabstand  
+Für die Projekt - und Bachelorarbeiten sollte eine Proportionalschrift und eine Schriftgröße zwi-
+schen 10 und 12 Punkten gewählt werden. Serifenlose Schriften wirken moderner und werden im 
+Ingenieurbereich bevorzugt. Für die gute Lesbarkeit des Textes ist ei n ausreichender Zeilenab-
+stand zu verwenden, der aber nicht zu groß gewählt werden darf, damit das Schriftbild nicht „zer-
+reißt“. Absätze können z.B. durch einen kleinen Zwischenraum betont werden.  
+ 
+ 
+ 
+ 
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 20 von 32 
+ Silbentrennung  
+Insbesondere bei Verwendung eines Blocksatzes sollten die Silbentrennung aktiviert werden. 
+Vielfach ist die automatische Trennung durch manuell vorgenommene Trennungen zu unterstütz-
+ten. Dabei sind unbedingt sogenannte „bedingte Trennzeichen“ zu verwenden, damit bei Ände-
+rung des Textumbruchs keine Bindestriche auftauchen.  
+ 
+Seitennummerierung  
+Die Seitennummerierung beginnt mit der Seite „1“ auf der ersten Seite im Textteil. Das Deckblatt 
+hat keine Seitenzahl. Geht das Inhaltsverzeichnis über mehr als eine Seite, sollte eine separate 
+Nummerierung gewählt werden (z.B. mit römischen Ziffern). Das gleiche gilt auch für Anlagen 
+innerhalb des Hauptteils.  
+ 
+Doppel - oder einseitig drucken ? 
+Beide Varianten haben Vor - und Nachteile. Durch doppelseitige n Ausdruck wird Papier einge-
+spart – die Arbeit ist handlicher und sieht evtl. „professioneller“ aus. Dafür gibt es aber einige 
+zusätzliche Punkte, die zu beachten sind:  
+• Satzspiegel anpassen: der Bundsteg (Abstand des Satzspiegels zur Bindung) ist größer 
+als der Außensteg (Abstand des Satzspiegels zur Außenkante des Papiers). Daher ist 
+das Seitenlayout für linke und rechte Seiten  separat zu definieren;  
+• Bei Bedarf zusätzliche Leerseiten einfügen, damit Inhaltsverzeichnis, Textteil, Anlagenteil 
+etc. jeweils auf „rechten“ Seiten  beginnen ; 
+• Anforderung an Drucker / Papier: bei doppelseitigem Druck  dürfen Texte oder Abbildun-
+gen nicht „verschmiert“ werden.  
+ 
+Hinweis: Die Arbeit muss nicht in gedruckter Form abgegeben werden (siehe: 3.6 Abgabe der 
+Arbeit)  
+3.7 Abgabe der Arbeit  
+Die Projekt - bzw. Bachelorarbeit ist zweifach in digitaler Form (hiervon einmal anonymisiert13, d.h. 
+ohne den Namen und die Matrikelnummer der/ des Studierenden zur Prüfung mit PlagAware ) 
+beim Betreuer, Erst - und Zweitprüfer abzugeben. In der Regel sollte die Abgabe über einen  
+Cloud -Download erfolgen.  
+ 
+Die Abgabe der Bachelorarbeit ist zusätzlich für den Hochschulservice Studium (siehe Anlage 5) 
+zu dokumentieren.  
+ 
+ 
+ 
+ 
+ 
+13  das ist nur erforderlich, wenn der Kandidat die „Einwilligung zur Überprüfung mittels Plag Aware “ nicht  
+abgibt.  Mit der Einwilligung erfolgt die Zustimmung für das Hochladen einer nicht anonymisierten Form 
+in Plag Aware  – d.h. mit Angabe des Verfassers. Da i.d.R. die Zustimmung erteilt wird, ist eine anony-
+misierte Version nicht erforderlich.  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 21 von 32 
+ Tipp:  
+o „Schreiben“ und „Korrekturlesen“ zeitlich voneinander trennen, keinesfalls 
+beide Arbeitsschritte unmittelbar nacheinander abarbeiten  
+o Wenn die Arbeit von zwei Studierenden bearbeitet / geschrieben wird, ist eine 
+gege nseitige Korrektur der Texte angebracht  
+o Ein unabhängiges Korrekturlesen durch kompetente Personen ist dringend zu 
+empfehlen  
+ 
+ 
+ 
+ 
+  
+
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 22 von 32 
+ 4 Gestaltung von Plänen  
+Auch für die Plangestaltung gelten formale und inhaltliche Grundregeln, die unbedingt zu beach-
+ten sind. Dennoch ist jeder Plan individuell und die Gestaltung und Ausarbeitung abhängig vom 
+Planinhalt  und von der Ausrichtung der Arbeit . 
+ 
+Zu den inhaltlichen Mindestanforderungen zählen:  
+• durchgängiger Planrahmen mit Faltmarkierungen nach DIN 824 , 
+• Plankopf,  
+• Zeichenerklärung/Legende , 
+• Maßstabsleiste ,  
+• Nordpfeil . 
+ 
+Je nach Planinhalt sind folgende Ergänzungen anzubringen:  
+• Koordinatengitter und Koordinatenanschrieb mit Gitterkreuzen i.d.R. mit 10 cm Abstand , 
+• Übersichtskarte mit Eintragung der Gebietslage , 
+• Anpassung der Geobasisdaten an den Planmaßstab (z.B. Liegenschaftskarte) , 
+• bei mehreren Ansichtsfenstern Beschriftung der einzelnen Ansichtsfenster und Angabe 
+des Maßstabes je Ansichtsfenster , 
+• Detailierungsgrad im Ansichtsfenster in Abhängigkeit vom Maßstab einstellen .  
+ 
+Tipp:  
+o In AutoCAD kann man pro Ansichtsfenster Sichtbarkeiten, Farben, Linienty-
+pen und Linienstärken für jeden Layer separat steuern.  
+ 
+ 
+Hinsichtlich Plandesign sind folgende Grundsätze zu beachten:  
+• Farbkonzept überlegen (grelle, aggressive Farben vermeiden, farbig - nicht bunt) , 
+• Skalierung der Linientypen und Linienstärken beachten , 
+• Bezüge einhalten, z.B. exaktes Ausrichten der Ansichtsfenster , 
+• Bei gefalteten Plänen größer DIN A3 ist die Gestaltung des Deckblattes zu beachten:  
+o Planinhalt sollte nicht in die Deckseite hineinragen ,  
+o hier nur Plankopf, Übersichtsfenster, eventuell Legende, Visualisierungen platzieren , 
+• bei mehreren Plänen:  
+o ein einheitliches Farbkonzept verwenden , 
+o den gleichen Plankopf verwenden , 
+o gleiche Schriftarten, Schriftgrößen, Linienstärken , 
+o gleiche Positionierung der Einzelelemente wie Nordpfeil, Maßstabsleiste, Legende, 
+Übersichtsplan  etc. 
+ 
+ 
+Die Abgabe von Plänen erfolgt (falls analog) gefaltet, gelocht und geheftet. Auch bei Plänen ist 
+ein Korrekturplot notwendig. Häufig erkennt man Fehler/Unstimmigkeiten erst auf dem Ausdruck. 
+Vor der Abgabe ist deshalb unbedingt zu prüfen:  
+
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 23 von 32 
+ • Maßstab : Wurde der Plan im gewünschten Maßstab gedruckt, oder erfolgte eine Verzer-
+rung z.B. durch Ausgabe aus dem PDF? ; 
+• Lesbarkeit : Überlagern sich Texte gegenseitig? Sind die Textgrößen stimmig ; 
+• Sind die Texte nach unten oder rechts bezüglich Planrand ausgerichtet? ; 
+• Ist jede Darstellung im Plan auch in der Zeichenerklärung vorhanden? ; 
+• Entspricht die Darstellung in der Zeichenerklärung der im Plan (gleiche Größe von Sym-
+bolen, gleiche Linientypen und -stärken, identische Skalierung von Schraffuren)? ; 
+• Farbliche Darstellung überprüfen: Farbwirkung ist oftmals auf Bildschirm und Planaus-
+druck unterschiedlich . 
+ 
+ 
+ 
+  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 24 von 32 
+ 5 Sonstiges  
+ 
+5.1 Präsentation der Projekt - und Bachelor arbeit in einem mündlichen 
+Vortrag  
+Zur Projekt - und Bachelor arbeit gehört neben der schriftlichen Ausarbeitung auch die Präsenta-
+tion dieser Arbeit in einem mündlichen Vortrag. Dabei gelten folgende Grundsätze:  
+• Dauer des Vortrags ca. 20 Minuten bei einem bzw. 30 Minuten bei zwei Bearbeitern ; 
+• der Vortrag ist Teil des Projekt - bzw. Bachelor seminars , an dem auch andere Studierende 
+teilnehmen können; Die Teilnahme von Externe n/Gäste n ist nur mit Einverständnis  des 
+Prüflings möglich ; 
+• nach dem Vortrag findet eine Fragerunde statt, hier sind nur Fragen der  Prüfer zugelas-
+sen. 
+Wichtig:   für Studierende der Vermessung und Geoinformatik nach SPO 2012 ist nur eine  Prä-
+sentation der Projektarbeit vorgesehen . 
+ 
+5.2 Präsentation der Bachelorarbeit als Plakat  
+Zur Bachelorarbeit gehört die Erstellung eines Plakates. Eine entsprechende Formatvorlage  
+(Publisher Format *.pub) ist im eLearning (Kurs: „ Geo - Dokumente für Studierende“) hinterlegt. 
+Die Plakate  können bei Ausstellungen und Messen (z.B. Intergeo -Stand des Studienbereichs) 
+oder auch im Rahmen der Poster -Session im Geodätischen Kolloquium verwendet werden.  
+Sinn und Zweck ist nicht eine Dokumentation der durchgeführten Arbeiten. Vielmehr soll en beim 
+Betrachter Interesse geweckt und – wenn machbar – Rückfragen angeregt  werden . 
+Wichtige Grundsätze:  
+• ausgewogenes Verhältnis von Text und Bild , 
+• nicht mit Information überladen , 
+• notwendige Auflösung der Grafiken (Rasterung) beachten , 
+• Plakate  sollen sich im Aufbau ähneln, vorgegebene Schriftgrößen und Schriftarten nicht 
+ändern , 
+• das grafische Layout ist ebenso wichtig wie die Inhalte , 
+• keine Rechtschreib - und Grammatikfehler , 
+• evtl. mit dem Betreuer /Prüfer  absprechen , 
+• Wichtige Inhalte sind: Einleitung, Motivation, eigene Leistung, Fazit . 
+ 
+5.3 Arbeiten im Team  
+Werden Projekt - und Bachelor arbeiten im Team erbracht  (mehr als ein Bearbeiter) , ist erforder-
+lich, dass die Aufgaben so aufteilbar und abgrenzbar sind, dass individuelle Beurteilungen und 
+Noten vergeben werden können. Die individuelle Leistung ist in der schriftlichen Ausfertigung der 
+Projekt - und Bachelor arbeiten zu dokumentieren. Dies kann z.B. in Form eines Inhaltsverzeich-
+nisses erfolgen, in dem die Kapitel den Bearbeitern zugeordnet werden. Einzelne Kapitel - wie 
+z.B. Einleitung und Zusammenfassung - können auch mehrere Bearbeiter aufweisen. Alternativ 
+kann der  Nachweis auch als separates Dokument an die Prüfer  übergeben werden.  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 25 von 32 
+ 5.4 Kontakt zum Betreuer /Prüfer  
+Projekt - und Bachelorarbeiten sind von den Studierenden selbstständig zu bearbeiten.  Aber was 
+bedeutet „selbstständig“ in Bezug auf Betreuung der Arbeit (i.d.R. durch den/die Prüfer)? Wann 
+sollte eine Rücksprache mit dem Betreuer /Prüfer  erfolgen?  Auch hier sind leider keine pauscha-
+len Angaben möglich.  
+• Inhaltliche Abstimmungen: abhängig von der Aufgabenstellung  
+Es gibt klar formulierte Aufgabenstellungen, die nur wenig Betreuungsaufwand erfordern: die 
+Reihenfolge der Bearbeitung ist eindeutig, die Hilfsmittel und Ziele können bereits vor Beginn 
+der Arbeit scharf und exakt definiert werden. In einem solchen Fall w äre es theoretisch mög-
+lich, die Arbeit ohne weitere Rücksprachen fertigzustellen.  
+Auf der anderen Seite gibt es immer wieder auch Aufgabenstellungen, deren Inhalt und ggfs. 
+auch Umfang sich erst im Laufe der Bearbeitung klar fassen lassen. Hier gilt: rechtzeitig vor 
+Fertigstellung der Arbeit sollten entsprechende Absprachen erfolgen.  
+ 
+• Regelmäßige Besprechungstermine  
+Regelmäßige Besprechungstermine sind nicht vorgesehen. Andererseits: auch der Be-
+treuer /Prüfer  freut sich in der Regel, ein „Lebenszeichen“ vom Kandidaten zu erhalten. Dies 
+kann z.B. ein kurzer „Fortschrittsbericht“ sein , der signalisiert: die Arbeit ist auf einem guten 
+Weg.  
+ 
+• Fachliche / Organisatorische Rückfragen  
+In der Regel treten während der Bearbeitung immer wieder fachliche oder organisatorische 
+Fragen auf, die mit dem Betreuer /Prüfer  geklärt werden müssen. Diese Fragen sind so zu 
+bündeln, dass einerseits nicht immer wieder neue Rücksprachetermine in Anspruch genom-
+men werden müssen, andererseits aber der Arbeitsfortschritt nicht allzu sehr behindert wird.  
+ 
+Für Besprechungen gilt:  
+• die Termine sind mit einem entsprechenden Vorlauf (ca. 3 -4 Werktage) zu vereinbaren. An-
+klopfen mit „ich hab da mal eine Frage“ ist wenig professionell ; 
+• werden im Rahmen eines Rücksprachetermins konkrete Festlegungen getroffen, so sollten 
+diese auch protokolliert werden. Sinnvoll: Kurzprotokoll per eMail an den Betreuer /Prüfer ; 
+• allein durch ein (vorläufiges) Inhaltsverzeichnis werden Umfang und Inhalt nicht transparent. 
+Eine kurze, stichwortartige Beschreibung hilft nicht nur bei Gesprächen mit dem Betreue r/Prü-
+fer, sondern dient auch zur Ordnung der eigenen Gedanken ; 
+• die Initiative für Besprechungen und Rücksprachen geht vom Kandidaten aus , der Be-
+treuer /Prüfer  wird von sich aus i.d.R. nicht zu einem Gespräch bitten.  
+ 
+  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 26 von 32 
+ 5.5 Last but not least  
+• eine „Vorkorrektur“ findet nicht statt. Auf Wunsch des Kandidaten ist der Betreuer /Prüfer  aber 
+sicherlich bereit, einen (Teil -) Abschnitt der Arbeit (vor der Abgabe) zu sichten und z.B. ein 
+Feedback zu geben;  
+• es gilt nur „eine Abgabe“; fehlen Teile (z.B. Anlagenband oder CD), so ist dies vom Kandida-
+ten zu verantworten und entsprechend in der Bewertung zu berücksichtigen. Eine „Nachliefe-
+rung“ ist nicht möglich.  
+  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 27 von 32 
+ ANLAGE  1: CHECKLISTE  
+ 
+Zeitmanagement   
+• Projektarbeit und Bachelorarbeit rechtzeitig beantragen. Die Bruttobearbeitungsdauer der Ba-
+chelorarbeit ist abhängig vom Datum des Antrags. Voraussetzung für Beantragung einer Ba-
+chelorarbeit (u.a.): Projektarbeit abgeschlossen und benotet , 150 CP erreicht, Praxisphase an-
+erkannt  ❑ 
+• Besprechungstermin(e) rechtzeitig vereinbaren (Vorlauf 3 -4 Werktage)  ❑ 
+• Besprechungen: Kurzprotokoll anfertigen, an Betreuer /Prüfer senden  ❑ 
+• evtl. erforderliche Fristverlängerungen rechtzeitig beantragen   ❑ 
+• während der vorlesungsfreien Zeit: längere Vorlaufzeiten für Besprechungen und Ausleihe In-
+strumentarium einkalkulieren  ❑ 
+  
+Die Arbeit   
+• Korrekturlesen mit zeitlichem Abstand  ❑ 
+• Arbeit komplett inklusive Deckblatt, Erklärung, (Sperrvermerk), Kurzfassung, Textteil, Literatur-
+verzeichnis, Anlagen, Plag Aware -Erklärung?  ❑ 
+• Digitale Anlagen komplett, Verweise im Hauptteil eingefügt?  ❑ 
+• Datenträger  nach Erstellen auf Lesbarkeit prüfen  ❑ 
+• Ggf. a naloge Anlagen wie z.B. Pläne etc.: Faltung (nach Norm), geheftet  ❑ 
+• Nur Bachelorarbeit: P lakat  (im *.pub und *.pdf Format) in Anlage  ❑ 
+  
+Abgabe   
+• Vorgaben  der Prüfungskommission  vollständig eingehalten (siehe auch „Arbeiten im Team“)  ❑ 
+• Arbeit  beim Be treuer , Erst - und Zweitp rüfer abgeben  (digital, vorzugsweise über Cloud -Down-
+load)  ❑ 
+• Dokumentation des Abgabedatums (nur bei Bachelorarbeit!), siehe Anlage 5  ❑ 
+ 
+  
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 28 von 32 
+ ANLAGE 2:  MUSTERDECKBLATT  
+ 
+PROJEKT ARBEIT  / BACHELORARBEIT  
+ 
+vorgelegt an der Technischen Hochschule  Würzburg -Schweinfurt  
+an der Fakultät Kunststofftechnik und Vermessung  
+ 
+ 
+Thema:  
+Vermessung der Welt  
+ 
+ 
+Angefertigt in Firma / Institut:   Firma Muster  
+Erstprüfer /in:     Prof. Dr. Anna Test  
+Zweitprüfer /in:   Dr. Max Muster   
+Betreuer/in:     Lisa Musterfrau  
+Abgabetermin:     20. Oktober 2015  
+ 
+ 
+ 
+        Eingereicht von   
+        Peter Mustermann  
+        aus Musterstadt  
+        Matrikelnummer: 123456  
+ 
+        Würzburg, den 10. Oktober 20 23 
+ 
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 29 von 32 
+ ANLAGE 3: ERKLÄRUNG ZUR PROJEKT - ODER BACHELORARBEIT  
+ 
+ 
+ 
+ 
+ 
+ERKLÄRUNG ZUR PROJEKT ARBEIT /BACHELORARBEIT  
+ 
+Hiermit versichere ich, dass ich die vorliegende Arbeit eigenständig verfasst 
+und keine anderen als die angegebenen Quellen und Hilfsmittel verwendet 
+habe.  
+[bei Zulassung von KI -Werkzeugen  zusätzlich: ] Alle übernommenen Inhalte so-
+wie mit Unterstützung von KI generierten Inhalte wurden entsprechend den 
+anerkannten wissenschaftlichen Grundsätzen oder entsprechend der Regelun-
+gen zur Kennzeichnung von KI -Inhalten kenntlich gemacht. Ausgenommen von 
+der Kenntl ichmachung sind orthografische oder grammatikalische Korrekturen, 
+Über setzungen sowie nicht -sinnverändernde Verbesserungen von Formulierun-
+gen. Ich bin mir bewusst, dass mit KI generierte Texte keine Garantie für die 
+Qualität von Inhalten und Text bieten. Daher erkläre ich, dass ich KI -Werkzeuge 
+lediglich als Hilfsmittel genutzt habe, die von KI generierten Inhalte kritisch 
+überprüft habe und mein eigenständiger kognitiver sowie kreativer Einfluss in 
+dieser Arbeit überwiegt. Ich versichere, dass ich die Inh alte meiner Arbeit voll-
+ständig verstanden habe und selbstständig vertreten kann .   
+ 
+ 
+Würzburg, den   
+               Unterschrift des/der Studierenden  
+ 
+  
+
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 30 von 32 
+ ANLAGE 4: EINWILLIGUNG ZUR ÜBERPRÜFUNG MITTELS PLAGAWARE  
+ 
+EINWILLIGUNG ZUR ÜBERPRÜFUNG EINER ARBEIT  
+MIT DER PLAGIATERKENNUNGSSOFTWARE PLAGAWARE  
+ 
+Name:    Vorname:    Matr.Nr. :     
+Adresse:             
+eMail:        Studiengang:      
+Titel der Arbeit:            
+             
+Die THWS überprüft Prüfungsarbeiten (Studien -, Projekt -, Bachelor - und Masterarbeiten mit Hilfe der Pla-
+giaterkennungssoftware PlagAware. Die zu überprüfenden Arbeiten werden an den Dienst der Software 
+übermittelt, dort auf Übereinstimmung mit externen Quel len untersucht und zum Zwecke des Abgleichs 
+mit zukünftig zu überprüfenden Arbeiten  gespeichert . Die befristete Speicherung der Arbeit in der Daten-
+bank sowie die Weitergabe der persönlichen Daten im Rahmen der Plagiatsprüfung ist nur mit Einwilli-
+gung zulässig.  
+Mit der Unterschrift erkläre ich meine Einwillingung, dass  
+• Die von mir vorgelegte und verfasste Arbeit zum Zwecke der Überprüfung auf Plagiate 
+hin an PlagAware übermittelt und vorübergehnd (5 Jahre) in der von PlagAware 
+geführten Datenbank gespeichert wird:  
+• Meine persönlichen Daten (Vorname, Name, studentische eMail -Adresse) zusammen 
+mit dem Text digital gespeichert und verwendet werden. Diese Daten sind nur meinen 
+Prüferinnen und/oder Prüfern zugänglich  
+Hinweis:  Diese Einwilligung ist freiwillig. Sie haben die Möglichkeit, die Erklärung abzulehnen. Durch die 
+Verweigerung der Einwilligung kann bei Entfernung der persönlichen Angaben und Wahrung der 
+urheberrechtlichen Vorgaben die Plagiatprüfung nicht verh indert werden. Die Einwilligung zur 
+Speicherung und Verwednung der persönlichen Daten kann jederzeit gegenüber der Fakultät mit Wirkung 
+für die Zukunft widerrufen werden.  
+             
+Ort, Datum       Unterschrift des/der Studierenden  
+ 
+ 
+ 
+Technische Hochschule Würzburg -Schweinfurt  Studienbereich Geo  
+Ausarbeitung v on Projekt - und Bachelorarbeiten  Seite 31 von 32 
+ ANLAGE 5: ANGABE DES ABGABEDATUMS DER BACHELORARBEIT  
+ 
+ 
+An 
+Hochschulservice Studium  
+THWS  
+ 
+ 
+ 
+ 
+ 
+Betreff:   Angabe des Abgabedatums der Bachelorarbeit  
+ 
+ 
+Frau / Herr:   ……………………………………………  
+ 
+   
+Studiengang:   ……………………………………………  
+ 
+ 
+Fakultät:   ……………………………………………  
+ 
+ 
+Matrikelnummer.  ……………………………………………  
+ 
+ 
+hat am    ……………………….  
+ 
+ 
+ihre / seine Bachelorarbeit mit dem Titel:  
+ 
+ 
+……………………………………………………………………………………………………………  
+ 
+ 
+……………………………………………………………………………………………………………  
+ 
+abgegeben.  
+ 
+ 
+ 
+ 
+ 
+Unterschrift der entgegennehmenden Person  
+ 
