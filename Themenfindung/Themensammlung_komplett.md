@@ -1,8 +1,8 @@
 # Themensammlung Projektarbeit – Konsolidierte Übersicht
 
-> Konsolidiert aus implementation_plan v1–v4 + neues Thema T7
+> Konsolidiert aus implementation_plan v1–v4 + Themen T7, T8
 >
-> Stand: 29.04.2026
+> Stand: 04.05.2026
 
 ---
 
@@ -39,17 +39,18 @@
 | T5 | Skyfall-GS – Schrägluftaufnahmen 3DGS | `SKYFALL` | ✅ **Hauptthema (kombiniert mit T6)** |
 | T6 | Gaussian Splatting vs. Punktwolke – Vergleich | `GAUSS` | ✅ **Hauptthema (kombiniert mit T5)** |
 | T7 | Historische Luftbilder + SAM3 Segmentierung | `HISTSAM` | 🆕 Neu – zu bewerten |
+| T8 | Bundesweite Geodaten-Plattform | `GEOPORT` | 🆕 Neu – bewertet (⚠️) |
 
 ### Bewertungsmatrix (alle 7 Themen)
 
-| Kriterium | T1 | T2 | T3 | T4 | T5 | T6 | T7 |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Interessenabdeckung** (Geo, KI, CV, FE, AppDev) | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| **Datenverfügbarkeit** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
-| **Scope-Kontrollierbarkeit** (4 Wochen PA) | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **PA-BA-Kopplung** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Wissenschaftliche Tiefe** | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| **Gesellschaftliche Relevanz** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| Kriterium | T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Interessenabdeckung** (Geo, KI, CV, FE, AppDev) | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
+| **Datenverfügbarkeit** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ |
+| **Scope-Kontrollierbarkeit** (4 Wochen PA) | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
+| **PA-BA-Kopplung** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| **Wissenschaftliche Tiefe** | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ |
+| **Gesellschaftliche Relevanz** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 
 ---
 
@@ -321,23 +322,69 @@
 
 ---
 
-## Entscheidungsstand (29.04.2026)
+## T8 – Bundesweite Geodaten-Plattform `GEOPORT` 🆕
+
+**Idee:** Webbasierte Plattform, die bundesweite Geobasisdaten und Open-Source-Geodaten aggregiert. Nutzer wählen über eine Bounding Box ihr Gebiet aus und erhalten die Daten in einem gewünschten Format (Konvertierung via Open-Source-ETL). Zusätzlich Upload-Funktion für neue Datenquellen mit Review-Prozess.
+
+**Technologie:**
+- **Frontend:** Web-Karte mit BBox-Zeichentool (Leaflet/OpenLayers)
+- **Backend:** ETL-Pipeline mit GDAL/OGR, hale studio, oder PostGIS
+- **Datenquellen:** WFS/WMS-Dienste der Länder, Open Data Portale, OSM
+- **Upload & Review:** Nutzergenerierte Daten mit Qualitätsprüfung
+
+**Datengrundlage:**
+- Geobasisdaten der Länder (seit 2023 zunehmend Open Data)
+- OpenStreetMap
+- Weitere Open-Source-Geodaten (z.B. Copernicus, OpenData-Portale)
+
+**PA-Scope (4 Wochen, vorläufig):**
+1. Literaturreview: GDI-DE, SDI-Architekturen, Geodaten-Interoperabilität
+2. Anforderungsanalyse: Nutzergruppen, Use Cases, Abgrenzung zu Geoportal.de
+3. Konzept: System-Architektur, Datenmodell, ETL-Pipeline
+4. Prototyp: BBox-Auswahl + Download für 1-2 Datensätze (1 Bundesland)
+5. Review-Konzept: Workflow für nutzergenerierte Daten
+6. Versuchsdesign für die BA
+
+**BA-Scope:** Vollständige Implementierung, Skalierung auf mehrere Bundesländer, Review-System
+
+**Stärken:**
+- Echtes Problem: Geodaten in DE sind fragmentiert über 16+ Portale
+- Hohe gesellschaftliche und praktische Relevanz
+- Klares, greifbares Produkt
+- FOSS-Stack verfügbar (GDAL, PostGIS, Leaflet)
+
+**Risiken:**
+- ⚠️ **Hauptrisiko: Scope-Explosion!** 16 Bundesländer × n Datensätze × Formatkonvertierung × Upload × Review
+- ⚠️ **Abgrenzung**: Geoportal.de / GDI-DE existiert bereits → Mehrwert muss klar dargelegt werden
+- ⚠️ **Wissenschaftliche Tiefe**: Eher Software-Engineering als Forschungsarbeit
+- Heterogene APIs und Datenformate der Bundesländer
+- FME ist nicht Open Source → Alternative: GDAL/OGR, hale studio
+
+**Betreuer-Fit:** 🟡 Wilkening (WebApp/GIS), weniger Müller (CV/KI)
+
+**Status:** 🆕 Neu – Bewertet. ⚠️ Scope und wissenschaftliche Tiefe problematisch in aktueller Form.
+
+---
+
+## Entscheidungsstand (04.05.2026)
 
 ```
 T3 ❌ Eliminiert (Scope-Explosion)
 T4 ❌ Eliminiert (geringe Eigenleistung)
 
-T5+T6 ✅ HAUPTTHEMA (3DGS vs. Photogrammetrie, Schrägluftbilder)
+T5+T6 ⚠️ HAUPTTHEMA – muss heruntergebrochen werden (Skyfall-GS/Schrägluft unrealistisch)
+ T6b  ✅ Reduzierte Variante: Reiner Vergleich 3DGS vs. Punktwolke + opt. Segmentierung
 T1    ✅ BACKUP (15-Minuten-Stadt, sofort startbar)
 
 T2    🟡 Offen (Datenrisiko, aber möglich)
 T7    🆕 Neu (SAM3 + hist. Luftbilder – Datenkosten klären!)
+T8    🆕 Bewertet – ⚠️ Scope-Explosion & geringe wiss. Tiefe in aktueller Form
 ```
 
 ### Nächste Schritte
 
-1. **Tag 3 (30.04.):** Tiefenrecherche T5+T6 mit vorbereiteten Queries (siehe implementation_plan_v4)
-2. **Dozent kontaktieren:** Schrägluftbilder Würzburg – Verfügbarkeit, Orientierungsdaten
-3. **T7 prüfen:** LDBV/Stadt Würzburg wegen kostenfreiem Datensatz anfragen (lohnt sich nur parallel)
-4. **Skyfall-GS testen:** Repository auf GitHub/HuggingFace sichten
-5. **Nach Recherche:** Forschungsfrage + Scope finalisieren → Exposé schreiben
+1. **Entscheidung treffen:** T6b (reduzierter 3DGS-Vergleich) oder T1 (15-Min-Stadt) als Hauptthema
+2. **Falls T6b:** Alleinstellungsmerkmal definieren (z.B. Punktwolken-Segmentierung als Zusatzdimension)
+3. **Falls T8 weiterverfolgt:** Scope radikal auf „Geodaten-Quality-Review mit ML“ einschränken
+4. **Dozent kontaktieren:** Thema besprechen, Betreuer-Fit klären
+5. **Nach Entscheidung:** Forschungsfrage finalisieren → Exposé schreiben
