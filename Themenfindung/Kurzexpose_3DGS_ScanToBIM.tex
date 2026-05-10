@@ -1,0 +1,188 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{a4paper, left=25mm, right=25mm, top=25mm, bottom=25mm}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{amssymb}
+
+\titleformat{\section}{\large\bfseries}{}{0em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8em}
+
+\definecolor{noteblue}{RGB}{0,90,160}
+\definecolor{notebg}{RGB}{230,243,255}
+
+\begin{document}
+
+\begin{center}
+\textbf{\Large Kurzexposé: Projekt- und Bachelorarbeit} \\[0.5em]
+\textbf{\large 3D Gaussian Splatting vs. klassische Photogrammetrie:\\ Geometrische Validierung, Segmentierung und\\ Centerline-Extraktion für Leitungsinfrastruktur (Scan-to-BIM)}\\[1em]
+\textit{Diskussionsgrundlage für die Besprechung mit dem Betreuer}
+\end{center}
+
+\vspace{0.5em}
+
+\begin{tcolorbox}[colback=notebg, colframe=noteblue, title=\textbf{Hinweis zur Einordnung dieses Dokuments}]
+Dieses Exposé stellt die \textbf{Gesamtvision} der geplanten Pipeline dar. Es dient als Diskussionsgrundlage, um gemeinsam mit dem Betreuer den realistischen Scope für PA und BA festzulegen. Für jeden Baustein existieren bereits publizierte Methoden und Open-Source-Implementierungen -- die zentrale Eigenleistung liegt im \textbf{Zusammenführen} dieser Bausteine zu einer durchgehenden, evaluierten Pipeline sowie in der \textbf{Validierung} an einem physischen Testfeld mit geodätischer Referenz.
+\end{tcolorbox}
+
+% ============================================================
+\section*{1. Ausgangspunkt und Motivation}
+
+Der Leitungsbau (DC-Erdkabel, Überlandleitungen) durch Übertragungsnetzbetreiber (TSOs) erfordert eine exakte 3D-Dokumentation des Baufortschritts. Klassische Photogrammetrie (Dense Multi-View Stereo, MVS) liefert hohe metrische Genauigkeit, hat jedoch Schwächen bei feinen Strukturen und erfordert lange Rechenzeiten. 3D Gaussian Splatting (3DGS) bietet fotorealistische Echtzeit-Renderings und bewahrt feine Details, ist aber für geodätische Zwecke kaum validiert.
+
+\textbf{Das übergeordnete Ziel} ist eine durchgehende Pipeline:
+\begin{center}
+\texttt{Bilder} $\rightarrow$ \texttt{SfM} $\rightarrow$ \texttt{3DGS} $\rightarrow$ \texttt{Georef.} $\rightarrow$ \texttt{Segmentierung} $\rightarrow$ \texttt{Mesh (SuGaR)} $\rightarrow$ \texttt{Centerline} $\rightarrow$ \texttt{GIS}
+\end{center}
+
+Um Datenschutzhürden einer echten Baustelle zu vermeiden, wird die Methodik auf einem \textbf{Campus-Testfeld} evaluiert. Gartenschläuche (Erdkabel, $\varnothing$ ca. 20\,cm) und feine Schnüre (Überlandleitungen) simulieren die Infrastruktur. Die Datenerfassung erfolgt videobasiert (handgeführte Kamera).
+
+% ============================================================
+\section*{2. Bausteine der Pipeline -- Übersicht mit Literatur}
+
+Die folgende Tabelle zeigt, dass für \textbf{jeden einzelnen Baustein} bereits publizierte Methoden und Implementierungen existieren. Die wissenschaftliche Eigenleistung liegt in der Integration und Evaluation.
+
+\begin{center}
+\small
+\begin{tabular}{|p{3.2cm}|p{4.5cm}|p{4cm}|p{2.5cm}|}
+\hline
+\textbf{Baustein} & \textbf{Methode / Paper} & \textbf{Tool / Code} & \textbf{Status} \\
+\hline
+SfM (Kamera\-kalibrierung) & Schönberger \& Frahm (CVPR 2016) & COLMAP (Open Source) & Etabliert \\
+\hline
+3DGS Training & Kerbl et al. (SIGGRAPH 2023) & gsplat, nerfstudio & Etabliert \\
+\hline
+Georeferenzierung & GeoRefGS (2025, bisher nur in Unity validiert) & GitHub-Repo verfügbar & Forschungscode \\
+\hline
+Segmentierung der Gaussians & Gaussian Grouping (Ye et al., ECCV 2024) & GitHub-Repo verfügbar & Forschungscode \\
+\hline
+Mesh-Extraktion & SuGaR (Guédon \& Lepetit, CVPR 2024) & GitHub-Repo verfügbar & Forschungscode \\
+\hline
+Centerline-Extraktion & Kerautret et al. (DGCI 2016): Normalenakkumulation auf Meshes & DGtal-Bibliothek (Open Source) & Publiziert \\
+\hline
+GIS-Integration & 3D Tiles, glTF KHR\_gaussian\_splatting & ArcGIS Pro, CesiumJS, QGIS & In Entwicklung \\
+\hline
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section*{3. Das Problem: SuGaR allein reicht nicht}
+
+SuGaR extrahiert ein \textbf{Gesamtmesh} der gesamten Szene -- es erkennt dabei \textbf{keine Objekte}. Das bedeutet: Der Gartenschlauch, der Boden, die Schnur und der Hintergrund werden alle gleich behandelt. Um aus dem Mesh eine verwertbare 3D-Linie des Kabels zu gewinnen, muss \textbf{vorher} eine Segmentierung stattfinden, die festlegt, \textit{welcher} Teil der Szene das Kabel ist.
+
+Daraus ergibt sich die logische Reihenfolge:
+\begin{enumerate}[noitemsep]
+    \item \textbf{Segmentierung} -- Identifikation der Kabel-Gaussians (z.B. über Gaussian Grouping oder Farb-/Formfilter auf den Splat-Attributen)
+    \item \textbf{Mesh-Extraktion} -- SuGaR nur auf die isolierten Kabel-Gaussians anwenden
+    \item \textbf{Centerline} -- Aus dem röhrenförmigen Kabel-Mesh die Mittellinie extrahieren (Kerautret et al.)
+\end{enumerate}
+
+Ebenso ist die \textbf{Georeferenzierung} zentral, da ohne sie die extrahierte Linie nur in einem lokalen Koordinatensystem liegt und nicht im GIS verortet werden kann.
+
+% ============================================================
+\section*{4. Projektarbeit (PA) -- 7 ECTS, 4 Wochen netto}
+
+\textbf{Scope:} Testfeldaufbau, Datenerfassung, Proof of Concept (MVS vs. 3DGS).
+
+\begin{itemize}[noitemsep]
+    \item Aufbau des Campus-Testfelds (Gartenschlauch, Schnüre, GCPs)
+    \item RTK-GNSS-Einmessung der GCPs und Referenzstrecken
+    \item Kamerabasierte Datenerfassung (Videosequenzen)
+    \item Pipeline 1: COLMAP $\rightarrow$ MVS (z.B. Metashape oder WebODM)
+    \item Pipeline 2: COLMAP $\rightarrow$ 3DGS (z.B. gsplat)
+    \item Anmerkung: Beide Pipelines nutzen SfM (COLMAP) als gemeinsamen ersten Schritt; der Vergleich bezieht sich auf die \textit{dichte Rekonstruktion} (MVS vs. 3DGS).
+\end{itemize}
+
+\textbf{Forschungsfragen PA:}
+\begin{itemize}[noitemsep]
+    \item Lassen sich texturlose (Schlauch) und extrem feine Strukturen (Schnüre) durch 3DGS visuell vollständiger rekonstruieren als durch MVS?
+    \item Wie verhalten sich die Rechenzeiten der dichten Rekonstruktion?
+\end{itemize}
+
+\textbf{Ergebnis PA:} Validierter Datensatz, lauffähige Pipelines, erster qualitativer und quantitativer Vergleich. Dieser Datensatz bildet die Grundlage für die BA.
+
+% ============================================================
+\section*{5. Bachelorarbeit (BA) -- 15 ECTS, 10 Wochen netto}
+
+\textbf{Scope:} Durchgehende Scan-to-BIM-Pipeline mit Evaluation.
+
+\subsection*{5.1 Kernpipeline (Pflicht)}
+\begin{enumerate}[noitemsep]
+    \item \textbf{3DGS-Modell} aus dem PA-Datensatz trainieren
+    \item \textbf{Segmentierung} der Kabel-Gaussians (Farb-/Formattribute der Splats; ggf. Gaussian Grouping)
+    \item \textbf{SuGaR-Mesh} der isolierten Kabel-Gaussians extrahieren
+    \item \textbf{Centerline} aus dem Mesh mittels Normalenakkumulation (Kerautret et al.) ableiten
+    \item \textbf{RMSE-Evaluation} der Centerline gegen RTK-GNSS-Referenzlinie
+\end{enumerate}
+
+\subsection*{5.2 Georeferenzierung (wichtig, Methode offen)}
+
+Die Überführung vom lokalen 3DGS-Koordinatensystem in ein geodätisches Bezugssystem ist für den TSO-Anwendungsfall essenziell. Zwei Wege sind denkbar:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Klassisch:} Die GCPs sind bereits in COLMAP (SfM) enthalten. Die resultierende Transformation (Helmert 7-Parameter) wird auf das 3DGS-Modell angewendet. Einfach, erprobt, keine zusätzliche Forschungssoftware nötig.
+    \item \textbf{Integriert (GeoRefGS):} Die GCP-Constraints werden direkt ins 3DGS-Training eingebaut. Potenziell genauer, aber bisher nur in simulierter Umgebung (Unity) validiert -- ein Echtdaten-Test wäre ein eigener Forschungsbeitrag.
+\end{itemize}
+
+\textbf{Für den Betreuer:} Die Georeferenzierung kann pragmatisch (klassisch) oder ambitioniert (GeoRefGS) gelöst werden. Der Aufwand unterscheidet sich erheblich. Empfehlung: Klassischen Weg als Baseline implementieren; GeoRefGS nur bei ausreichend verbleibender Zeit testen.
+
+\subsection*{5.3 Erweiterte Ideen (Ausblick / bei Zeitüberschuss)}
+\begin{itemize}[noitemsep]
+    \item \textbf{Schaltbare Layer im GIS:} Das vollständige 3DGS-Modell als Hintergrund, segmentierte Kabel als Sub-Layer, Centerlines als Vektorgeometrie -- alles in ArcGIS Pro via 3D Tiles.
+    \item \textbf{ML-Objekterkennung (YOLOv8):} Anwendung eines Detektors auf die gerenderten 3DGS-Bilder zur automatischen Erkennung der Leerrohre. Laut Literatur ein ,,unbeschriebenes Blatt`` (Dimension D4).
+    \item \textbf{Übertragbarkeit auf Überlandleitungen:} 3DGS bewahrt feine Strukturen (Drähte, Seile) besser als MVS -- potenziell eine kostengünstige Alternative zum Laserscanning für Freileitungsinspektionen.
+    \item \textbf{Tagesaktuelles As-Built BIM:} Cloud-Berechnung über Nacht, täglicher Überflug mit Standarddrohne, automatische Fortschrittskontrolle.
+\end{itemize}
+
+% ============================================================
+\section*{6. Forschungsfragen BA}
+\begin{enumerate}[noitemsep]
+    \item Lässt sich aus einem 3DGS-Modell über SuGaR-Mesh-Extraktion und Centerline-Algorithmen eine geometrisch verwertbare 3D-Achslinie für röhrenförmige Infrastruktur ableiten?
+    \item Wie genau ist diese Linie im Vergleich zur RTK-GNSS-Referenz (RMSE)?
+    \item Welche Segmentierungsstrategie (Farbe, Durchmesser, Gaussian Grouping) liefert die robusteste Isolation der Kabel-Gaussians?
+    \item Ab welchem Objektdurchmesser / welcher Detailgröße scheitert die Pipeline?
+\end{enumerate}
+
+% ============================================================
+\section*{7. Evaluation}
+\textbf{Metriken:}
+\begin{itemize}[noitemsep]
+    \item Geometrie: RMSE horizontal/vertikal der Centerline gegen RTK-Referenz [cm]
+    \item Vollständigkeit: Anteil der korrekt rekonstruierten Kabellänge [\%]
+    \item Segmentierung: Precision, Recall, F1-Score der Kabel-Isolation
+    \item Performance: Rechenzeit pro Pipeline-Schritt
+    \item Wirtschaftlichkeit: Kosten-Vergleich (Drohne + Cloud vs. konventionelle Vermessung)
+\end{itemize}
+
+% ============================================================
+\section*{8. Abgrenzung}
+Die Arbeit entwickelt \textbf{keine} neuen neuronalen Architekturen. Es werden ausschließlich publizierte, verfügbare Methoden kombiniert und evaluiert. Der wissenschaftliche Beitrag liegt in:
+\begin{itemize}[noitemsep]
+    \item der \textbf{erstmaligen Verkettung} von 3DGS, Segmentierung, Mesh-Extraktion und Centerline-Analyse zu einer durchgehenden Scan-to-BIM-Pipeline für Leitungsinfrastruktur,
+    \item der \textbf{Validierung} an einem physischen Testfeld mit geodätischer RTK-GNSS-Referenz,
+    \item der \textbf{quantitativen Bewertung}, ob die geometrische Genauigkeit für TSO-Anforderungen ausreicht.
+\end{itemize}
+
+% ============================================================
+\section*{9. Diskussionspunkte für den Betreuer}
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Scope PA vs. BA:} Ist die vorgeschlagene Trennung (PA = Proof of Concept, BA = Scan-to-BIM-Pipeline) sinnvoll, oder sollte die PA bereits einen Baustein der Pipeline enthalten?
+    \item \textbf{Segmentierung:} Reicht eine einfache Farb-/Größenfilterung der Gaussians, oder sollte Gaussian Grouping (ECCV 2024) als Forschungscode eingebunden werden?
+    \item \textbf{Georeferenzierung:} Klassische Helmert-Transformation aus COLMAP oder ambitionierter GeoRefGS-Ansatz?
+    \item \textbf{Testfeld:} Ist der Campus ausreichend, oder sollte ein Testflug mit einer echten Drohne (z.B. im Photogrammetrie-Labor) eingeplant werden?
+    \item \textbf{KI-Nutzung:} Große Teile des Codes werden KI-gestützt (Copilot, ChatGPT) erstellt. Dokumentation gemäß PABA-Hinweisen Kap. 3.5 ist eingeplant.
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,182 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{a4paper, left=25mm, right=25mm, top=25mm, bottom=25mm}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+
+\titleformat{\section}{\normalsize\bfseries}{}{0em}{}[\vspace{-0.3em}]
+\titleformat{\subsection}{\small\bfseries}{}{0em}{}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+
+\definecolor{linkcolor}{RGB}{0,70,140}
+\hypersetup{colorlinks=true, linkcolor=linkcolor, urlcolor=linkcolor}
+
+\begin{document}
+
+% ============================================================
+% HEADER
+% ============================================================
+\begin{center}
+    {\large\bfseries Kurzexpos\'e zur Bachelorarbeit}\\[0.5em]
+    {\normalsize\bfseries 3D Gaussian Splatting f\"ur Scan-to-Building Information Modeling (BIM):\\
+        Segmentierung und Centerline-Extraktion linienf\"ormiger Infrastruktur}\\[0.8em]
+    \small
+    \begin{tabular}{ll}
+        \textbf{Studiengang:} & Geovisualisierung (B.Eng.) \\
+        \textbf{Datum:}       & \today                     \\
+    \end{tabular}
+\end{center}
+
+\vspace{-0.5em}
+\noindent\rule{\textwidth}{0.4pt}
+
+% ============================================================
+\section{1. Problemstellung und Motivation}
+
+Bei der Verlegung von Gleichstrom-Erdkabeln (Direct Current, DC) ist die laufende Dokumentation der Trassenlage ein zentraler Bestandteil der Baukoordination. Die heutige Praxis -- manuelle Vermessung mit Totalstation oder RTK-GNSS -- ist zeitaufw\"andig, erfordert Fachpersonal und liefert nur diskrete Punkte statt fl\"achendeckender 3D-Modelle. Gleichzeitig zeigt die Forschung, dass \textbf{3D Gaussian Splatting} (3DGS) als neue Methode der bildbasierten 3D-Rekonstruktion klassische Photogrammetrie in Rechenzeit und Detailtreue \"ubertreffen kann (Kerbl et al., SIGGRAPH 2023).
+
+\textbf{Forschungsl\"ucke:} W\"ahrend 3DGS f\"ur visuelle Qualit\"at optimiert ist, fehlt eine systematische Untersuchung, ob sich aus 3DGS-Modellen \textbf{geometrisch verwertbare Achslinien} f\"ur r\"ohrenf\"ormige Infrastruktur ableiten lassen -- und wie genau diese im Vergleich zu geod\"atischen Referenzdaten sind.
+
+% ============================================================
+\section{2. Forschungsfragen}
+
+\begin{enumerate}[noitemsep, leftmargin=1.5em]
+    \item L\"asst sich aus einem 3DGS-Modell \"uber Mesh-Extraktion (SuGaR) und Centerline-Algorithmen (DGtal) eine geometrisch verwertbare 3D-Achslinie f\"ur r\"ohrenf\"ormige Infrastruktur ableiten?
+    \item Welche der drei untersuchten Segmentierungsmethoden -- Farbfilterung (Baseline), FlashSplat (trainingsfrei), Gaussian Grouping (trainingsbasiert) -- liefert die robusteste Objektisolation bei geringstem Aufwand?
+    \item Wie genau ist die extrahierte Centerline im Vergleich zur Referenz eines terrestrischen Laserscanners (TLS) gemessen im Root Mean Square Error (RMSE)?
+    \item \textbf{Praxis-Problem:} Wie l\"asst sich der systematische H\"ohenfehler der Centerline algorithmisch korrigieren (Z-Shift), der durch die unvollst\"andige optische Erfassung des Kabels im Graben (Halbzylinder-Geometrie) entsteht?
+    \item Ab welchem Objektdurchmesser scheitert die Pipeline?
+\end{enumerate}
+
+% ============================================================
+\section{3. Methodischer Ansatz}
+
+Die Arbeit entwickelt eine durchg\"angige \textbf{Scan-to-BIM-Pipeline}, die von der Bildaufnahme bis zur georeferenzierten 3D-Achslinie im GIS reicht. Alle Bausteine basieren auf ver\"offentlichter, quelloffener Forschungssoftware:
+
+\begin{center}
+    \small
+    \begin{tabular}{c p{4.5cm} p{5.5cm} p{4cm}}
+        \toprule
+        \textbf{\#} & \textbf{Schritt}                                 & \textbf{Tool / Methode}                & \textbf{Referenz}            \\
+        \midrule
+        1           & Bilderfassung                                    & Kamera (Testfeld Campus)               & --                           \\
+        2           & Structure-from-Motion                            & COLMAP                                 & Sch\"onberger (CVPR 2016)    \\
+        3           & 3DGS-Training                                    & gsplat                                 & Kerbl et al. (SIGGRAPH 2023) \\
+        4           & Georeferenzierung                                & Helmert 7P (eigenes Skript)            & Klassische Geod\"asie        \\
+        5           & Segmentierung                                    & \textit{Vergleichsstudie (3 Methoden)} & s. Abschnitt 4               \\
+        6           & Mesh-Extraktion                                  & SuGaR                                  & Gu\'edon (CVPR 2024)         \\
+        7           & Centerline-Extraktion                            & DGtal / Python                         & Kerautret (DGCI 2016)        \\
+        8           & Geometrische H\"ohenkorrektur (Z-Shift)          & Python (Radius-Offset)                 & L\"osung Halbzylinder-Problem \\
+        9           & Geoinformationssystem (GIS)-Import \& Evaluation & ArcGIS Pro / QGIS                      & --                           \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+\textbf{Kernbeitrag (Der Automatisierungs-Vorteil):} Die Arbeit entwickelt eine durchg\"angige, hochautomatisierte \textbf{Scan-to-BIM-Pipeline}. Der gro\ss e Vorteil dieses Ansatzes liegt in der Verkettung: Aus einem einfachen Drohnenflug plus wenigen Passpunkten (Ground Control Points, GCPs) wird vollautomatisch ein segmentiertes, georeferenziertes 3D-Mesh erzeugt. Da dieses Mesh nicht via klassischer Photogrammetrie (Multi-View Stereo, MVS), sondern topologisch sauber aus den Oberfl\"achen der 3D Gaussians (SuGaR) abgeleitet wird, ist es geometrisch glatt genug, um daraus \textbf{direkt eine vektorisierte, GIS-f\"ahige 3D-Achslinie (Centerline)} zu extrahieren. Der wissenschaftliche Mehrwert liegt im quantitativen \textbf{Segmentierungsvergleich} und der \textbf{Evaluation gegen TLS-Referenzdaten}. Die technische Umsetzung erfolgt dabei methodisch sauber \"uber ein zentrales Python-basiertes Orchestrierungs-Skript, das alle Sub-Tools steuert und ein automatisiertes Time-Tracking erm\"oglicht.
+
+% ============================================================
+\section{4. Segmentierungsvergleich (Kernbeitrag)}
+
+F\"ur die Isolation der Kabel-Gaussians werden drei Methoden mit steigender Komplexit\"at verglichen:
+
+\begin{center}
+    \small
+    \begin{tabular}{p{3.5cm} p{6.5cm} c p{3cm}}
+        \toprule
+        \textbf{Methode}      & \textbf{Typ}                                      & \textbf{Training} & \textbf{Paper}   \\
+        \midrule
+        (A) Farbfilterung     & Baseline (Hue-Saturation-Value (HSV)-Schwellwert) & Nein              & Eigene Impl.     \\
+        (B) FlashSplat        & Optimierung auf 2D-Annotationen                   & Nein              & Shen (ECCV 2024) \\
+        (C) Gaussian Grouping & Identity Encoding via DEVA/SAM                    & Ja                & Ye (ECCV 2024)   \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+Dieser Vergleich zeigt systematisch, ab welcher Komplexit\"atsstufe sich der Mehraufwand f\"ur die Kabelisolation in besserer Centerline-Genauigkeit auszahlt.
+
+% ============================================================
+\section{5. Evaluation und Referenzdaten}
+
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+    \item \textbf{RTK-GNSS} (Hochschulger\"ate): Einmessung von 8--12 GCPs f\"ur die Georeferenzierung ($<$\,1\,cm Genauigkeit).
+    \item \textbf{Terrestrischer Laserscanner} (Hochschulger\"at): Dichte Referenz-Punktwolke des Testfelds. Daraus wird eine \textbf{TLS-Referenz-Centerline} extrahiert, gegen die die 3DGS-Centerline quantitativ evaluiert wird (Linie-zu-Linie RMSE, nicht nur Punkt-zu-Punkt).
+\end{itemize}
+
+Evaluationsdimensionen: (D1)~Geometrischer RMSE vs. TLS, (D2)~Visuelle Qualit\"at -- Peak Signal-to-Noise Ratio (PSNR) / Structural Similarity Index Measure (SSIM), (D3)~Segmentierungsqualit\"at -- Intersection over Union (IoU), (D4)~Rechenzeit und Kosten, (D5)~Skalierbarkeit (Tile-\"Ubergangs-RMSE).
+
+% ============================================================
+\section{6. Testfeld und Skalierbarkeit}
+
+Das Testfeld wird auf dem \textbf{Campus} aufgebaut (ca. 20--30\,m L\"ange). Die Kamera wird auf ca. \textbf{2\,m H\"ohe} gef\"uhrt; bei einer realen Drohnenh\"ohe von 10\,m ergibt sich ein \textbf{Skalierungsfaktor von 5$\times$}. Die Testobjekt-Durchmesser sind so gew\"ahlt, dass sie bei 2\,m die gleiche Pixelabdeckung (Ground Sampling Distance, GSD) erzeugen wie reale Kabel bei 10\,m Drohnenh\"ohe:
+
+\begin{center}
+    \small
+    \begin{tabular}{p{3.8cm} p{2.5cm} p{3.5cm} p{2.5cm} p{2cm}}
+        \toprule
+        \textbf{Testobjekt}     & \textbf{$\varnothing$ Campus} & \textbf{Simuliert} & \textbf{$\varnothing$ real (10\,m)} & \textbf{Beschaffung} \\
+        \midrule
+        Gartenschlauch (dick)   & $\sim$40\,mm                  & DC-Erdkabel        & 20\,cm                              & Baumarkt             \\
+        Gartenschlauch (d\"unn) & $\sim$16\,mm                  & Steuerkabel        & 8\,cm                               & Vorhanden            \\
+        Paketschnur / Seil      & $\sim$10\,mm                  & Lichtwellenleiter  & 5\,cm                               & Vorhanden            \\
+        Nylonschnur             & $\sim$3\,mm                   & Grenztest          & $<$\,2\,cm                          & Vorhanden            \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+Diese Abstufung (40\,mm $\rightarrow$ 16\,mm $\rightarrow$ 10\,mm $\rightarrow$ 3\,mm) erm\"oglicht die systematische Untersuchung der Forschungsfrage~4 (Mindestdurchmesser). Das Campus-Testfeld vermeidet Datenschutzprobleme und erm\"oglicht sofortige Datenverf\"ugbarkeit.
+
+F\"ur reale Trassen (100\,m--1\,km) wird ein \textbf{Tile-basiertes Processing} konzipiert: Die Szene wird in Abschnitte mit \"Uberlappung unterteilt, jeder Tile durchl\"auft die Pipeline separat, und die georeferenzierten Centerlines werden im GIS zusammengef\"uhrt.
+
+% ============================================================
+\section{7. Machbarkeit und Ressourcen}
+
+\begin{center}
+    \small
+    \begin{tabular}{p{6.5cm} l p{5.5cm}}
+        \toprule
+        \textbf{Ressource}                               & \textbf{Status}                       & \textbf{Anmerkung}                \\
+        \midrule
+        Graphics Processing Unit (GPU, RTX 4000, 20\,GB) & \textit{Vorhanden}                    & Ausreichend f\"ur alle Tools      \\
+        RTK-GNSS \& TLS                                  & \textit{Hochschule}                   & Rechtzeitig reservieren           \\
+        3DGS Pipeline Tools                              & \textit{Open Source}                  & COLMAP, gsplat, SuGaR, FlashSplat \\
+        Testfeld (Campus)                                & \textit{vermutlich schnell m\"oglich} & Genehmigungsbedarf ?              \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+Alle Software-Bausteine sind quelloffen, voll publiziert (SIGGRAPH, CVPR, ECCV 2023/2024) und auf der vorhandenen Hardware lauff\"ahig. Die technische Realisierbarkeit ist durch Fallback-Optionen abgesichert (z.\,B. Fokus auf die trainingsfreie Segmentierung mit FlashSplat, falls Gaussian Grouping den VRAM \"ubersteigt).
+
+% ============================================================
+\section{8. Abgrenzung PA / BA}
+
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+    \item \textbf{Projektarbeit} (8 ECTS, vorangehend): Testfeldaufbau, Datenerfassung, COLMAP + gsplat einrichten, visueller Vergleich MVS vs. 3DGS. \textit{Ergebnis:} Validierter Datensatz und lauff\"ahige Basispipeline.
+    \item \textbf{Bachelorarbeit} (15 ECTS): Georeferenzierung, Segmentierungsvergleich, Mesh-Extraktion, Centerline, quantitative Evaluation gegen TLS. \textit{Ergebnis:} Vollst\"andige Scan-to-BIM-Pipeline mit RMSE-Bewertung.
+\end{itemize}
+
+% ============================================================
+\section{9. Ausgew\"ahlte Literatur}
+
+\begin{enumerate}[noitemsep, leftmargin=1.5em, label={[\arabic*]}]
+    \item Kerbl et al.: \textit{3D Gaussian Splatting for Real-Time Radiance Field Rendering.} SIGGRAPH 2023.
+    \item Gu\'edon, Lepetit: \textit{SuGaR: Surface-Aligned Gaussian Splatting for Efficient 3D Mesh Reconstruction.} CVPR 2024.
+    \item Ye et al.: \textit{Gaussian Grouping: Segment and Edit Anything in 3D Scenes.} ECCV 2024.
+    \item Shen et al.: \textit{FlashSplat: 2D to 3D Gaussian Splatting Segmentation Solved Optimally.} ECCV 2024.
+    \item Kerautret et al.: \textit{3D Geometric Analysis of Tubular Objects based on Surface Normal Accumulation.} DGCI 2016.
+    \item He et al.: \textit{A Survey on 3DGS Applications: Segmentation, Editing, and Generation.} ArXiv 2508.09977, 2025.
+    \item Sch\"onberger, Frahm: \textit{Structure-from-Motion Revisited.} CVPR 2016.
+\end{enumerate}
+
+\end{document}

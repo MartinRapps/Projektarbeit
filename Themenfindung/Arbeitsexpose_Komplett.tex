@@ -1,0 +1,552 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{a4paper, left=20mm, right=20mm, top=20mm, bottom=20mm}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{amssymb}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{fancyvrb}
+\usepackage{listings}
+
+\lstset{basicstyle=\ttfamily\small, breaklines=true, frame=single, backgroundcolor=\color{gray!10}}
+
+\titleformat{\section}{\large\bfseries}{}{0em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+\titleformat{\subsubsection}{\small\bfseries}{}{0em}{}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+
+\definecolor{noteblue}{RGB}{0,90,160}
+\definecolor{notebg}{RGB}{230,243,255}
+\definecolor{linkcolor}{RGB}{0,70,140}
+
+\hypersetup{colorlinks=true, linkcolor=linkcolor, urlcolor=linkcolor}
+
+\begin{document}
+
+\begin{center}
+\textbf{\LARGE Arbeitsexpos\'e}\\[0.3em]
+\textbf{\Large 3D Gaussian Splatting (3DGS) Scan-to-Building Information Modeling (BIM) Pipeline}\\[1em]
+\textit{Arbeitsgrundlage f\"ur das formale Expos\'e an den Dozenten}\\[0.3em]
+\small Stand: \today
+\end{center}
+
+\begin{tcolorbox}[colback=notebg, colframe=noteblue, title=\textbf{Zweck dieses Dokuments}]
+Enth\"alt alle technischen Details, Repositories, Paper-Referenzen, Installations-TODOs und den Pipeline-Aufbau. Dient als Vorbereitung f\"ur das formale Kurzexpos\'e.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=green!5, colframe=green!50!black, title=\textbf{Verf\"ugbare Hardware}]
+\textbf{Graphics Processing Unit (GPU):} NVIDIA RTX 4000 Ada Generation -- \textbf{20\,GB Video Random Access Memory (VRAM)}, 6144 CUDA Cores, 160-bit GDDR6\\
+\textbf{RAM:} 64\,GB\\
+\textbf{Bewertung:} 20\,GB VRAM sind ausreichend f\"ur alle Pipeline-Komponenten (SuGaR: 12\,GB Min., Gaussian Grouping: 8--12\,GB, gsplat: 8\,GB+). Kein Cloud-Rechner notwendig.
+\end{tcolorbox}
+
+% ============================================================
+\section{1. Titel und Forschungsfrage}
+
+\textbf{Arbeitstitel:}\\
+\textit{3D Gaussian Splatting vs. klassische Photogrammetrie: Geometrische Validierung, Segmentierung und Centerline-Extraktion f\"ur Leitungsinfrastruktur (Scan-to-BIM)}
+
+\textbf{Zentrale Forschungsfrage (BA):}\\
+\textit{L\"asst sich aus einem 3DGS-Modell \"uber SuGaR-Mesh-Extraktion und Centerline-Algorithmen eine geometrisch verwertbare 3D-Achslinie f\"ur r\"ohrenf\"ormige Infrastruktur ableiten, und wie genau ist diese im Vergleich zur Real-Time Kinematic Global Navigation Satellite System (RTK-GNSS)-Referenz?}
+
+\begin{tcolorbox}[colback=blue!5, colframe=blue!50!black, title=\textbf{Kernbeitrag (Der Automatisierungs-Vorteil)}]
+Eigentlich ist der gro\ss e Vorteil bei diesem Ansatz, dass sich lineare Objekte nicht nur in Vektorform erzeugen lassen, sondern auch als segmentierte Meshes direkt aus der realen Welt, die von vornherein georeferenziert sind. \\
+Das ist der \textbf{Riesen-Vorteil} an dieser Arbeit: Die Pipeline wird so zusammengef\"uhrt, dass in der Praxis nur noch ein Drohnenflug und wenige Ground Control Points (GCPs) ben\"otigt werden. Am Ende liefert die Pipeline vollautomatisch ein segmentiertes 3D-Objekt. Da dieses \"uber 3D Gaussian Splatting und die SuGaR-Extraktion l\"auft, passt sich das Mesh physikalisch korrekt an die Oberfl\"ache an und sieht geometrisch deutlich besser (und lochfreier) aus, als wenn es rein \"uber klassische Photogrammetrie (Multi-View Stereo, MVS-Punktwolken-Triangulierung) erstellt w\"urde. Dadurch kann im letzten Schritt eine saubere Geoinformationssystem (GIS)-Centerline extrahiert werden.
+\end{tcolorbox}
+
+% ============================================================
+\section{2. Pipeline-Architektur}
+
+\begin{lstlisting}[frame=none, backgroundcolor=\color{white}]
+Kamera-Video --> COLMAP (Structure-from-Motion, SfM) --> 3DGS (gsplat) --> Georef. (Helmert 7P)
+                                                        |
+               Gaussian Grouping (Segm.) --> SuGaR (Mesh) --> Centerline (DGtal)
+                                                                    |
+                                                              GIS-Import
+\end{lstlisting}
+
+\textbf{Umsetzung:} Die gesamte Pipeline wird durch ein zentrales Python-Orchestrierungs-Skript gesteuert. Dieses \"ubernimmt das automatische Wechseln der Conda-Umgebungen (via \texttt{subprocess}), das Fehler-Handling sowie das Time-Tracking f\"ur die sp\"atere Performance-Evaluation.
+
+\textbf{Schritte im Detail:}
+
+\begin{center}
+\small
+\begin{tabular}{|c|p{2.8cm}|p{3cm}|p{3.5cm}|p{3.5cm}|}
+\hline
+\textbf{\#} & \textbf{Schritt} & \textbf{Tool} & \textbf{Input} & \textbf{Output} \\
+\hline
+1 & Bilderfassung & Kamera (Video) & Campus-Testfeld & Bildsequenz (JPEG) \\
+\hline
+2 & SfM & COLMAP & Bilder & Sparse Point Cloud (PC) + Kameraposen \\
+\hline
+3 & 3DGS Training & gsplat & Sparse PC + Kameras & 3DGS-Modell (.ply) \\
+\hline
+4 & Georeferenzierung & Eigenes Skript & GCP-Koord. + Modell & Georef. 3DGS \\
+\hline
+5 & Segmentierung & \textit{Vergleichsstudie} & 3DGS + Annotationen & Segm. Gaussians \\
+\hline
+6 & Mesh-Extraktion & SuGaR & Segm. Gaussians & 3D-Mesh (.obj/.ply) \\
+\hline
+7 & Centerline & DGtal / Python & Kabel-Mesh & 3D-Linie (Polyline) \\
+\hline
+8 & Geometrische H\"ohenkorrektur & Python & Centerline + Radius & Korrigierte Centerline (Z-Shift) \\
+\hline
+9 & GIS-Import & ArcGIS / QGIS & Georef. Linie & Shapefile / GeoJSON \\
+\hline
+10 & Evaluation & Python (numpy) & Centerline vs. RTK & Root Mean Square Error (RMSE) [cm] \\
+\hline
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{3. Segmentierungsvergleich (neu)}
+
+F\"ur die Isolation der Kabel-Gaussians werden \textbf{drei Methoden} systematisch verglichen. Dies ergibt eine zus\"atzliche, methodisch wertvolle Forschungsfrage.
+
+\begin{center}
+\small
+\begin{tabular}{|p{2.5cm}|p{2.5cm}|p{3cm}|p{2cm}|p{2.5cm}|}
+\hline
+\textbf{Methode} & \textbf{Typ} & \textbf{Prinzip} & \textbf{Training?} & \textbf{Paper} \\
+\hline
+(A) Farb-Filterung & Baseline & Schwellwert auf Red-Green-Blue (RGB)/Hue-Saturation-Value (HSV)-Attribute der Splats & Nein & -- (eigene Impl.) \\
+\hline
+(B) FlashSplat & Optimierung & 2--3 manuelle 2D-Annotationen $\rightarrow$ optimale 3D-Maske & Nein & Shen et al. (ECCV 2024) \\
+\hline
+(C) Gaussian Grouping & Training & Identity Encoding via DEVA/SAM-Masken & Ja & Ye et al. (ECCV 2024) \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Bewertungskriterien:}
+\begin{itemize}[noitemsep]
+    \item \textbf{Segmentierungsqualit\"at:} Intersection over Union (IoU) / Precision / Recall der isolierten Kabel-Gaussians
+    \item \textbf{Aufwand:} Setup-Komplexit\"at, Annotationszeit, Dependencies
+    \item \textbf{Auswirkung auf Centerline:} RMSE-Differenz der resultierenden Achslinie
+\end{itemize}
+
+\begin{tcolorbox}[colback=notebg, colframe=noteblue]
+\textbf{Wissenschaftlicher Mehrwert:} Der dreistufige Vergleich (manuell $\rightarrow$ trainingsfrei $\rightarrow$ trainingsbasiert) zeigt systematisch, ab welcher Komplexit\"atsstufe sich der Aufwand f\"ur die Kabelisolation lohnt. Gleichzeitig dient die Farbfilterung als Baseline, gegen die die ML-Methoden quantitativ bewertet werden.
+\end{tcolorbox}
+
+\textbf{Referenz-Survey:} He et al. (2025): \textit{``A Survey on 3D Gaussian Splatting Applications: Segmentation, Editing, and Generation.''} ArXiv: 2508.09977. Umfassendster Survey zu 3DGS-Segmentierung mit 50+ Methoden -- dient als Grundlage f\"ur die Methodenauswahl und das State-of-the-Art-Kapitel.
+
+% ============================================================
+\section{4. Scope-Trennung PA / BA}
+
+\subsection{Projektarbeit (PA) -- 7 European Credit Transfer System (ECTS), 4 Wochen netto}
+\textbf{Scope:} Testfeldaufbau, Datenerfassung, Proof of Concept (Schritte 1--3).
+
+\begin{center}
+\small
+\begin{tabular}{|p{3.5cm}|p{6.5cm}|p{2.5cm}|}
+\hline
+\textbf{TODO} & \textbf{Details} & \textbf{Zeit} \\
+\hline
+Testfeld aufbauen & Gartenschlauch + Schn\"ure auf Campus & 1 Tag \\
+\hline
+GCPs einmessen & 8--12 GCPs mit RTK-GNSS (HS-Ger\"ate) & 1--2 Tage \\
+\hline
+TLS-Referenzscan & Laserscanner-Aufnahme des Testfelds & 0.5--1 Tag \\
+\hline
+Videoaufnahme & Kamerasequenz (Nadir + Oblique) & 0.5 Tage \\
+\hline
+COLMAP installieren & Pre-built Windows Binary & 0.5 Tage \\
+\hline
+COLMAP Pipeline & Feature Extr. $\rightarrow$ Matching $\rightarrow$ Sparse & 1 Tag \\
+\hline
+MVS-Baseline & Dense Reconstruction (Metashape/COLMAP) & 1--2 Tage \\
+\hline
+gsplat installieren & Conda + pip install gsplat & 1 Tag \\
+\hline
+3DGS trainieren & gsplat auf COLMAP-Output & 1--2 Tage \\
+\hline
+Visueller Vergleich & Screenshots MVS vs. 3DGS & 1 Tag \\
+\hline
+Rechenzeit-Benchmark & Tabelle: MVS vs. 3DGS & 0.5 Tage \\
+\hline
+PA schreiben & 15--25 Seiten & 5--7 Tage \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Forschungsfragen PA:}
+\begin{enumerate}[noitemsep]
+    \item Lassen sich texturlose und feine Strukturen durch 3DGS visuell vollst\"andiger rekonstruieren als durch MVS?
+    \item Wie verhalten sich die Rechenzeiten der dichten Rekonstruktion?
+\end{enumerate}
+
+\textbf{Ergebnis PA:} Validierter Datensatz, lauff\"ahige Pipelines, erster Vergleich.
+
+\subsection{Bachelorarbeit (BA) -- 15 ECTS, 10 Wochen netto}
+\textbf{Scope:} Georeferenzierung, \textbf{Segmentierungsvergleich (3 Methoden)}, Mesh, Centerline, Evaluation (Schritte 4--9).
+
+\begin{center}
+\small
+\begin{tabular}{|p{3.5cm}|p{6.5cm}|p{2.5cm}|}
+\hline
+\textbf{TODO} & \textbf{Details} & \textbf{Zeit} \\
+\hline
+Georef-Skript & Helmert 7P (numpy/scipy) & 2--3 Tage \\
+\hline
+(A) Farb-Filterung & HSV-Schwellwert auf Splat-Attribute & 1--2 Tage \\
+\hline
+(B) FlashSplat & 2--3 Annotationen $\rightarrow$ 3D-Maske & 2--3 Tage \\
+\hline
+(C) Gaussian Grouping & DEVA-Masken + Identity Encoding & 3--5 Tage \\
+\hline
+SuGaR installieren & Conda (Python 3.9, CUDA 11.8) & 1--2 Tage \\
+\hline
+SuGaR Windows-Fix & Pfadtrenner mit pathlib fixen & 0.5 Tage \\
+\hline
+SuGaR Mesh & Poisson-Rekonstruktion Kabel-Gaussians & 1--2 Tage \\
+\hline
+Centerline-Algorithmus & DGtal oder Python-Reimplementierung & 3--5 Tage \\
+\hline
+GIS-Import & Export Shapefile $\rightarrow$ ArcGIS/QGIS & 1--2 Tage \\
+\hline
+RMSE-Evaluation & Centerline vs. RTK-Referenzlinie & 2--3 Tage \\
+\hline
+Wirtschaftlichkeit & Kosten/Zeit vs. klass. Vermessung & 2--3 Tage \\
+\hline
+BA schreiben & 40--60 Seiten & 15--20 Tage \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Forschungsfragen BA:}
+\begin{enumerate}[noitemsep]
+    \item Wie genau ist die extrahierte Centerline im Vergleich zur RTK-Referenz (RMSE)?
+    \item \textbf{Welche der drei Segmentierungsmethoden (Farb-Filter, FlashSplat, Gaussian Grouping) liefert die robusteste Isolation bei geringstem Aufwand?}
+    \item \textbf{Praxis-Problem:} Wie l\"asst sich der systematische H\"ohenfehler der Centerline algorithmisch korrigieren (Z-Shift), der durch die unvollst\"andige optische Erfassung des Kabels im Graben (Halbzylinder-Geometrie) entsteht?
+    \item Ab welchem Objektdurchmesser scheitert die Pipeline?
+    \item Ist 3DGS eine wirtschaftlichere Alternative f\"ur die Bau\"uberwachung?
+\end{enumerate}
+
+% ============================================================
+\section{5. GitHub-Repositories}
+
+\begin{center}
+\small
+\begin{tabular}{|p{3cm}|p{8cm}|p{2cm}|}
+\hline
+\textbf{Tool} & \textbf{URL} & \textbf{Lizenz} \\
+\hline
+COLMAP & \url{https://github.com/colmap/colmap} & BSD-3 \\
+\hline
+gsplat & \url{https://github.com/nerfstudio-project/gsplat} & Apache-2.0 \\
+\hline
+SuGaR & \url{https://github.com/Anttwo/SuGaR} & Research \\
+\hline
+Gaussian Grouping & \url{https://github.com/lkeab/gaussian-grouping} & Apache-2.0 \\
+\hline
+\textbf{FlashSplat} & \url{https://github.com/florinshen/FlashSplat} & Research \\
+\hline
+DEVA & \url{https://github.com/hkchengrex/Tracking-Anything-with-DEVA} & -- \\
+\hline
+DGtal & \url{https://github.com/DGtal-team/DGtal} & LGPL \\
+\hline
+Original 3DGS & \url{https://github.com/graphdeco-inria/gaussian-splatting} & Research \\
+\hline
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{6. Paper-Referenzen}
+
+\subsection{Kern-Paper (direkt in Pipeline genutzt)}
+\begin{enumerate}[noitemsep]
+    \item \textbf{3D Gaussian Splatting} -- Kerbl et al. (SIGGRAPH 2023)\\
+    \textit{``3D Gaussian Splatting for Real-Time Radiance Field Rendering.''}\\
+    ACM Transactions on Graphics 42(4). Best Paper SIGGRAPH 2023.
+
+    \item \textbf{SuGaR} -- Gu\'edon, Lepetit (CVPR 2024)\\
+    \textit{``SuGaR: Surface-Aligned Gaussian Splatting for Efficient 3D Mesh Reconstruction.''}\\
+    ArXiv: 2311.12775
+
+    \item \textbf{Gaussian Grouping} -- Ye et al. (ECCV 2024)\\
+    \textit{``Gaussian Grouping: Segment and Edit Anything in 3D Scenes.''}
+
+    \item \textbf{FlashSplat} -- Shen et al. (ECCV 2024)\\
+    \textit{``FlashSplat: 2D to 3D Gaussian Splatting Segmentation Solved Optimally.''}\\
+    Trainingsfreie Segmentierung durch Optimierung auf 2D-Annotationen.
+
+    \item \textbf{Centerline-Extraktion} -- Kerautret et al. (DGCI 2016)\\
+    \textit{``3D Geometric Analysis of Tubular Objects based on Surface Normal Accumulation.''}
+
+    \item \textbf{COLMAP} -- Sch\"onberger, Frahm (CVPR 2016)\\
+    \textit{``Structure-from-Motion Revisited.''}
+\end{enumerate}
+
+\subsection{Vergleichsstudien und Benchmarks}
+\begin{enumerate}[noitemsep, start=6]
+    \item \textbf{GauU-Scene V2 Benchmark} -- Inverse Korrelation PSNR vs. geometrische Genauigkeit
+    \item \textbf{ISPRS Annals 2025} -- Geod\"atisch relevanteste Vergleichsstudie 3DGS vs. Photogrammetrie
+    \item \textbf{GeoRefGS} -- \textit{``Towards Georeferenced 3DGS from UAV Platforms''} (MDPI 2025)\\
+    Erw\"ahnt als State-of-the-Art, nicht genutzt (kein \"offentlicher Code)
+    \item \textbf{3DGS Applications Survey} -- He et al. (2025)\\
+    \textit{``A Survey on 3D Gaussian Splatting Applications: Segmentation, Editing, and Generation.''}\\
+    ArXiv: 2508.09977. Umfassendster Survey mit 50+ Segmentierungsmethoden.
+\end{enumerate}
+
+\subsection{Varianten (State-of-the-Art)}
+\begin{enumerate}[noitemsep, start=9]
+    \item \textbf{Mip-Splatting} (CVPR 2024) -- Anti-Aliasing f\"ur Multi-Scale
+    \item \textbf{2D Gaussian Splatting} (SIGGRAPH 2024) -- Planare Gaussians
+    \item \textbf{GaussianPro} (ICML 2024) -- Texturlose Regionen
+    \item \textbf{Scaffold-GS} (CVPR 2024) -- Speicher-Reduktion
+    \item \textbf{DroneSplat} -- Drohnenspezifische 3DGS-Pipeline
+\end{enumerate}
+
+\subsection{Large-Scale 3DGS (Skalierbarkeit)}
+\begin{enumerate}[noitemsep, start=14]
+    \item \textbf{VastGaussian} -- Lin et al. (CVPR 2024)\\
+    \textit{``VastGaussian: Vast 3D Gaussians for Large Scene Reconstruction.''}\\
+    Automatische Partitionierung gro\ss er Szenen in Tiles mit seamless Merging.
+    \item \textbf{CityGaussian} -- Liu et al. (2024)\\
+    \textit{``CityGaussian: Real-time High-quality Large-Scale Scene Rendering.''}\\
+    Level-of-Detail f\"ur stadtweite 3DGS-Rekonstruktionen.
+\end{enumerate}
+
+% ============================================================
+\section{7. Installations-Checkliste}
+
+\subsection{Voraussetzung: Hardware}
+\begin{itemize}[noitemsep]
+    \item[$\checkmark$] \textbf{NVIDIA RTX 4000 Ada -- 20\,GB VRAM} (vorhanden)
+    \item[$\checkmark$] \textbf{64\,GB RAM} (vorhanden)
+    \item[$\square$] NVIDIA Treiber $\geq$ 525.x (CUDA 11.3--11.8)
+    \item[$\square$] Conda/Miniconda installiert
+    \item[$\square$] Git installiert
+    \item[$\square$] Visual Studio Build Tools (C++ Compiler)
+\end{itemize}
+
+\subsection{COLMAP}
+\begin{itemize}[noitemsep]
+    \item[$\square$] Pre-built Binary von \url{https://demuc.de/colmap/} (CUDA-Version)
+    \item[$\square$] Entpacken und PATH setzen
+    \item[$\square$] Test: \texttt{colmap -h}
+\end{itemize}
+
+\subsection{gsplat (3DGS Training)}
+\begin{lstlisting}
+conda create -n gsplat python=3.10 -y
+conda activate gsplat
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install gsplat
+\end{lstlisting}
+
+\subsection{SuGaR (Mesh-Extraktion)}
+\begin{lstlisting}
+git clone https://github.com/Anttwo/SuGaR.git --recursive
+cd SuGaR
+python install.py   # Erstellt conda env "sugar"
+conda activate sugar
+\end{lstlisting}
+\begin{itemize}[noitemsep]
+    \item[$\square$] Windows-Pfade fixen: \texttt{/} $\rightarrow$ \texttt{os.path.join()} in relevanten Skripten
+\end{itemize}
+
+\subsection{FlashSplat (Segmentierung -- trainingsfrei)}
+\begin{lstlisting}
+git clone https://github.com/florinshen/FlashSplat.git
+cd FlashSplat
+pip install -r requirements.txt
+\end{lstlisting}
+
+\subsection{Gaussian Grouping (Segmentierung -- trainingsbasiert)}
+\begin{lstlisting}
+git clone https://github.com/lkeab/gaussian-grouping.git
+cd gaussian-grouping
+conda create -n gaussian_grouping python=3.8 -y
+conda activate gaussian_grouping
+conda install pytorch==1.12.1 torchvision==0.13.1 cudatoolkit=11.3 -c pytorch
+pip install plyfile==0.8.1 tqdm scipy wandb opencv-python scikit-learn lpips
+pip install submodules/diff-gaussian-rasterization
+pip install submodules/simple-knn
+\end{lstlisting}
+
+\subsection{DGtal (Centerline)}
+\begin{lstlisting}
+git clone https://github.com/DGtal-team/DGtal.git
+cd DGtal && mkdir build && cd build
+cmake .. && make
+\end{lstlisting}
+Alternativ: Centerline-Algorithmus (Normalenakkumulation) in Python mit Open3D reimplementieren.
+
+\subsection{Georeferenzierung (eigenes Skript)}
+\begin{lstlisting}
+pip install numpy scipy   # Kein extra Environment noetig
+\end{lstlisting}
+\begin{itemize}[noitemsep]
+    \item[$\square$] CSV: \texttt{ID, X\_lokal, Y\_lokal, Z\_lokal, X\_welt, Y\_welt, Z\_welt}
+    \item[$\square$] Helmert 7P mit \texttt{scipy.spatial.transform}
+    \item[$\square$] Transformation auf alle Gaussian-Positionen anwenden
+\end{itemize}
+
+% ============================================================
+\section{8. Evaluation-Framework (D1--D6)}
+
+\begin{center}
+\small
+\begin{tabular}{|p{2cm}|p{4cm}|p{3cm}|c|c|}
+\hline
+\textbf{Dim.} & \textbf{Metrik} & \textbf{Tool} & \textbf{PA} & \textbf{BA} \\
+\hline
+D1: Geometrie & RMSE horiz./vert. [cm] vs. TLS & CloudCompare / numpy & -- & $\checkmark$ \\
+\hline
+D2: Visuell & PSNR, SSIM, LPIPS & gsplat metrics & $\checkmark$ & $\checkmark$ \\
+\hline
+D3: Manuell & Visueller Vergleich & Screenshots & $\checkmark$ & $\checkmark$ \\
+\hline
+D4: ML-Erkennung & Precision, Recall, F1 & sklearn & -- & $\checkmark$ \\
+\hline
+D5: Kosten & Zeit, Kosten, Hardware & Tabelle & $\checkmark$ & $\checkmark$ \\
+\hline
+D6: Tile-Konsistenz & Overlap-RMSE [cm] & numpy & -- & $\checkmark$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{tcolorbox}[colback=green!5, colframe=green!50!black, title=\textbf{Referenzdaten (verf\"ugbar an der Hochschule)}]
+\textbf{RTK-GNSS:} F\"ur GCP-Einmessung und Georeferenzierung (Genauigkeit: $<$\,1\,cm).\\
+\textbf{Terrestrischer Laserscanner (TLS):} F\"ur dichte Referenz-Punktwolke des gesamten Testfelds. Daraus wird eine \textbf{TLS-Referenz-Centerline} extrahiert, gegen die die 3DGS-Centerline evaluiert wird (Linie-zu-Linie-Vergleich, nicht nur Punkt-zu-Punkt).\\
+$\rightarrow$ \textbf{Doppelte Referenz:} GCPs f\"ur Georeferenzierung, TLS f\"ur geometrische Evaluation.
+\end{tcolorbox}
+
+% ============================================================
+\section{9. Testfeld-Design (Campus, ca. 20--30\,m)}
+
+Die Kamera wird auf ca. \textbf{2\,m H\"ohe} gef\"uhrt; bei einer realen Drohnenh\"ohe von 10\,m ergibt sich ein \textbf{Skalierungsfaktor von 5$\times$}. Die Testobjekt-Durchmesser erzeugen somit bei 2\,m die gleiche Pixelabdeckung (GSD) wie reale Kabel bei 10\,m Flugh\"ohe:
+
+\begin{center}
+\small
+\begin{tabular}{|p{3cm}|p{2cm}|p{3.5cm}|p{4.5cm}|}
+\hline
+\textbf{Testobjekt} & \textbf{$\varnothing$ Campus} & \textbf{Simuliert} & \textbf{$\varnothing$ real (10\,m H\"ohe)} \\
+\hline
+Gartenschlauch (dick) & $\sim$40\,mm & DC-Erdkabel & 20\,cm (200\,mm) \\
+\hline
+Gartenschlauch (d\"unn) & $\sim$16\,mm & Steuerkabel & 8\,cm (80\,mm) \\
+\hline
+Paketschnur / Seil & $\sim$10\,mm & Lichtwellenleiter & 5\,cm (50\,mm) \\
+\hline
+Nylonschnur & $\sim$3\,mm & Grenztest & $<$\,2\,cm \\
+\hline
+GCP-Targets & -- & Passpunkte & 8--12 St\"uck, RTK-GNSS ($<$\,1\,cm) \\
+\hline
+TLS-Scan & -- & Referenz & Terrestr. Laserscanner (HS-Ger\"at) \\
+\hline
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{10. Skalierbarkeit: Tile-basiertes Processing}
+
+Standard-3DGS ist f\"ur kleine bis mittlere Szenen optimiert ($\sim$50\,m$^2$). Reale Kabeltrassen erstrecken sich \"uber \textbf{100\,m bis 1\,km}. Die L\"osung ist ein \textbf{georeferenziertes Tiling}, das in der Photogrammetrie Standard ist.
+
+\subsection{Tile-Strategie}
+
+\begin{lstlisting}[frame=none, backgroundcolor=\color{white}]
+1km Trasse --> Aufteilen in N Tiles a 50m (mit 10m Ueberlappung)
+  |
+  Pro Tile: COLMAP --> 3DGS --> Georef --> Segm. --> SuGaR --> Centerline
+  |
+  Alle Centerlines in georef. Koordinaten (UTM)
+  |
+  GIS-Merge: Spatial Join auf Ueberlappungszonen --> durchgehende Linie
+\end{lstlisting}
+
+\begin{center}
+\small
+\begin{tabular}{|p{3cm}|p{2.5cm}|p{3cm}|p{4cm}|}
+\hline
+\textbf{Parameter} & \textbf{Empfehlung} & \textbf{Begr\"undung} & \textbf{Auswirkung} \\
+\hline
+Tile-L\"ange & 50\,m & Optimale 3DGS-Szenengr\"o\ss e & $\sim$500k Gaussians/Tile \\
+\hline
+\"Uberlappung & 10\,m (20\%) & Genug Kontext f\"ur COLMAP & Seamless Centerline-Join \\
+\hline
+GCPs pro Tile & 3--4 Minimum & F\"ur Helmert-Transformation & $<$\,2\,cm Georef.-Fehler \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Merge-Strategie im GIS}
+\begin{enumerate}[noitemsep]
+    \item Alle Tile-Centerlines als Polylines in ein GIS laden (gleiche Projektion)
+    \item In der \"Uberlappungszone: \textbf{gewichtete Mittelung} der Positionen
+    \item \textbf{Spatial Join} auf $<$\,0{,}5\,m Abstand $\rightarrow$ durchgehende Linie
+    \item \textbf{Overlap-RMSE} berechnen: Abweichung der Centerlines beider Tiles in der \"Uberlappung
+\end{enumerate}
+
+\begin{tcolorbox}[colback=notebg, colframe=noteblue]
+\textbf{Wissenschaftlicher Mehrwert:} Der Overlap-RMSE ist eine \textbf{neue Evaluationsdimension} (D6), die die Konsistenz der Pipeline \"uber Tile-Grenzen hinweg misst. F\"ur das Campus-Testfeld (5--10\,m) ist Tiling nicht notwendig -- es kann aber als Proof-of-Concept getestet werden, indem man die Szene k\"unstlich in 2--3 Tiles aufteilt.
+\end{tcolorbox}
+
+\textbf{Referenzen:} VastGaussian (CVPR 2024) und CityGaussian (2024) zeigen, dass 3DGS auf Stadtma\ss stab skaliert werden kann. Der hier gew\"ahlte manuelle Tiling-Ansatz ist f\"ur linienf\"ormige Infrastruktur \textbf{einfacher und robuster}, da die Georeferenzierung die r\"aumliche Konsistenz sicherstellt.
+
+% ============================================================
+\section{11. Risikomatrix}
+
+\begin{center}
+\small
+\begin{tabular}{|p{3.5cm}|p{2cm}|p{1.5cm}|p{5.5cm}|}
+\hline
+\textbf{Risiko} & \textbf{Wahrsch.} & \textbf{Impact} & \textbf{Mitigation} \\
+\hline
+SuGaR Windows-Pfade & Hoch & Niedrig & Trivial fixbar mit pathlib \\
+\hline
+Kabel nicht erkannt & Mittel & Hoch & Fallback: manuelle Farb-Filterung \\
+\hline
+Centerline schlecht & Mittel & Hoch & Alternative: Open3D Skeleton \\
+\hline
+VRAM $<$ 12\,GB & \textit{Entf\"allt} & -- & RTX 4000 Ada mit 20\,GB vorhanden \\
+\hline
+RTK-GNSS / TLS nicht verf. & \textit{Gering} & Mittel & Ger\"ate an HS vorhanden, fr\"uhzeitig reservieren \\
+\hline
+Mesh verrauscht & Mittel & Mittel & SuGaR \texttt{dn\_consistency} nutzen \\
+\hline
+Szene zu gro\ss{} & Mittel & Mittel & Tile-basiertes Processing (50\,m Tiles) \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Externe Machbarkeitsanalyse (ValyuAI)}
+Eine unabh\"angige Machbarkeitspr\"ufung best\"atigt f\"ur dieses Forschungsdesign die Statusfreigabe \textbf{START GR\"UN}. 
+\begin{itemize}[noitemsep]
+    \item \textbf{Machbarkeit:} Sehr hoch (alle Komponenten verifiziert, Hardware mit RTX 4000 20\,GB ausreichend).
+    \item \textbf{Wissenschaftlicher Mehrwert:} Sehr hoch. Es schlie\ss t eine echte Forschungsl\"ucke (3DGS-Genauigkeit f\"ur Centerline-Extraktion).
+    \item \textbf{Fallbacks (Risiko-Minimierung):} Falls \textit{Gaussian Grouping} zu rechenintensiv wird, kann auf \textit{FlashSplat} reduziert werden. Falls \textit{DGtal} h\"angt, kann das Mesh exportiert und extern (z.B. Open3D) verarbeitet werden.
+    \item \textbf{Publikationspotenzial:} Es sind bis zu 3 Papers ableitbar (Segmentierungs-Vergleich, Scan-to-BIM Genauigkeitsanalyse gegen TLS, Open-Source Toolkit Report).
+\end{itemize}
+
+% ============================================================
+\section{12. Diskussionspunkte f\"ur den Dozenten}
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Scope PA vs. BA:} PA = Datenerhebung + Vergleich (MVS vs. 3DGS). BA = Scan-to-BIM Pipeline.
+    \item \textbf{Segmentierung:} Dreistufiger Vergleich: Farb-Filterung vs. FlashSplat vs. Gaussian Grouping.
+    \item \textbf{Georeferenzierung:} Klassische Helmert-Transformation \"uber COLMAP GCPs.
+    \item \textbf{Skalierbarkeit:} Tile-basiertes Processing (50\,m Tiles, 10\,m Overlap) f\"ur Trassen bis 1\,km. Machbarkeitstest auf Campus durch k\"unstliches Aufteilen in 2--3 Tiles.
+    \item \textbf{Referenzdaten:} RTK-GNSS (GCPs) + TLS-Scan (Referenz-Centerline) -- beides an der HS verf\"ugbar.
+    \item \textbf{Testfeld:} Campus ausreichend, oder Drohnenflug?
+    \item \textbf{KI-Nutzung:} Dokumentation gem\"a\ss{} PABA-Hinweise Kap.~3.5.
+    \item \textbf{Hardware:} RTX 4000 Ada (20\,GB) + 64\,GB RAM vorhanden.
+    \item \textbf{Centerline:} DGtal (C++) oder eigene Python-Reimplementierung?
+    \item \textbf{Survey:} He et al. (2025) als Grundlage f\"ur SotA-Kapitel (50+ Methoden).
+\end{enumerate}
+
+\end{document}
