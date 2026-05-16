@@ -39,14 +39,14 @@ Dieses Exposé stellt die \textbf{Gesamtvision} der geplanten Pipeline dar. Es d
 % ============================================================
 \section*{1. Ausgangspunkt und Motivation}
 
-Der Leitungsbau (DC-Erdkabel, Überlandleitungen) durch Übertragungsnetzbetreiber (TSOs) erfordert eine exakte 3D-Dokumentation des Baufortschritts. Klassische Photogrammetrie (Dense Multi-View Stereo, MVS) liefert hohe metrische Genauigkeit, hat jedoch Schwächen bei feinen Strukturen und erfordert lange Rechenzeiten. 3D Gaussian Splatting (3DGS) bietet fotorealistische Echtzeit-Renderings und bewahrt feine Details, ist aber für geodätische Zwecke kaum validiert.
+Der Leitungsbau (DC-Erdkabel, Überlandleitungen) durch Übertragungsnetzbetreiber (TSOs) erfordert eine exakte 3D-Dokumentation des Baufortschritts. In einem Praxisbeispiel fordert TenneT hierbei eine Genauigkeit von $\pm 10$\,cm von der Kabelachse in Lage und Höhe, sowie $5$\,cm für Kontrollpunkte. Klassische Photogrammetrie (Dense Multi-View Stereo, MVS) liefert hohe metrische Genauigkeit, hat jedoch Schwächen bei feinen Strukturen und erfordert lange Rechenzeiten. 3D Gaussian Splatting (3DGS) bietet fotorealistische Echtzeit-Renderings und bewahrt feine Details, ist aber für geodätische Zwecke an diesen Vorgaben kaum validiert.
 
 \textbf{Das übergeordnete Ziel} ist eine durchgehende Pipeline:
 \begin{center}
 \texttt{Bilder} $\rightarrow$ \texttt{SfM} $\rightarrow$ \texttt{3DGS} $\rightarrow$ \texttt{Georef.} $\rightarrow$ \texttt{Segmentierung} $\rightarrow$ \texttt{Mesh (SuGaR)} $\rightarrow$ \texttt{Centerline} $\rightarrow$ \texttt{GIS}
 \end{center}
 
-Um Datenschutzhürden einer echten Baustelle zu vermeiden, wird die Methodik auf einem \textbf{Campus-Testfeld} evaluiert. Gartenschläuche (Erdkabel, $\varnothing$ ca. 20\,cm) und feine Schnüre (Überlandleitungen) simulieren die Infrastruktur. Die Datenerfassung erfolgt videobasiert (handgeführte Kamera).
+Um Datenschutzhürden vorerst zu vermeiden, wird die Methodik zunächst auf einem \textbf{Campus-Testfeld} evaluiert. Gartenschläuche (Erdkabel) und Schnüre simulieren die Infrastruktur. Durch größere Entfernungen in der Realität ändern sich jedoch Kameraparameter und Pixel verschwimmen eher. Daher besteht der Wunsch, nach Klärung mit TenneT eigene Daten von einer echten Baustelle zu nutzen, was einer bloß skalierten Campus-Alternative deutlich vorzuziehen ist.
 
 % ============================================================
 \section*{2. Bausteine der Pipeline -- Übersicht mit Literatur}
@@ -83,7 +83,7 @@ SuGaR extrahiert ein \textbf{Gesamtmesh} der gesamten Szene -- es erkennt dabei 
 
 Daraus ergibt sich die logische Reihenfolge:
 \begin{enumerate}[noitemsep]
-    \item \textbf{Segmentierung} -- Identifikation der Kabel-Gaussians (z.B. über Gaussian Grouping oder Farb-/Formfilter auf den Splat-Attributen)
+    \item \textbf{Segmentierung} -- Für einen ersten Prototypen wird zunächst die einfachste Methode, die Farbfilterung, angewendet. Bei Erfolg wird die Segmentierungsqualität durch ML-Methoden (z.B. Gaussian Grouping) gesteigert.
     \item \textbf{Mesh-Extraktion} -- SuGaR nur auf die isolierten Kabel-Gaussians anwenden
     \item \textbf{Centerline} -- Aus dem röhrenförmigen Kabel-Mesh die Mittellinie extrahieren (Kerautret et al.)
 \end{enumerate}
@@ -128,7 +128,7 @@ Ebenso ist die \textbf{Georeferenzierung} zentral, da ohne sie die extrahierte L
 
 \subsection*{5.2 Georeferenzierung (wichtig, Methode offen)}
 
-Die Überführung vom lokalen 3DGS-Koordinatensystem in ein geodätisches Bezugssystem ist für den TSO-Anwendungsfall essenziell. Zwei Wege sind denkbar:
+Die Überführung vom lokalen 3DGS-Koordinatensystem in ein geodätisches Bezugssystem ist für den TSO-Anwendungsfall essenziell. Ein alternativer Scope fokussiert sich zudem auf die automatische Georeferenzierung über eindeutig GNSS-eingemessene Passpunkte. Generell sind zwei Wege denkbar:
 
 \begin{itemize}[noitemsep]
     \item \textbf{Klassisch:} Die GCPs sind bereits in COLMAP (SfM) enthalten. Die resultierende Transformation (Helmert 7-Parameter) wird auf das 3DGS-Modell angewendet. Einfach, erprobt, keine zusätzliche Forschungssoftware nötig.

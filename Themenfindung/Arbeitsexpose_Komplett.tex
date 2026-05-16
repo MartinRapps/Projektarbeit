@@ -58,8 +58,11 @@ Enth\"alt alle technischen Details, Repositories, Paper-Referenzen, Installation
 \textbf{Arbeitstitel:}\\
 \textit{3D Gaussian Splatting vs. klassische Photogrammetrie: Geometrische Validierung, Segmentierung und Centerline-Extraktion f\"ur Leitungsinfrastruktur (Scan-to-BIM)}
 
+\textbf{Praxis-Anforderung (TenneT):}\\
+Gem\"a\ss{} eines Praxisbeispiels des \"Ubertragungsnetzbetreibers TenneT wird eine Genauigkeit von $\pm 10$\,cm von der Kabelachse in Lage und H\"ohe gefordert, sowie $5$\,cm f\"ur Kontrollpunkte. Diese Werte dienen als Benchmark.
+
 \textbf{Zentrale Forschungsfrage (BA):}\\
-\textit{L\"asst sich aus einem 3DGS-Modell \"uber SuGaR-Mesh-Extraktion und Centerline-Algorithmen eine geometrisch verwertbare 3D-Achslinie f\"ur r\"ohrenf\"ormige Infrastruktur ableiten, und wie genau ist diese im Vergleich zur Real-Time Kinematic Global Navigation Satellite System (RTK-GNSS)-Referenz?}
+\textit{L\"asst sich aus einem 3DGS-Modell \"uber SuGaR-Mesh-Extraktion und Centerline-Algorithmen eine geometrisch verwertbare 3D-Achslinie f\"ur r\"ohrenf\"ormige Infrastruktur ableiten, die den Praxisanforderungen entspricht, und wie genau ist diese im Vergleich zur Real-Time Kinematic Global Navigation Satellite System (RTK-GNSS)-Referenz?}
 
 \begin{tcolorbox}[colback=blue!5, colframe=blue!50!black, title=\textbf{Kernbeitrag (Der Automatisierungs-Vorteil)}]
 Eigentlich ist der gro\ss e Vorteil bei diesem Ansatz, dass sich lineare Objekte nicht nur in Vektorform erzeugen lassen, sondern auch als segmentierte Meshes direkt aus der realen Welt, die von vornherein georeferenziert sind. \\
@@ -113,7 +116,7 @@ Kamera-Video --> COLMAP (Structure-from-Motion, SfM) --> 3DGS (gsplat) --> Geore
 % ============================================================
 \section{3. Segmentierungsvergleich (neu)}
 
-F\"ur die Isolation der Kabel-Gaussians werden \textbf{drei Methoden} systematisch verglichen. Dies ergibt eine zus\"atzliche, methodisch wertvolle Forschungsfrage.
+F\"ur die Isolation der Kabel-Gaussians werden \textbf{drei Methoden} systematisch verglichen. F\"ur einen ersten Prototypen wird zun\"achst nur die Farbfilterung verwendet, da diese am einfachsten umzusetzen ist. Bei Erfolg wird die Segmentierungsqualit\"at schrittweise gesteigert. Dies ergibt eine zus\"atzliche, methodisch wertvolle Forschungsfrage.
 
 \begin{center}
 \small
@@ -391,10 +394,37 @@ Alternativ: Centerline-Algorithmus (Normalenakkumulation) in Python mit Open3D r
 pip install numpy scipy   # Kein extra Environment noetig
 \end{lstlisting}
 \begin{itemize}[noitemsep]
+    \item[$\square$] Alternativer Scope: Automatische Georeferenzierung \"uber eindeutig GNSS-eingemessene Passpunkte.
     \item[$\square$] CSV: \texttt{ID, X\_lokal, Y\_lokal, Z\_lokal, X\_welt, Y\_welt, Z\_welt}
     \item[$\square$] Helmert 7P mit \texttt{scipy.spatial.transform}
     \item[$\square$] Transformation auf alle Gaussian-Positionen anwenden
 \end{itemize}
+
+\subsection{Finale Einrichtung und Kompilierung (Skyfall-GS)}
+Nach der grundlegenden Installation von Python und PyTorch m\"ussen die spezifischen 3DGS-CUDA-Kernels (Rasterizer) kompiliert und das Projekt gestartet werden.
+
+\textbf{1. Systemumgebung (Compiler) pr\"ufen:}\\
+Nach der Installation von \textit{Visual Studio Build Tools 2022} (C++ Desktop) und dem \textit{CUDA Toolkit 11.8} muss das System neu gestartet werden. Anschlie\ss end in der Anaconda Prompt pr\"ufen:
+\begin{lstlisting}
+nvcc --version   # Muss CUDA 11.8 anzeigen
+cl               # Muss den MSVC C++ Compiler erkennen
+\end{lstlisting}
+
+\textbf{2. Submodules (CUDA Kernels) kompilieren:}\\
+Der \texttt{submodules}-Ordner im Skyfall-GS Repository muss initialisiert und installiert werden. Dieser Schritt nutzt \texttt{cl.exe} und \texttt{nvcc.exe}, um die spezifischen Grafik-Befehle f\"ur die RTX-GPU ma\ss geschneidert zu bauen.
+\begin{lstlisting}
+conda activate skyfall-gs
+cd C:\Users\k66700\Skyfall-GS
+git submodule update --init --recursive
+pip install ./submodules/diff-gaussian-rasterization
+pip install ./submodules/simple-knn
+\end{lstlisting}
+
+\textbf{3. Datensatz laden und Training starten:}\\
+Das Test-Dataset wird z.\,B. mittels des installierten \texttt{huggingface\_hub}-Pakets geladen (gem\"a\ss{} Skyfall-GS README). F\"ur eigene Bilder muss zun\"achst das COLMAP-Skript (z.\,B. \texttt{convert.py}) ausgef\"uhrt werden. Danach startet das Training:
+\begin{lstlisting}
+python train.py -s ./data/test_szene
+\end{lstlisting}
 
 % ============================================================
 \section{8. Evaluation-Framework (D1--D6)}
@@ -429,7 +459,8 @@ $\rightarrow$ \textbf{Doppelte Referenz:} GCPs f\"ur Georeferenzierung, TLS f\"u
 % ============================================================
 \section{9. Testfeld-Design (Campus, ca. 20--30\,m)}
 
-Die Kamera wird auf ca. \textbf{2\,m H\"ohe} gef\"uhrt; bei einer realen Drohnenh\"ohe von 10\,m ergibt sich ein \textbf{Skalierungsfaktor von 5$\times$}. Die Testobjekt-Durchmesser erzeugen somit bei 2\,m die gleiche Pixelabdeckung (GSD) wie reale Kabel bei 10\,m Flugh\"ohe:
+Die Kamera wird am Campus auf ca. \textbf{2\,m H\"ohe} gef\"uhrt; bei einer realen Drohnenh\"ohe von 10\,m ergibt sich ein \textbf{Skalierungsfaktor von 5$\times$}. 
+Idealerweise soll auf einer echten TenneT-Baustelle gemessen werden (vorbehaltlich interner Kl\"arung). Da durch eine Skalierung bei gr\"o\ss erer Entfernung Kameraparameter abweichen und Pixel eher verschwimmen, sind echte Daten der skalierten Alternative auf dem Campus deutlich vorzuziehen. F\"ur den simulierten Fall erzeugen die Testobjekt-Durchmesser bei 2\,m die gleiche Pixelabdeckung (GSD) wie reale Kabel bei 10\,m Flugh\"ohe:
 
 \begin{center}
 \small
