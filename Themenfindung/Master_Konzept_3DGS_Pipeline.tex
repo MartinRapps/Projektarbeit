@@ -1,0 +1,152 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{a4paper, left=25mm, right=25mm, top=25mm, bottom=25mm}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{mdframed}
+
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\vspace{-0.3em}]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{}{0em}{}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+
+\definecolor{linkcolor}{RGB}{0,70,140}
+\hypersetup{colorlinks=true, linkcolor=linkcolor, urlcolor=linkcolor}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{gray!10},
+  frame=single,
+  breaklines=true
+}
+
+\begin{document}
+
+% ============================================================
+% HEADER
+% ============================================================
+\begin{center}
+    {\large\bfseries Master-Dokumentation: 3DGS Scan-to-BIM Pipeline}\\[0.5em]
+    {\normalsize\bfseries KI-gest\"utzte Vorverarbeitung, Machbarkeitsanalyse und Docker-Infrastruktur}\\[0.8em]
+    \small
+    \begin{tabular}{ll}
+        \textbf{Studiengang:} & Geovisualisierung (B.Eng.) \\
+        \textbf{Datum:}       & \today                     \\
+    \end{tabular}
+\end{center}
+
+\vspace{-0.5em}
+\noindent\rule{\textwidth}{0.4pt}
+\tableofcontents
+\vspace{1em}
+\noindent\rule{\textwidth}{0.4pt}
+
+% ============================================================
+\section{1. Die aktuelle Pipeline-Idee (Der modifizierte 3-Schritte-Plan)}
+
+Das Ziel dieser Pipeline ist es, schwer zu erfassende, oft extrem d\"unne Objekte (wie Stromleitungen oder gest\"uckelte Schl\"auche) pr\"azise zu isolieren und als sauberes 3D-Gittermodell (Mesh) zu rekonstruieren. Der Workflow basiert auf einer klugen Entkopplung von 2D-Segmentierung und 3D-Training.
+
+\textbf{Die modifizierte Architektur:}
+\begin{enumerate}[noitemsep]
+    \item \textbf{Das COLMAP-Fundament:} Unbearbeitete Drohnenbilder werden in COLMAP verarbeitet, um das Kamera-Tracking durch den detailreichen Hintergrund abzusichern.
+    \item \textbf{Intelligente 2D-Vorarbeit (Schritt 1):} Grounded-SAM (textbasiert) und DEVA (Videotracking) weisen den Kabel-Pixeln in den Bildern ID-Masken zu.
+    \item \textbf{Logisches B\"undeln (Schritt 2):} Ein Python-Skript f\"arbt den Hintergrund aller Bilder rabenschwarz.
+    \item \textbf{Der Bait \& Switch (Schritt 3):} Die Originalbilder im COLMAP-Ordner werden durch die schwarzen Bilder ausgetauscht.
+    \item \textbf{Fokussiertes 3D-Meshing (Schritt 4):} SuGaR trainiert 100\% seiner 3D-Gaussians ausschlie\ss lich auf den Leitungen und extrahiert daraus das finale 3D-Mesh.
+\end{enumerate}
+
+% ============================================================
+\section{2. Machbarkeitsanalyse (Feasibility Report)}
+
+\subsection{Phase 1: Infrastruktur (WSL2, Docker, CUDA)}
+Der native Windows-Betrieb (MSVC Compiler) f\"uhrt bei diesen KI-Repos garantiert zu unl\"osbaren Kompilierungsfehlern. Windows Subsystem for Linux (WSL2) mit Ubuntu 22.04 LTS ist zwingend erforderlich. 
+Das Problem der "Dependency Hell" (alte CUDA 11.3 Version f\"ur Vorverarbeitung vs. CUDA 11.8 f\"ur SuGaR) l\"asst sich \textbf{nur durch Docker} l\"osen. Durch die Nutzung des NVIDIA Container Toolkits l\"aufen die Teilschritte in streng isolierten Containern. Die Masken m\"ussen zudem nicht in einem KI-Modell gespeichert werden; sie werden effizient als PNGs in geteilten Ordnern abgelegt.
+
+\subsection{Phase 2: Die 2D-Vorverarbeitung (SAM + DEVA)}
+Die "Out-of-the-box" Erkennung extrem d\"unner Leitungen scheitert oft. Grounding DINO spannt riesige Bounding Boxes um diagonale Leitungen, woraufhin SAM den Fokus verliert. DEVA verliert das Tracking bei Motion Blur. 
+\textbf{Workarounds:} Die Bilder m\"ussen mittels SAHI (Tiling) in Kacheln zerschnitten werden. Zur Vermeidung von Motion Blur m\"ussen die Drohnenaufnahmen mit sehr kurzen Belichtungszeiten und hohen Framerates (60+ fps) gemacht werden.
+
+\subsection{Phase 3: Der fatale COLMAP-Flaschenhals}
+Ein massiver Architekturfehler im Ursprungsplan: COLMAP st\"urzt ab (Aperture Problem), wenn es freigestellte Bilder (Leitung auf schwarzem Hintergrund) verarbeiten soll, da SIFT keine Hintergrund-Features findet.
+\textbf{Die L\"osung:} Der "Image Swap". COLMAP berechnet die Kamerapositionen auf den \textit{Originalbildern}. Erst danach werden die Bilddateien auf der Festplatte gegen die schwarzen Masken ausgetauscht, bevor SuGaR gestartet wird.
+
+\subsection{Phase 4: Das 3D-Meshing (SuGaR vs. Poisson)}
+Die in SuGaR verwendete Poisson Surface Reconstruction baut bevorzugt geschlossene Volumen und hasst offene, hauchd\"unne R\"ohren (Gefahr des Oversmoothing). Da jedoch 100\% der Gaussians (durch den schwarzen Hintergrund) auf die Leitung gezwungen werden, entsteht eine extreme Punktdichte, die Poisson stabilisiert. 
+\textbf{Plan B:} Falls das Mesh dennoch rei\ss t, k\"onnen die Zentren der Gaussians direkt als dichte Punktwolke (.ply) an Software wie DGtal \"ubergeben werden, um perfekte CAD-Zylinder zu fitten.
+
+% ============================================================
+\section{3. Praxis-Handbuch: Docker \& System-Setup}
+
+Sollten Sie das Projekt auf Ihrem Windows-Laptop via WSL2 machen, oder sich einen echten Linux-Rechner (z.B. im Uni-Labor) besorgen? Ein nativer Linux-PC hat direkten GPU-Zugriff und verursacht weniger Kopfschmerzen. M\"ussen Sie unter Windows arbeiten, ist WSL2 der einzige Weg. Wichtig: Speichern Sie Ihre Daten niemals auf den C:/ Laufwerken, sondern zwingend innerhalb des virtuellen Linux-Dateisystems (\texttt{\textbackslash\textbackslash wsl\$\textbackslash Ubuntu\textbackslash home\textbackslash...}).
+
+\subsection{Administrator-Rechte}
+Admin-Rechte unter Windows werden ben\"otigt f\"ur:
+\begin{itemize}[noitemsep]
+    \item Die WSL2 Aktivierung (\texttt{wsl -{}-install}).
+    \item Die Installation von Docker Desktop f\"ur Windows (mit WSL2-Backend).
+\end{itemize}
+NVIDIA Treiber m\"ussen nicht im Linux installiert werden, das \"ubernimmt Windows automatisch.
+
+\subsection{Abh\"angigkeiten \& Issue \#20 (DEVA)}
+Ein ber\"uhmter C++ Compiler-Fehler (Issue \#20) im DEVA-Repo unter WSL2 tritt auf, weil sich die Windows- und Linux-Umgebungsvariablen verheddern. Durch die Nutzung von Docker wird dieser Fehler obsolet, da der Container (z.B. \texttt{nvidia/cuda:11.7.1-devel-ubuntu22.04}) seinen eigenen, sauberen \texttt{nvcc} Compiler mitbringt.
+
+\subsection{Die Docker-Compose Architektur (Bauplan)}
+Die Trennung der Pipeline erfolgt am besten \"uber eine \texttt{docker-compose.yml}:
+
+\begin{lstlisting}
+version: '3.8'
+services:
+  vorverarbeitung:
+    build:
+      context: ./Repos_Pipeline/Tracking-Anything-with-DEVA
+    volumes:
+      - ./mein_drohnen_datensatz:/daten_ordner
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: /bin/bash
+
+  meshing:
+    build:
+      context: ./Repos_Pipeline/SuGaR
+    volumes:
+      - ./mein_drohnen_datensatz:/daten_ordner
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: /bin/bash
+\end{lstlisting}
+
+% ============================================================
+\section{4. Repository-Analysen}
+
+\begin{itemize}
+    \item \textbf{lkeab/gaussian-grouping:} Genutzt als 2D-Vorverarbeitungs-Werkzeug (Schritt 1) zur Erstellung konsistenter Masken via SAM+DEVA, ohne das 3D-Training zu nutzen.
+    \item \textbf{hkchengrex/Tracking-Anything-with-DEVA:} Das Herzst\"uck des Frame-Trackings. Trennt Bildsegmentierung vom zeitlichen Tracking.
+    \item \textbf{hkchengrex/Grounded-Segment-Anything:} Kombination aus Zero-Shot Objekterkennung (DINO) und präziser Segmentierung (SAM) per Text-Prompt (z.B. "power line").
+    \item \textbf{Anttwo/SuGaR:} Der "Finisher" (Schritt 4). Extrahiert ein hochpr\"azises 3D-Mesh aus den flach an der Oberfl\"ache anliegenden Gaussians.
+    \item \textbf{florinshen/FlashSplat:} Optionaler Plan-B Benchmark f\"ur extrem schnelle 2D-zu-3D Projektion.
+\end{itemize}
+
+\end{document}
