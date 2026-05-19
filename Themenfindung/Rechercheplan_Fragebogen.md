@@ -1,63 +1,61 @@
-# Rechercheplan & Validierungs-Fragebogen (v2 - Inklusive Antworten & Research-Fokus)
+# Rechercheplan & Validierungs-Fragebogen (Der 3-Schritte-Plan)
 
-Dieses Dokument enthält nun deine Antworten auf den 3-Schritte-Plan sowie gezielte **Suchbegriffe und Research-Empfehlungen**, damit du für die anstehenden Detailfragen (besonders rund um das neue SAM 3) Artikel und Tutorials suchen kannst.
+Dieses Dokument dient als Checkliste und Fragebogen für deine aktuelle Projektidee: Die Isolation von dünnen Objekten (Stromleitungen) durch intelligente 2D-Vorverarbeitung (SAM+DEVA), Hintergrund-Ausblendung und anschließendes fokussiertes Meshing mit SuGaR.
+
+Bitte fülle die Antworten aus, um sicherzustellen, dass dein 3-Schritte-Plan wasserdicht ist und alle technischen Hürden bedacht wurden.
 
 ---
 
 ## 1. Zielsetzung & Kernvorteile
 
-* **Fokus-Objekte:**
-  * *Deine Antwort:* Ich will Stromerdkabel erfassen. Diese liegen in einem ca 1,5m tiefen Graben und haben einen Durchmesser von ca 20cm. Die Aufnahme sollte mit Hilfe von Drohnen erfolgen, welche in ca. 10m über dem Objekt fliegen. Die maximale Aufnahmestrecke ist ca. 1000m und müsste einmal links und einmal rechts um das Objekt rumgeflogen werden.
-  * **🔍 Research-Fokus & Suchbegriffe:** Für den Flug über Gräben ist der Winkel der Kamera entscheidend. Da du das Kabel im Graben erfassen musst, reicht "Nadir" (direkt nach unten) oft nicht aus, um die Seiten des Kabels zu sehen.
-    * *Suchbegriffe (Google/YouTube):* `Drone photogrammetry for trenches`, `Oblique vs Nadir drone mapping`, `Corridor mapping drone flight plan`.
+> **Dein Ansatz:** 100% Splat-Budget auf das Objekt, perfekte Kanten durch schwarzen Hintergrund, Umgehung der CUDA-"Dependency Hell" durch Entkopplung der Teilschritte.
 
-* **PA vs. BA Aufteilung:** 
-  * *Deine Antwort:* PA: Fokus auf die 2D-Vorarbeit. Nur wenige Testbilder, Machbarkeit überprüfen (Aluabsperrung, zylindrischer Sitzhocker). BA: Komplette Pipeline inkl. COLMAP, SuGaR-Meshing, Georeferenzierung (GNSS GCPs), Laserscan-Referenz.
-  * **🔍 Feedback:** Perfekte Aufteilung. Die Alu-Absperrung (dünne Rohre) ist ein exzellenter Stresstest für die PA!
+* **Fokus-Objekte:** Welche Art von "dünnen Leitungen" (Durchmesser, Material) auf welchem Hintergrund (Wald, Himmel, Straße) möchtest du im Testfeld abbilden?
+  * *[Deine Antwort hier einfügen...]*
+
+* **PA vs. BA Aufteilung:** Wie teilst du diesen 3-Schritte-Plan auf? 
+  * *Empfehlung: PA = Proof of Concept der 2D-Vorarbeit (Docker, SAM, DEVA, Filter-Skript) auf wenigen Testbildern. BA = Die komplette Pipeline inkl. COLMAP, SuGaR-Meshing und Evaluierung der Genauigkeit.*
+  * *[Deine Antwort hier einfügen...]*
 
 ---
 
-## 2. Phase 1: Die intelligente 2D-Vorarbeit (SAM + DEVA $\rightarrow$ Upgrade auf SAM 3!)
+## 2. Phase 1: Die intelligente 2D-Vorarbeit (SAM + DEVA)
 
-* **Das Bounding-Box-Problem (Grounded-SAM) & Deine Frage zu SAM 3:**
-  * *Deine Antwort:* Wie kann ich bei SAHI sichergehen, dass die Leitung als Ganzes erfasst wird? [...] Kann ich in Gaussian Grouping einfach SAM 3 einfügen? (Mit SAM 3 kann ich textbasiert suchen und es trackt über Frames hinweg). Ich brauche Research zum Zusammenspiel von DEVA, G-DINO, SAM und SAM 3.
-  * **🔍 Antwort & Research-Fokus (BINGO!):** Du hast den Nagel auf den Kopf getroffen! **SAM 3 (Segment Anything 3) ist ein absoluter Gamechanger für dein Projekt.** SAM 3 vereint Text-Erkennung (Concept Prompting), Segmentierung UND Video-Tracking in einem *einzigen* Modell!
-    Du kannst den komplexen Tech-Stack (Grounding DINO $\rightarrow$ SAM $\rightarrow$ DEVA) komplett in den Müll werfen! SAM 3 hat einen nativen `sam3_video_predictor`. Du gibst ihm dein Drohnen-Video und den Text-Prompt "thick black power cable in a trench" und es trackt das Kabel automatisch durch alle Frames. Das löst auch dein SAHI-Problem, da SAM 3 von Haus aus viel besser auf Text-Konzepte trainiert ist.
-    * *Suchbegriffe (Google/YouTube):* `Meta SAM 3 video tracking tutorial`, `SAM 3 concept prompting python`, `Segment Anything 3 custom dataset inference`, `Replacing DEVA with SAM 3 video predictor`.
-    * *GitHub:* Schau dir im SAM 3 Repo unbedingt das Notebook `sam3_video_predictor_example.ipynb` an. Das ist exakt das, was du für die PA brauchst!
+> **Das Risiko:** KI-Modelle sind nicht perfekt. SAM übersieht feine Linien, DEVA verliert das Tracking bei schnellen Bewegungen.
 
-* **Motion Blur & Tracking-Abbrüche:**
-  * *Deine Antwort:* Ich kann das Problem vernachlässigen, da ich es über gute Kameraeinstellungen löse. Fehlerhafte Artefakte kann ich manuell bereinigen.
-  * **🔍 Research-Fokus & Suchbegriffe:** Da du die Fehlerquelle bei der Hardware anpackst (sehr gut!), musst du die exakten Kamera-Einstellungen für schnelle Drohnenflüge recherchieren.
-    * *Suchbegriffe:* `Drone camera settings to eliminate motion blur mapping`, `Shutter speed vs flight speed drone mapping`, `ND filters for drone photogrammetry`.
+* **Das Bounding-Box-Problem (Grounded-SAM):** Wenn eine Stromleitung diagonal durchs Bild läuft, ist die Bounding Box riesig und SAM fokussiert evtl. den Hintergrund. Wie löst du das? (Hinweis: Schau dir "SAHI" oder Image-Tiling an, um das Bild in kleinere Kacheln zu zerschneiden).
+  * *[Deine Antwort hier einfügen...]*
+
+* **Motion Blur & Tracking-Abbrüche (DEVA):** DEVA ist anfällig für Bewegungsunschärfe. Wie stellst du sicher, dass dein Videomaterial gestochen scharf ist? (z.B. Vorgaben für die Drohne: 60+ FPS, extrem kurze Belichtungszeit). Was passiert im Skript, wenn DEVA für 3 Frames die Maske verliert?
+  * *[Deine Antwort hier einfügen...]*
 
 ---
 
 ## 3. Phase 2: Logisches Bündeln & Der COLMAP-Flaschenhals
 
-* **Das Aperture-Problem ("Image Swap" Trick):** 
-  * *Deine Antwort:* Ja, ich muss das einbauen mit einer einfachen Wait-Funktion, um sicherzustellen, dass COLMAP die Cameras berechnet hat. Und danach tausche ich die Bilder aus.
-  * **🔍 Research-Fokus & Suchbegriffe:** Du wirst COLMAP idealerweise nicht über die GUI steuern, sondern über Kommandozeilen (CLI) via Python aufrufen, damit dein Workflow automatisiert ist.
-    * *Suchbegriffe:* `Automating COLMAP with Python subprocess`, `COLMAP CLI tutorial`, `Python wait for process to finish`.
+> **Das größte technische Risiko:** Wenn du die Bilder (Leitung auf schwarzem Hintergrund) in eine Standard 3D-Pipeline wirfst, stürzt das Kamera-Tracking ab.
+
+* **Das Aperture-Problem:** Weder SuGaR noch 3DGS wissen, wo die Kameras waren. Dafür brauchst du zwingend COLMAP. Wenn du COLMAP aber deine Bilder mit dem schwarzen Hintergrund gibst, findet es keine Feature-Punkte mehr und bricht ab. **Wie baust du den Workflow um, um das zu verhindern?** 
+  * *Lösungs-Idee (Der "Bait & Switch" / "Image Swap" Trick):* COLMAP muss auf den **Originalbildern** (mit Wald und Bäumen) laufen, um die Kameras zu berechnen. Erst direkt vor dem Start von SuGaR tauschst du die Bilder im COLMAP-Ordner heimlich gegen deine gefilterten (schwarzen) Bilder aus. 
+  * *Wirst du diesen Trick in dein Orchestrierungs-Skript einbauen?*
+  * *[Deine Antwort hier einfügen...]*
 
 ---
 
 ## 4. Phase 3: Fokussiertes 3D-Meshing (SuGaR)
 
-* **Das Oversmoothing-Problem (Poisson Mesh):**
-  * *Deine Antwort:* Ja, Export als Punktwolke wäre eine Möglichkeit. Ich werde anhand der Testobjekte in der PA evaluieren, wann ich Schwierigkeiten bekomme und wie ich diese verhindere.
-  * **🔍 Research-Fokus & Suchbegriffe:** Falls das Mesh bei der Alu-Absperrung (in der PA) wie Knetmasse aussieht, musst du wissen, wie du die 3DGS-Zentren (die `.ply` Datei) als saubere Punktwolke in eine CAD-Leitung umwandelst.
-    * *Suchbegriffe (Google/YouTube/Scholar):* `DGtal centerline extraction from point clouds`, `Open3D cylinder fitting RANSAC Python`, `CloudCompare trace polyline from point cloud`.
+> **Das Risiko:** SuGaR nutzt den "Poisson Surface Reconstruction" Algorithmus, um aus den Splats ein Gitter zu bauen. Poisson hasst offene Röhren und baut lieber geschlossene Klumpen.
+
+* **Das Oversmoothing-Problem:** Selbst wenn alle Splats perfekt auf der Leitung liegen, könnte der Poisson-Algorithmus versuchen, "Löcher" großflächig zu schließen, wodurch die Leitung wie ein unförmiger Wassertropfen aussehen könnte. Was ist dein **Plan B**, wenn das SuGaR-Mesh unbrauchbar wird?
+  * *Lösungs-Idee:* Da du dank des schwarzen Hintergrunds ein 100% reines 3DGS-Leitungs-Modell hast, könntest du auf das Mesh verzichten. Du exportierst nur die Mittelpunkte der Gaussians als dichte Punktwolke (.ply) und fittest mathematisch perfekte 3D-Zylinder (CAD) durch diese Wolke (z.B. mit Tools wie DGtal oder CloudCompare).
+  * *[Deine Antwort hier einfügen...]*
 
 ---
 
-## 5. Scope & Bewertung
+## 5. Scope & Bewertung (Wann ist das Projekt erfolgreich?)
 
-* **Erfolgskriterium & Wirtschaftlichkeit:**
-  * *Deine Antwort:* +/- 10cm Abweichung in Lage und Höhe. Vektorisierte, georeferenzierte Linie. Wirtschaftliche Bewertung: Rechtfertigt der niedrige Aufwand der Vermessung die Serverkosten/Rechenzeit im Vergleich zur klassischen Vermessung?
-  * **🔍 Research-Fokus & Suchbegriffe:** Für den wirtschaftlichen Vergleich brauchst du Literatur, die aufzeigt, was "klassische" Vermessung kostet (Zeit/Personal im Feld). 
-    * *Suchbegriffe:* `Cost benefit analysis Scan-to-BIM vs classical surveying`, `Economic evaluation of drone mapping utility lines`, `Python RMSE calculation 3D polylines`.
+* **Erfolgskriterium:** Woran misst du am Ende der BA, ob diese neue Methode besser ist als klassische Punktwolken? (Geht es um Zeitersparnis beim Berechnen? Um die Vollständigkeit der Leitung ohne Lücken? Um millimetergenaue Maßhaltigkeit?)
+  * *[Deine Antwort hier einfügen...]*
 
-* **Out-of-Scope:**
-  * *Deine Antwort:* Georeferenzierung ist "nice-to-have" und kommt erst, wenn der Rest läuft. Sonstige Bauteile sind out of scope. Überlandleitungen sind out of scope.
-  * **🔍 Feedback:** Sehr smarte, defensive Scope-Setzung! Das schützt dich vor bösen Überraschungen bei der Zeitplanung. Behalte diese Argumentation für das Exposé genau so bei!
+* **Out-of-Scope (Was du NICHT tust):** Um dich zu schützen, was klammerst du explizit aus? (z.B. Kein Training von eigenen KI-Modellen, keine Echtzeit-Verarbeitung, keine automatische Objekterkennung anderer Bauteile außer den Leitungen).
+  * *[Deine Antwort hier einfügen...]*
