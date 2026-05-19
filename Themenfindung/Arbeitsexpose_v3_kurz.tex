@@ -1,0 +1,127 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\title{\textbf{Arbeitsexposé (Kurzfassung)}\\KI-gestützte 3D-Rekonstruktion linearer Infrastruktur:\\Evaluierung einer Docker-basierten Scan-to-BIM Pipeline\\mittels SAM 3 und Gaussian Splatting}
+\author{Bachelor- und Projektarbeit}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Forschungsfrage}
+Die präzise Erfassung extrem dünner Objekte (wie Stromerdkabel in Baugräben) stellt für klassische photogrammetrische Verfahren eine große Herausforderung dar. Ziel dieser Arbeit ist die Entwicklung eines ``Scan-to-BIM''-Workflows, der 2D-KI-Segmentierung (Segment Anything Model 3, Meta) mit modernsten 3D-Rekonstruktionsmethoden (3D Gaussian Splatting) verbindet.
+
+\textit{Lässt sich die 3D-Rekonstruktion linearer Infrastruktur durch eine vorgelagerte 2D-Segmentierung und objektspezifische 3DGS-Trainingsfunktionen so optimieren und georeferenzieren, dass strenge ingenieurstechnische Toleranzen ($\pm$ 10\,cm) eingehalten werden?}
+
+\section{Praxisbezug und Erfolgskriterien}
+Die Pipeline wird für den Anwendungsfall der TenneT (Übertragungsnetzbetreiber) konzipiert.
+\begin{itemize}[noitemsep]
+    \item \textbf{Geometrische Toleranz:} Max. $\pm$ 10\,cm Abweichung in Lage und Höhe gegenüber der realen Kabeltrasse.
+    \item \textbf{Georeferenzierung:} Finales 3D-Modell in UTM-Koordinaten für den Import in GIS (z.B. ArcGIS Pro).
+    \item \textbf{Wirtschaftliche Evaluierung:} Kostenvergleich Drohne/Server vs. klassische terrestrische Vermessung.
+\end{itemize}
+
+\section{Methodik und Architektur}
+Der Workflow nutzt eine Docker-basierte 5-Container-Architektur, um Versionskonflikte (CUDA 11.8 vs. 12.1 vs. 12.8) vollständig zu isolieren. Die Pipeline besteht aus folgenden Kernkomponenten:
+\begin{itemize}[noitemsep]
+    \item \textbf{SAM 3 (Meta):} 2D-Segmentierung via Concept-Prompting und temporales Video-Tracking.
+    \item \textbf{COLMAP:} Structure from Motion (SfM) zur Generierung der Kameraposen.
+    \item \textbf{Segment-then-Splat (STS):} Objektspezifisches 3DGS-Training (Lu et al., NeurIPS 2025). Teilt Gaussians anhand der SAM 3 Masken in Objekt-Sets auf und trainiert mit nativem Object-specific Loss ($\mathcal{L}_{obj}$).
+    \item \textbf{SuGaR:} Geometrische Regularisierung des STS-Checkpoints und Poisson Mesh-Extraktion.
+    \item \textbf{DGtal + GDAL:} Centerline-Extraktion auf dem Kabel-Sub-Mesh und Georeferenzierung (UTM).
+\end{itemize}
+
+\begin{figure}[h!]
+    \centering
+    \resizebox{\textwidth}{!}{%
+        \begin{tikzpicture}[node distance=1.3cm, auto,
+                box/.style={rectangle, draw=blue!60, fill=blue!5, very thick, minimum width=3.5cm, minimum height=0.9cm, align=center, rounded corners, font=\small},
+                decision/.style={diamond, draw=red!60, fill=red!5, very thick, text width=2cm, align=center, font=\small},
+                arrow/.style={-{Stealth[scale=1.1]}, thick},
+                container_bg/.style={rectangle, draw, dashed, rounded corners, inner sep=0.3cm}]
+
+            \node[box] (video) {Drohnen-Video (RAW)\\+ GNSS Messung};
+            \node[decision, below=of video] (check) {Kabel gut\\sichtbar?};
+            \node[box, left=1cm of check] (pathA) {\textbf{Hauptweg}\\SAM 3 Video Predictor};
+            \node[box, right=1cm of check] (pathB) {\textbf{Fallback}\\SAHI \& SAM 3 Image};
+
+            \node[box, below=2.5cm of check] (colmap) {\textbf{COLMAP} -- SfM};
+
+            \node[box, below=1cm of colmap] (sts) {\textbf{Segment-then-Splat}\\Object-specific 3DGS};
+
+            \node[box, below left=1cm and 0.2cm of sts] (sugar) {\textbf{SuGaR}\\Regularisierung + Meshing};
+            \node[box, below right=1cm and 0.2cm of colmap] (cc) {\textbf{CloudCompare}\\Point Picking (Host)};
+
+            \node[box, below=3cm of sts] (dgtal) {\textbf{DGtal} Centerline\\+ \textbf{GDAL} Georef. $\rightarrow$ UTM};
+
+            \node[box, draw=green!60, fill=green!5, below=of dgtal] (eval) {\textbf{Evaluation}\\RMSE, Hausdorff vs. GNSS};
+
+            \begin{pgfonlayer}{background}
+                \node[container_bg, fill=blue!10, draw=blue!80, fit=(pathA) (pathB)] (contA) {};
+                \node[container_bg, fill=orange!10, draw=orange!80, fit=(colmap)] (contB) {};
+                \node[container_bg, fill=cyan!10, draw=cyan!80, fit=(sts)] (contC) {};
+                \node[container_bg, fill=purple!10, draw=purple!80, fit=(sugar)] (contD) {};
+                \node[container_bg, fill=red!10, draw=red!80, fit=(cc)] (host) {};
+                \node[container_bg, fill=teal!10, draw=teal!80, fit=(dgtal)] (contE) {};
+            \end{pgfonlayer}
+
+            \node[draw=black!50, fill=white, rectangle, rounded corners, anchor=north, inner sep=0.2cm, yshift=-0.7cm, font=\footnotesize] at (eval.south) {
+                \begin{tabular}{ll}
+                    \multicolumn{2}{l}{\textbf{Legende}}                               \\[0.5ex]
+                    \textcolor{blue!80}{\rule{0.4cm}{0.25cm}}   & A: SAM 3 (CUDA 12.8) \\
+                    \textcolor{orange!80}{\rule{0.4cm}{0.25cm}} & B: COLMAP            \\
+                    \textcolor{cyan!80}{\rule{0.4cm}{0.25cm}}   & C: STS (CUDA 12.1)   \\
+                    \textcolor{purple!80}{\rule{0.4cm}{0.25cm}} & D: SuGaR (CUDA 11.8) \\
+                    \textcolor{red!80}{\rule{0.4cm}{0.25cm}}    & Host (Breakpoint)    \\
+                    \textcolor{teal!80}{\rule{0.4cm}{0.25cm}}   & E: DGtal/GDAL (CPU)  \\
+                \end{tabular}
+            };
+
+            \draw[arrow] (video) -- (check);
+            \draw[arrow] (check) -- node[above] {Ja} (pathA);
+            \draw[arrow] (check) -- node[above] {Nein} (pathB);
+            \draw[arrow] (pathA) |- (colmap);
+            \draw[arrow] (pathB) |- (colmap);
+            \draw[arrow] (colmap) -- (sts);
+            \draw[arrow] (colmap) -| (cc);
+            \draw[arrow] (sts) -| (sugar);
+            \draw[arrow] (sugar) |- (dgtal);
+            \draw[arrow] (cc) |- (dgtal);
+            \draw[arrow] (dgtal) -- (eval);
+
+        \end{tikzpicture}
+    }
+    \caption{5-Container-Pipeline: SAM 3 $\rightarrow$ COLMAP $\rightarrow$ STS $\rightarrow$ SuGaR $\rightarrow$ DGtal/GDAL.}
+\end{figure}
+
+\section{Zeit- und Scope-Planung}
+
+\noindent\textbf{Projektarbeit (PA) -- Fokus Machbarkeit (4 Wochen):}
+\begin{itemize}[noitemsep]
+    \item Konfiguration der Docker-Architektur (5 Container, \texttt{docker-compose}).
+    \item Master-Skript Orchestrierung inkl. manuellem Breakpoint (CloudCompare).
+    \item Evaluierung von SAM 3: Hauptweg (Video Predictor) vs. Fallback (SAHI).
+    \item Integration von Segment-then-Splat und Nachweis des objektspezifischen Trainings.
+\end{itemize}
+
+\noindent\textbf{Bachelorarbeit (BA) -- Fokus Skalierung \& Metrik (10 Wochen):}
+\begin{itemize}[noitemsep]
+    \item \textbf{Feldarbeit:} Drohnenflug + parallele GNSS-Referenzmessung (GCPs \& Kabel-Scheitelachse).
+    \item Georeferenzierung via Point Picking in CloudCompare.
+    \item Centerline-Extraktion via DGtal auf dem Kabel-Sub-Mesh.
+    \item \textbf{Evaluation:} RMSE und Hausdorff-Distanz der 3DGS-Centerline vs. GNSS-Referenz (B-Spline), Nachweis der $\pm$ 10\,cm Toleranz.
+    \item Wirtschaftlichkeitsanalyse für TenneT.
+\end{itemize}
+
+\end{document}

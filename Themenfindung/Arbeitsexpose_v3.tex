@@ -41,8 +41,9 @@ Der Ansatz basiert auf einer klaren Trennung von 2D-Bildverarbeitung und 3D-Mesh
 \begin{itemize}
     \item \textbf{SAM 3 (Meta):} Zuständig für Concept-Prompting und Video-Tracking.
     \item \textbf{COLMAP:} Generierung der Kameraposen auf Basis der \textit{unmaskierten} Originalbilder. Die Pipeline nutzt ausschließlich das schnelle \textit{Structure from Motion} (SfM) von COLMAP. Die rechenintensive dichte Rekonstruktion (MVS) wird vollständig übersprungen.
-    \item \textbf{SuGaR:} Surface extraction with Gaussian Splatting. Wird durch einen modifizierten Mask-Loss erweitert, um ausschließlich das Kabel zu rekonstruieren. Zudem berechnet SuGaR die Tiefenkarten (Depth Maps) zur Oberflächenausrichtung (DN-Consistency) intern on-the-fly durch das Rendern der Splats selbst, wodurch eine Abhängigkeit von externen MVS-Tiefenmessungen entfällt.
-    \item \textbf{DGtal:} Open-Source Geometrie-Bibliothek zur finalen Centerline-Extraktion. Sie wandelt die Oberfläche des georeferenzierten SuGaR-Meshes in eine räumliche 1D-Kurve (Centerline bzw. Scheitelachse mit globalen X-, Y- und Z-Koordinaten) um.
+    \item \textbf{Segment-then-Splat (STS):} Übernimmt das objektspezifische 3DGS-Training (Lu et al., NeurIPS 2025). STS teilt die initialen COLMAP-Gaussians anhand der SAM 3 Masken in objektspezifische Sets auf und trainiert diese mit einem dedizierten Object-specific Loss ($\mathcal{L}_{obj}$), ohne die Ground-Truth-Bilder zu manipulieren. Das Ergebnis ist ein vollständiges 3DGS-Modell, in dem jeder Gaussian eine Object-ID trägt. SAM 3 ersetzt hierbei das intern vorgesehene AutoSeg-SAM2.
+    \item \textbf{SuGaR:} Surface extraction with Gaussian Splatting. Übernimmt den vortrainierten STS-Checkpoint und wendet geometrische Regularisierung (DN-Consistency, Normal Alignment) sowie Poisson Surface Reconstruction an. SuGaR zwingt die von STS bereits sauber zugewiesenen Gaussians dazu, sich flach an die reale 3D-Oberfläche anzuschmiegen, und extrahiert daraus ein hochqualitatives Mesh.
+    \item \textbf{DGtal:} Open-Source Geometrie-Bibliothek zur finalen Centerline-Extraktion. Sie wandelt die Oberfläche des Kabel-Sub-Meshes in eine räumliche 1D-Kurve (Centerline bzw. Scheitelachse mit lokalen Koordinaten) um.
 \end{itemize}
 
 \subsection{Pipeline-Struktur: Temporale Konsistenz vs. SAHI}
@@ -69,10 +70,12 @@ Dennoch wurde der primäre Fokus für diese Pipeline bewusst auf den \textbf{SAM
 
             \node[box, below=3.5cm of check] (colmap) {\textbf{COLMAP}\\SfM (Sparse Point Cloud)};
 
-            \node[box, below left=1cm and 0.2cm of colmap] (sugar) {\textbf{SuGaR 3DGS}\\Training mit Mask-Loss Hack\\$\rightarrow$ Rohes lokales 3D-Mesh};
+            \node[box, below=1.2cm of colmap] (sts) {\textbf{Segment-then-Splat (STS)}\\Object-specific 3DGS Training\\(Masken + SfM $\rightarrow$ Objekt-Gaussians)};
+
+            \node[box, below left=1cm and 0.2cm of sts] (sugar) {\textbf{SuGaR}\\Geometrische Regularisierung\\+ Poisson Mesh-Extraktion};
             \node[box, below right=1cm and 0.2cm of colmap] (cc) {\textbf{CloudCompare (Host-System)}\\Point Picking in SfM-Wolke\\$\rightarrow$ Transformationsmatrix};
 
-            \node[box, below=3.2cm of colmap] (dgtal) {\textbf{DGtal Centerline-Extraktion}\\(Auf lokalem Mesh $\rightarrow$ Lokale Kurve)};
+            \node[box, below=3.2cm of sts] (dgtal) {\textbf{DGtal Centerline-Extraktion}\\(Kabel-Sub-Mesh $\rightarrow$ Lokale Kurve)};
 
             \node[box, below=of dgtal] (final) {\textbf{GDAL (ogr2ogr) Georeferenzierung}\\Anwendung CC-Matrix auf die Kurve $\rightarrow$ UTM};
 
@@ -83,19 +86,21 @@ Dennoch wurde der primäre Fokus für diese Pipeline bewusst auf den \textbf{SAM
                 \node[container_bg, fill=blue!10, draw=blue!80, fit=(pathA) (pathB) (extractA) (extractB)] (contA) {};
                 \node[container_bg, fill=orange!10, draw=orange!80, fit=(colmap)] (contB) {};
                 \node[container_bg, fill=red!10, draw=red!80, fit=(cc)] (host) {};
-                \node[container_bg, fill=purple!10, draw=purple!80, fit=(sugar)] (contC) {};
-                \node[container_bg, fill=teal!10, draw=teal!80, fit=(dgtal) (final)] (contD) {};
+                \node[container_bg, fill=cyan!10, draw=cyan!80, fit=(sts)] (contC) {};
+                \node[container_bg, fill=purple!10, draw=purple!80, fit=(sugar)] (contD) {};
+                \node[container_bg, fill=teal!10, draw=teal!80, fit=(dgtal) (final)] (contE) {};
             \end{pgfonlayer}
 
             % Legend
             \node[draw=black!50, fill=white, rectangle, rounded corners, anchor=north, inner sep=0.3cm, yshift=-1cm] at (eval.south) {
                 \begin{tabular}{ll}
                     \multicolumn{2}{l}{\textbf{Architektur-Legende}}                                \\[1ex]
-                    \textcolor{blue!80}{\rule{0.5cm}{0.3cm}}   & Container A (SAM 3, CUDA 12.1)     \\
+                    \textcolor{blue!80}{\rule{0.5cm}{0.3cm}}   & Container A (SAM 3, CUDA 12.8)     \\
                     \textcolor{orange!80}{\rule{0.5cm}{0.3cm}} & Container B (COLMAP)               \\
                     \textcolor{red!80}{\rule{0.5cm}{0.3cm}}    & Host System (Manueller Breakpoint) \\
-                    \textcolor{purple!80}{\rule{0.5cm}{0.3cm}} & Container C (SuGaR, CUDA 11.8)     \\
-                    \textcolor{teal!80}{\rule{0.5cm}{0.3cm}}   & Container D (DGtal \& GDAL, CPU)   \\
+                    \textcolor{cyan!80}{\rule{0.5cm}{0.3cm}}   & Container C (STS, CUDA 12.1)       \\
+                    \textcolor{purple!80}{\rule{0.5cm}{0.3cm}} & Container D (SuGaR, CUDA 11.8)     \\
+                    \textcolor{teal!80}{\rule{0.5cm}{0.3cm}}   & Container E (DGtal \& GDAL, CPU)   \\
                 \end{tabular}
             };
 
@@ -106,8 +111,9 @@ Dennoch wurde der primäre Fokus für diese Pipeline bewusst auf den \textbf{SAM
             \draw[arrow] (pathB) -- (extractB);
             \draw[arrow] (extractA) |- (colmap);
             \draw[arrow] (extractB) |- (colmap);
-            \draw[arrow] (colmap) -| (sugar);
+            \draw[arrow] (colmap) -- (sts);
             \draw[arrow] (colmap) -| (cc);
+            \draw[arrow] (sts) -| (sugar);
             \draw[arrow] (sugar) |- (dgtal);
             \draw[arrow] (dgtal) -- (final);
             \draw[arrow] (cc) |- (final);
@@ -115,18 +121,19 @@ Dennoch wurde der primäre Fokus für diese Pipeline bewusst auf den \textbf{SAM
 
         \end{tikzpicture}
     }
-    \caption{Microservice-Architektur: Containertrennung, CUDA-Abhängigkeiten und der manuelle Host-Breakpoint.}
+    \caption{Microservice-Architektur (v4): 5-Container-Pipeline mit Segment-then-Splat für objektspezifisches Training und SuGaR für geometrisches Meshing.}
 \end{figure}
 
 \section{Docker-Infrastruktur und Orchestrierung}
 Ein Kernproblem moderner KI-Pipelines sind tiefgreifende Versionskonflikte zwischen den benötigten Nvidia-Grafikkartentreibern (CUDA). Dieses Problem wird durch eine \texttt{docker-compose} Architektur vollständig gelöst. Die Pipeline isoliert die Anwendungen in voneinander getrennte Container, während alle erzeugten Daten über \textbf{Docker Bind Mounts (Volumes)} zentral und persistent auf dem Host-System (Windows/Linux) gespeichert werden.
 
-Um die Automatisierung zu maximieren, wird die Pipeline über ein zentrales Master-Skript (\textit{One-Click-Orchestration}) gesteuert. Dieses Skript stößt die Container sequenziell an, muss jedoch für manuelle Arbeitsschritte pausieren. Es kommen vier dedizierte Container zum Einsatz:
+Um die Automatisierung zu maximieren, wird die Pipeline über ein zentrales Master-Skript (\textit{One-Click-Orchestration}) gesteuert. Dieses Skript stößt die Container sequenziell an, muss jedoch für manuelle Arbeitsschritte pausieren. Es kommen fünf dedizierte Container zum Einsatz:
 \begin{itemize}
-    \item \textbf{Container A (Vorverarbeitung):} Beinhaltet PyTorch 2.x und SAM 3. Benötigt das Nvidia Container Toolkit (CUDA 12.1).
-    \item \textbf{Container B (SfM):} Ein offizielles NVIDIA-Image für COLMAP (CUDA 11.8 oder 12.1). \textit{Nach Ausführung dieses Containers pausiert das Master-Skript automatisch (Breakpoint). Der Nutzer öffnet CloudCompare auf dem Host-System, pickt die GCPs und speichert die Transformationsmatrix. Anschließend wird das Skript mit "Enter" fortgesetzt.}
-    \item \textbf{Container C (Meshing):} Beinhaltet SuGaR. Wegen tiefer Abhängigkeiten zum \texttt{diff-gaussian-rasterization} Modul wird hier strikt CUDA 11.8 erzwungen. Das intern geforderte Conda-Environment wird systemweit über eine Anpassung der \texttt{ENV PATH} Variable im Dockerfile nativ zugänglich gemacht.
-    \item \textbf{Container D (Post-Processing):} Ein reiner \textbf{CPU-Container} (ohne GPU/CUDA-Abhängigkeit). Beinhaltet die C++ Bibliothek DGtal sowie die GDAL-Tools (\texttt{ogr2ogr}). Durch die Auslagerung dieser CPU-basierten Nachbearbeitung in einen eigenen Microservice bleibt die Architektur extrem leichtgewichtig, da keine massiven Nvidia-Images geladen werden müssen.
+    \item \textbf{Container A (Vorverarbeitung):} Beinhaltet PyTorch 2.x und SAM 3. Benötigt das Nvidia Container Toolkit (CUDA 12.8).
+    \item \textbf{Container B (SfM):} Ein offizielles NVIDIA-Image für COLMAP (CUDA 11.8 oder 12.1). \textit{Nach Ausführung dieses Containers pausiert das Master-Skript automatisch (Breakpoint). Der Nutzer öffnet CloudCompare auf dem Host-System, pickt die GCPs und speichert die Transformationsmatrix. Anschließend wird das Skript mit ``Enter'' fortgesetzt.}
+    \item \textbf{Container C (Object-specific 3DGS):} Beinhaltet Segment-then-Splat (STS). Empfängt die SAM 3 Masken und die COLMAP-Kameraposen und führt das objektspezifische 3DGS-Training mit dem nativen Object-specific Loss ($\mathcal{L}_{obj}$) durch. Benötigt CUDA 12.1 (PyTorch 2.3.1). SAM 3 ersetzt hierbei das intern vorgesehene AutoSeg-SAM2 als Masken-Frontend.
+    \item \textbf{Container D (Meshing):} Beinhaltet SuGaR. Lädt den vortrainierten STS-Checkpoint und wendet die geometrische Regularisierung (DN-Consistency) sowie Poisson Surface Reconstruction an. Wegen tiefer Abhängigkeiten zum \texttt{diff-gaussian-rasterization} Modul wird hier strikt CUDA 11.8 erzwungen. Das intern geforderte Conda-Environment wird systemweit über eine Anpassung der \texttt{ENV PATH} Variable im Dockerfile nativ zugänglich gemacht.
+    \item \textbf{Container E (Post-Processing):} Ein reiner \textbf{CPU-Container} (ohne GPU/CUDA-Abhängigkeit). Beinhaltet die C++ Bibliothek DGtal sowie die GDAL-Tools (\texttt{ogr2ogr}). Durch die Auslagerung dieser CPU-basierten Nachbearbeitung in einen eigenen Microservice bleibt die Architektur extrem leichtgewichtig, da keine massiven Nvidia-Images geladen werden müssen.
 \end{itemize}
 
 \section{Risikomanagement und Datenhandling}
@@ -219,8 +226,52 @@ Aufgrund der massiven Architekturänderungen (Einführung von GLOMAP) in Release
     \item \textbf{Docker-Image:} \texttt{docker pull colmap/colmap:4.0.4-cuda}
 \end{itemize}
 
-\subsection*{Container C: SuGaR (3DGS Meshing)}
-Führt die 3D Gaussian Splatting Optimierung und die Mesh-Extraktion durch. Dies ist der sensitivste Container bezüglich CUDA-Versionen.
+\subsection*{Container C: Segment-then-Splat (Object-specific 3DGS)}
+Führt das objektspezifische 3DGS-Training durch. STS weist jedem initialen COLMAP-Gaussian eine Object-ID zu (basierend auf den SAM 3 Masken) und trainiert mit dem nativen Object-specific Loss ($\mathcal{L}_{obj}$). Das intern vorgesehene AutoSeg-SAM2 wird durch die externen SAM 3 Masken aus Container A ersetzt.
+
+\textbf{Requirements (Docker-Umgebung):}
+\begin{itemize}[noitemsep]
+    \item \textbf{Base Image:} \texttt{nvidia/cuda:12.1.0-devel-ubuntu22.04}
+    \item Python 3.10, PyTorch 2.3.1 mit CUDA 12.1
+    \item 24 GB VRAM
+\end{itemize}
+
+\textbf{Installationsablauf:}
+\begin{verbatim}
+git clone https://github.com/luyr/Segment-then-Splat --recursive
+cd Segment-then-Splat
+
+conda create -n segment_then_splat python=3.10
+conda activate segment_then_splat
+pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 \
+    --index-url https://download.pytorch.org/whl/cu121
+pip install -r requirements.txt --no-build-isolation
+\end{verbatim}
+
+\textbf{Ausführung (Preprocessing + Training):}
+\begin{verbatim}
+# 1. Masken-Preprocessing (SAM 3 Masken aus Container A)
+python ./helpers/preprocess_mask.py \
+    --mask_root /data/masks \
+    --out_root /data/scene/ \
+    --image_path /data/scene/images
+
+# 2. Object-specific Initialization (benötigt COLMAP-Output)
+python ./helpers/object_specific_initialization.py \
+    --scene_root /data/scene/
+
+# 3. Training mit Object-specific Loss
+python train.py -s /data/scene/ -m /data/output \
+    --eval --iterations 40000 \
+    --num_sample_objects 3 \
+    --densify_until_iter 20000 \
+    --partial_mask_iou 0.3
+\end{verbatim}
+
+\textbf{Wichtiger Hinweis:} Das Repository ist mit dem Vermerk \textit{``(To be verified)''} beim Object-Tracking markiert. Die Stabilität der Preprocessing-Skripte muss im Rahmen der Projektarbeit validiert werden.
+
+\subsection*{Container D: SuGaR (Geometrische Regularisierung \& Meshing)}
+Lädt den vortrainierten STS-Checkpoint und wendet die geometrische Regularisierung (DN-Consistency, Normal Alignment) sowie Poisson Surface Reconstruction an. Dies ist der sensitivste Container bezüglich CUDA-Versionen.
 
 \textbf{Exkurs: Conda innerhalb von Docker}\\
 Obwohl Docker bereits das Betriebssystem isoliert und Conda somit theoretisch redundant wäre, wird Miniconda in diesem Container explizit genutzt. Der Grund: 3DGS-Repositories (wie SuGaR) setzen stark auf vorkompilierte Conda-Binaries (z.B. \texttt{pytorch-cuda}) und exakte Paket-Versionen. Durch die strikte Nutzung von Conda im Docker-Container werden fatale C++ Kompilierungsfehler beim Rasterizer-Modul präventiv vermieden.
@@ -273,8 +324,8 @@ Für qualitativ hochwertige Rekonstruktionen (insb. dünne Kabelstrukturen) sind
 \end{itemize}
 
 
-\subsection*{Container D: DGtal \& GDAL (Post-Processing)}
-Führt die Extraktion der Centerline durch und überführt diese in georeferenzierte GIS-Formate (GeoJSON). Da \texttt{DGtal} eine komplexe C++ Bibliothek mit zahlreichen Abhängigkeiten (Eigen, CGAL, ITK) ist, wird direkt auf dem offiziellen \texttt{dgtal:latest} Docker-Image aufgebaut.
+\subsection*{Container E: DGtal \& GDAL (Post-Processing)}
+Führt die Extraktion der Centerline auf dem isolierten Kabel-Sub-Mesh durch und überführt diese in georeferenzierte GIS-Formate (GeoJSON). Da \texttt{DGtal} eine komplexe C++ Bibliothek mit zahlreichen Abhängigkeiten (Eigen, CGAL, ITK) ist, wird direkt auf dem offiziellen \texttt{dgtal:latest} Docker-Image aufgebaut.
 
 \textbf{Requirements \& Repositories:}
 \begin{itemize}[noitemsep]
@@ -334,7 +385,10 @@ Es könnte argumentiert werden, dass die beschriebenen Artefakte durch nachgelag
 
 \vspace{0.3cm}
 \textbf{Brutales Fazit \& Implementierungs-Roadmap:}
-Die bloße Kombination aus SAM 3 Masken und der Manipulation der Ground-Truth-Bilder (der aktuelle "Mask-Loss Hack" in SuGaR) ist aus ingenieurstechnischer Sicht nicht ausreichend, um strenge Toleranzen im Millimeter/Zentimeter-Bereich sicherzustellen. Der Ansatz ist bestenfalls ein fehleranfälliger Workaround, der geometrische Stauchungen und SSIM-Randartefakte provoziert.
-Für die Projektarbeit muss zwingend ein mathematisch korrekter Mask-Loss implementiert werden. Dieser darf die Ground-Truth nicht zerstören, sondern muss die Fehlerberechnung (\texttt{L1} und \texttt{SSIM}) während des Backwards-Pass dynamisch auf die Vordergrund-Pixel beschränken (z.B. \texttt{L1 = l1\_loss(image * mask, gt\_image * mask)}). Nur so können geometrische Verzerrungen durch künstliche Randinteraktionen mit dem Hintergrund vollständig ausgeschlossen werden.
+Die bloße Kombination aus SAM 3 Masken und der Manipulation der Ground-Truth-Bilder (der aktuelle ``Mask-Loss Hack'' in SuGaR) ist aus ingenieurstechnischer Sicht nicht ausreichend, um strenge Toleranzen im Millimeter/Zentimeter-Bereich sicherzustellen. Der Ansatz ist bestenfalls ein fehleranfälliger Workaround, der geometrische Stauchungen und SSIM-Randartefakte provoziert.
+
+Die Lösung ist eine konsequente Zweiteilung der 3D-Rekonstruktion: \textit{Segment-then-Splat} (Lu et al., NeurIPS 2025)\footnote{Y.~Lu et al., ``Segment then Splat: Unified 3D Open-Vocabulary Segmentation via Gaussian Splatting'', NeurIPS 2025. \url{https://github.com/luyr/Segment-then-Splat}} übernimmt als \textbf{Container C} das objektspezifische 3DGS-Training mit einem nativen Object-specific Loss ($\mathcal{L}_{obj}$), der die Ground-Truth-Bilder nicht manipuliert. STS teilt die initialen COLMAP-Gaussians \textit{vor} dem Training anhand der SAM 3 Masken in objektspezifische Sets auf und eliminiert damit sämtliche in den vorherigen Abschnitten beschriebenen Artefakte architektonisch. Allerdings basiert STS auf Vanilla 3DGS und liefert keine geometrische Regularisierung.
+
+Daher wird der vortrainierte STS-Checkpoint anschließend an \textbf{SuGaR (Container D)} übergeben. SuGaR wurde exakt für diesen Workflow konzipiert: Es lädt einen bestehenden 3DGS-Checkpoint und wendet zusätzliche Regularisierungs-Losses (DN-Consistency, Normal Alignment) an, um die Gaussians flach an die reale Oberfläche zu zwingen. Abschließend extrahiert SuGaR via Poisson Surface Reconstruction ein hochqualitatives Mesh. Da jeder Gaussian durch STS bereits eine Object-ID trägt, kann das Kabel-Sub-Mesh nach dem Meshing anhand dieser IDs isoliert und an DGtal (Container E) zur Centerline-Extraktion übergeben werden.
 
 \end{document}

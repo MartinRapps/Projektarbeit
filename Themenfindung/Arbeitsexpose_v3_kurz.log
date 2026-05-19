@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10.12) (preloaded format=pdflatex 2026.4.20)  19 MAY 2026 12:08
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10.12) (preloaded format=pdflatex 2026.4.20)  19 MAY 2026 12:14
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**c:/Users/4567r/.gemini/tmp/Projektarbeit/Themenfindung/Arbeitsexpose_v3.tex
-(c:/Users/4567r/.gemini/tmp/Projektarbeit/Themenfindung/Arbeitsexpose_v3.tex
+**c:/Users/4567r/.gemini/tmp/Projektarbeit/Themenfindung/Arbeitsexpose_v3_kurz.tex
+(c:/Users/4567r/.gemini/tmp/Projektarbeit/Themenfindung/Arbeitsexpose_v3_kurz.tex
 LaTeX2e <2023-11-01>
 L3 programming layer <2023-11-01>
 (C:\Users\4567r\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
@@ -415,50 +415,31 @@ Package: enumitem 2025/02/06 v3.11 Customized lists
 \enit@inbox=\box64
 \enit@count@id=\count298
 \enitdp@description=\count299
-) (C:\Users\4567r\AppData\Local\Programs\MiKTeX\tex/latex/tools\tabularx.sty
-Package: tabularx 2023/07/08 v2.11c `tabularx' package (DPC)
- (C:\Users\4567r\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty
-Package: array 2023/10/16 v2.5g Tabular extension package (FMi)
-\col@sep=\dimen267
-\ar@mcellbox=\box65
-\extrarowheight=\dimen268
-\NC@list=\toks34
-\extratabsurround=\skip52
-\backup@length=\skip53
-\ar@cellbox=\box66
-)
-\TX@col@width=\dimen269
-\TX@old@table=\dimen270
-\TX@old@col=\dimen271
-\TX@target=\dimen272
-\TX@delta=\dimen273
-\TX@cols=\count300
-\TX@ftn=\toks35
 ) (C:\Users\4567r\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdftex.def
 File: l3backend-pdftex.def 2023-10-23 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count301
-\l__pdf_internal_box=\box67
-) (Arbeitsexpose_v3.aux)
-\openout1 = `Arbeitsexpose_v3.aux'.
+\l__color_backend_stack_int=\count300
+\l__pdf_internal_box=\box65
+) (Arbeitsexpose_v3_kurz.aux)
+\openout1 = `Arbeitsexpose_v3_kurz.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -469,14 +450,14 @@ LaTeX Font Info:    ... okay on input line 19.
 * layoutoffset:(h,v)=(0.0pt,0.0pt)
 * modes: 
 * h-part:(L,W,R)=(71.13188pt, 455.24411pt, 71.13188pt)
-* v-part:(T,H,B)=(85.35826pt, 674.33032pt, 85.35826pt)
+* v-part:(T,H,B)=(71.13188pt, 702.78308pt, 71.13188pt)
 * \paperwidth=597.50787pt
 * \paperheight=845.04684pt
 * \textwidth=455.24411pt
-* \textheight=674.33032pt
+* \textheight=702.78308pt
 * \oddsidemargin=-1.1381pt
 * \evensidemargin=-1.1381pt
-* \topmargin=-23.91173pt
+* \topmargin=-38.1381pt
 * \headheight=12.0pt
 * \headsep=25.0pt
 * \topskip=12.0pt
@@ -496,178 +477,85 @@ LaTeX Font Info:    ... okay on input line 19.
 
 (C:\Users\4567r\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count302
-\scratchdimen=\dimen274
-\scratchbox=\box68
-\nofMPsegments=\count303
-\nofMParguments=\count304
-\everyMPshowfont=\toks36
-\MPscratchCnt=\count305
-\MPscratchDim=\dimen275
-\MPnumerator=\count306
-\makeMPintoPDFobject=\count307
-\everyMPtoPDFconversion=\toks37
+\scratchcounter=\count301
+\scratchdimen=\dimen267
+\scratchbox=\box66
+\nofMPsegments=\count302
+\nofMParguments=\count303
+\everyMPshowfont=\toks34
+\MPscratchCnt=\count304
+\MPscratchDim=\dimen268
+\MPnumerator=\count305
+\makeMPintoPDFobject=\count306
+\everyMPtoPDFconversion=\toks35
 ) (C:\Users\4567r\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
  (C:\Users\4567r\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
-Package hyperref Info: Link coloring OFF on input line 19.
- (Arbeitsexpose_v3.out) (Arbeitsexpose_v3.out)
+Package hyperref Info: Link coloring OFF on input line 18.
+ (Arbeitsexpose_v3_kurz.out) (Arbeitsexpose_v3_kurz.out)
 \@outlinefile=\write4
-\openout4 = `Arbeitsexpose_v3.out'.
+\openout4 = `Arbeitsexpose_v3_kurz.out'.
 
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <14.4> on input line 22.
+(Font)              <14.4> on input line 21.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 22.
+(Font)              <7> on input line 21.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 32.
+(Font)              <12> on input line 25.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 32.
+(Font)              <8> on input line 25.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 32.
+(Font)              <6> on input line 25.
  [1
 
 {C:/Users/4567r/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <10.95> on input line 104.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 104.
 
-LaTeX Warning: Float too large for page by 48.82544pt on input line 125.
 
-[2]
+LaTeX Warning: Float too large for page by 24.82294pt on input line 106.
+
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 128.
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 112.
 (C:\Users\4567r\AppData\Local\Programs\MiKTeX\tex/latex/base\t1cmtt.fd
 File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 )
-Overfull \hbox (18.50662pt too wide) in paragraph at lines 135--136
-[]\T1/cmr/bx/n/12 Container D (Mes-hing): \T1/cmr/m/n/12 Bein-hal-tet Su-GaR. Lädt den vor-trai-nier-ten STS-Checkpoint
+Overfull \hbox (46.53044pt too wide) in paragraph at lines 120--121
+[]\T1/cmr/bx/n/12 Feldarbeit: \T1/cmr/m/n/12 Droh-nen-flug + par-al-le-le GNSS-Referenzmessung (GCPs & Kabel-Scheitelachse). 
  []
 
 
-Overfull \hbox (33.73227pt too wide) in paragraph at lines 135--136
-\T1/cmr/m/n/12 face Re-con-struc-ti-on an. We-gen tiefer Ab-hän-gig-kei-ten zum \T1/cmtt/m/n/12 diff-gaussian-rasterization
+Overfull \hbox (1.79294pt too wide) in paragraph at lines 123--124
+[]\T1/cmr/bx/n/12 Evaluation: \T1/cmr/m/n/12 RM-SE und Hausdorff-Distanz der 3DGS-Centerline vs. GNSS-Referenz
  []
 
-
-Overfull \hbox (21.44789pt too wide) in paragraph at lines 135--136
-\T1/cmr/m/n/12 Mo-dul wird hier strikt CU-DA 11.8 er-zwun-gen. Das in-tern ge-for-der-te Conda-Environment
- []
-
-
-Overfull \hbox (6.54984pt too wide) in paragraph at lines 136--137
-[]\T1/cmr/bx/n/12 Container E (Post-Processing): \T1/cmr/m/n/12 Ein rei-ner \T1/cmr/bx/n/12 CPU-Container \T1/cmr/m/n/12 (oh-ne GPU/CUDA-
- []
-
-
-Overfull \hbox (16.85712pt too wide) in paragraph at lines 136--137
-\T1/cmr/m/n/12 Abhängigkeit). Bein-hal-tet die C++ Bi-blio-thek DG-tal so-wie die GDAL-Tools (\T1/cmtt/m/n/12 ogr2ogr\T1/cmr/m/n/12 ).
- []
-
-[3]
-Overfull \hbox (18.19753pt too wide) in paragraph at lines 148--149
-[]\T1/cmr/bx/n/12 Das ana-ly-ti-sche End-pro-dukt (Cen-ter-li-ne): \T1/cmr/m/n/12 Da DG-tal (als dis-kre-te Geometrie-
- []
-
-[4]
-Overfull \hbox (88.02322pt too wide) in paragraph at lines 217--217
-[]\T1/cmtt/m/n/12 pip install torch==2.10.0 torchvision --index-url https://download.pytorch.org/whl/cu128[] 
- []
-
-[5]
-Overfull \hbox (94.19672pt too wide) in paragraph at lines 217--217
-[]    \T1/cmtt/m/n/12 pip install flash-attn-3 --no-deps --index-url https://download.pytorch.org/whl/cu128[] 
- []
-
-
-Overfull \hbox (1.59433pt too wide) in paragraph at lines 217--217
-[]\T1/cmtt/m/n/12 # Download der aktuellsten SAM 3.1 Checkpoints (Object Multiplex) via wget[] 
- []
-
-
-Overfull \hbox (106.5437pt too wide) in paragraph at lines 217--217
-[]\T1/cmtt/m/n/12 wget -q https://huggingface.co/facebook/sam3-hiera-large/resolve/main/sam3.1_hiera_large.pt[] 
- []
-
-[6]
-Overfull \hbox (22.87941pt too wide) in paragraph at lines 276--278
-\T1/cmr/m/n/12 Repositories (wie Su-GaR) set-zen stark auf vor-kom-pi-lier-te Conda-Binaries (z.B. \T1/cmtt/m/n/12 pytorch-cuda\T1/cmr/m/n/12 )
- []
-
-[7]
-Overfull \hbox (20.1148pt too wide) in paragraph at lines 315--315
-[]\T1/cmtt/m/n/12 conda install -c conda-forge rich plyfile==0.8.1 jupyterlab nodejs ipywidgets[] 
- []
-
-
-Overfull \hbox (17.55144pt too wide) in paragraph at lines 320--321
-[]\T1/cmr/bx/n/12 Regularisierung: \T1/cmr/m/n/12 Nut-ze zwin-gend \T1/cmtt/m/n/12 -r "dn_consistency" \T1/cmr/m/n/12 für die bes-te Mesh-Qualität. 
- []
-
-
-Overfull \hbox (80.99843pt too wide) in paragraph at lines 321--322
-[]\T1/cmr/bx/n/12 Löcher im Mesh: \T1/cmr/m/n/12 Wenn die Mesh-Bereinigung zu ag-gres-siv ist, set-ze \T1/cmtt/m/n/12 vertices_density_quantile
- []
-
-
-Overfull \hbox (0.475pt too wide) in paragraph at lines 322--323
-[]\T1/cmr/bx/n/12 Ellipsoide Ar-te-fak-te (Bumps): \T1/cmr/m/n/12 Re-du-zie-re die Poisson-Tiefe \T1/cmtt/m/n/12 poisson_depth \T1/cmr/m/n/12 (z.B.
- []
-
-
-Overfull \hbox (5.04349pt too wide) in paragraph at lines 332--333
-[]\T1/cmr/bx/n/12 DGtal Re-lea-se (v2.1): []$\T1/cmtt/m/n/12 https : / / github . com / DGtal-[]team / DGtal / releases / tag /
- []
-
-[8]
-Overfull \hbox (20.1148pt too wide) in paragraph at lines 354--354
-[]\T1/cmtt/m/n/12 docker run -it -v /host/path/data:/data --user=digital dgtal-gdal:latest bash[] 
- []
-
-
-Overfull \hbox (75.67624pt too wide) in paragraph at lines 354--354
-[]\T1/cmtt/m/n/12 # ogr2ogr -f "GeoJSON" /data/centerline.geojson /data/centerline.csv -a_srs EPSG:25832[] 
- []
-
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 363.
-[9]
-Overfull \hbox (28.11406pt too wide) in paragraph at lines 368--368
-[][]\T1/cmr/bx/n/14.4 3. Die Im-per-fek-ti-on von SAM 3 (Pixel-Bluten & Geometrie-Stauchung) 
- []
-
-[10]
-Overfull \hbox (14.63109pt too wide) in paragraph at lines 379--379
-[][]\T1/cmr/bx/n/14.4 5. Li-mi-ta-tio-nen nach-ge-la-ger-ter Feh-ler-kor-rek-tu-ren (Glät-tung & Splat-
- []
-
-
-Overfull \hbox (10.98912pt too wide) in paragraph at lines 392--393
-\T1/cmr/m/n/12 hen-den 3DGS-Checkpoint und wen-det zu-sätz-li-che Regularisierungs-Losses (DN-Consistency,
- []
-
-[11] [12] [13] (Arbeitsexpose_v3.aux)
+[2] [3] (Arbeitsexpose_v3_kurz.aux)
  ***********
 LaTeX2e <2023-11-01>
 L3 programming layer <2023-11-01>
  ***********
-Package rerunfilecheck Info: File `Arbeitsexpose_v3.out' has not changed.
-(rerunfilecheck)             Checksum: 8B5E7CBC909D8E1D1278153A8B62C088;2578.
+Package rerunfilecheck Info: File `Arbeitsexpose_v3_kurz.out' has not changed.
+(rerunfilecheck)             Checksum: CA0EFA3FB50E7A37A1CB71A362CB3B60;660.
  ) 
 Here is how much of TeX's memory you used:
- 22492 strings out of 474592
- 430675 string characters out of 5745799
- 1947533 words of memory out of 5000000
- 44264 multiletter control sequences out of 15000+600000
- 572614 words of font info for 64 fonts, out of 8000000 for 9000
+ 22292 strings out of 474592
+ 427788 string characters out of 5745799
+ 1940533 words of memory out of 5000000
+ 44104 multiletter control sequences out of 15000+600000
+ 572462 words of font info for 65 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,13n,89p,1338b,941s stack positions out of 10000i,1000n,20000p,200000b,200000s
- <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1000.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0700.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1200.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1728.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/4567r/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/4567r/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/4567r/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/4567r/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
-Output written on Arbeitsexpose_v3.pdf (13 pages, 299072 bytes).
+ 84i,13n,89p,534b,941s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1200.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1728.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\4567r\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/4567r/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/4567r/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
+Output written on Arbeitsexpose_v3_kurz.pdf (3 pages, 182382 bytes).
 PDF statistics:
- 800 PDF objects out of 1000 (max. 8388607)
- 41 named destinations out of 1000 (max. 500000)
- 93 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 514 PDF objects out of 1000 (max. 8388607)
+ 9 named destinations out of 1000 (max. 500000)
+ 45 words of extra memory for PDF output out of 10000 (max. 10000000)
 
