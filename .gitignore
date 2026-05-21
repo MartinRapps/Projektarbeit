@@ -1,0 +1,34 @@
+# Exclude raw and processed heavy datasets
+data/
+
+# Exclude compiled C++ binaries and build folders
+src/cpp/build/
+bin/
+
+# Exclude virtual environments and python caches
+.venv/
+venv/
+.conda/
+__pycache__/
+*.pyc
+
+# Exclude IDE settings and temporary folders
+.idea/
+.vscode/
+.DS_Store
+
+# Exclude Docker credentials and local environment files
+.env
+.env.*.local
+
+# Exclude LaTeX auxiliary files
+*.aux
+*.log
+*.pdf
+*.toc
+*.synctex.gz
+*.out
+*.fls
+*.fdb_latexmk
+*.blg
+*.bbl

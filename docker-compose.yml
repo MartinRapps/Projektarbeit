@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Container A: Vorverarbeitung (SAM 3 Video Tracking / Mask Export)
+  sam3-preprocess:
+    build:
+      context: .
+      dockerfile: ./docker/container-a-sam3/Dockerfile
+    container_name: sam3_preprocess
+    volumes:
+      - ./data:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Container B: Structure from Motion (COLMAP CUDA 11.8/12.1)
+  colmap-sfm:
+    build:
+      context: .
+      dockerfile: ./docker/container-b-colmap/Dockerfile
+    container_name: colmap_sfm
+    volumes:
+      - ./data:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Container C: Object-specific 3DGS (Segment-then-Splat STS CUDA 12.1)
+  sts-training:
+    build:
+      context: .
+      dockerfile: ./docker/container-c-sts/Dockerfile
+    container_name: sts_training
+    volumes:
+      - ./data:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Container D: Meshing (SuGaR CUDA 11.8)
+  sugar-meshing:
+    build:
+      context: .
+      dockerfile: ./docker/container-d-sugar/Dockerfile
+    container_name: sugar_meshing
+    volumes:
+      - ./data:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Container E: Post-Processing (DGtal C++ & GDAL / CPU-only)
+  post-processing:
+    build:
+      context: .
+      dockerfile: ./docker/container-e-postprocess/Dockerfile
+    container_name: post_processing
+    volumes:
+      - ./data:/data
+    # Pure CPU-container, no GPU reservation needed

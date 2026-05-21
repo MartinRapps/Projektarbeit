@@ -36,6 +36,42 @@
       "sourceType": "github",
       "skillPath": "academic-writing-skills/paper-audit/SKILL.md",
       "computedHash": "e0e5df5a0e649170074d40a0f1a4ddf21b363c1dfd5562ab5eb18f51ee315f7f"
+    },
+    "mapbox": {
+      "source": "custom",
+      "sourceType": "local",
+      "skillPath": "skills/mapbox/SKILL.md",
+      "computedHash": "local-custom-mapbox"
+    },
+    "leaflet": {
+      "source": "custom",
+      "sourceType": "local",
+      "skillPath": "skills/leaflet/SKILL.md",
+      "computedHash": "local-custom-leaflet"
+    },
+    "threejs-3d-graphics": {
+      "source": "custom",
+      "sourceType": "local",
+      "skillPath": "skills/threejs-3d-graphics/SKILL.md",
+      "computedHash": "local-custom-threejs"
+    },
+    "python-best-practices": {
+      "source": "custom",
+      "sourceType": "local",
+      "skillPath": "skills/python-best-practices/SKILL.md",
+      "computedHash": "local-custom-python"
+    },
+    "cpp": {
+      "source": "custom",
+      "sourceType": "local",
+      "skillPath": "skills/cpp/SKILL.md",
+      "computedHash": "local-custom-cpp"
+    },
+    "github-actions-expert": {
+      "source": "custom",
+      "sourceType": "local",
+      "skillPath": "skills/github-actions-expert/SKILL.md",
+      "computedHash": "local-custom-github-actions"
     }
   }
 }
