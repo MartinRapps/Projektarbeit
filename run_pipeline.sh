@@ -3,6 +3,10 @@ set -e
 
 echo "=== Starting Scan-to-BIM Reconstruction Pipeline ==="
 
+# Step 0: GCP Coordinate Preparation (Relative Coordinates)
+echo "[Step 0/5] Preparing relative GCP coordinates..."
+docker compose run --rm sam3-preprocess python3 /app/src/python/prepare_gcp.py
+
 # Step 1: Pre-processing (SAM 3 Tracking)
 echo "[Step 1/5] Extracting frames and generating SAM 3 masks..."
 docker compose run --rm sam3-preprocess python3 /app/scripts/extract_masks.py

@@ -272,9 +272,10 @@ cd ..
 \end{verbatim}
 
 \textbf{Ausführung \& Masken-Export (Python API):}\\
-Hier ist das Python-Skript zur automatischen temporalen Propagation des Kabel-Prompts im Video und dem anschließenden Export der binären Masken als PNG-Dateien für die 3DGS-Pipeline:
+Hier ist das Python-Skript zur temporalen Propagation des Kabel-Prompts im Video. Da der SAM 3 Video Predictor im Tracking-Modus aus Konsistenzgründen nur eine einzelne, eindeutige Maske pro Frame propagiert (und nicht die drei hierarchischen Skalen des Image Predictors), generiert das Skript die für das Curriculum-Learning von Segment-then-Splat (STS) benötigten Stufen (\texttt{small}, \texttt{middle}, \texttt{default}) künstlich über morphologische Bildoperationen (Erosion und Dilation):
 \begin{verbatim}
 import os
+import cv2
 import numpy as np
 from PIL import Image
 from sam3.model_builder import build_sam3_video_predictor
@@ -289,21 +290,25 @@ response = predictor.handle_request(
 )
 session_id = response["session_id"]
 
-# 3. Prompt setzen (z. B. Text-Prompt "cable" auf Frame 0)
+# 3. Prompt setzen (z. B. Punkt-Prompt auf das Kabel in Frame 0)
 predictor.handle_request(
     request=dict(
         type="add_prompt",
         session_id=session_id,
         frame_index=0,
-        text="cable"
+        points=[[1024, 768]],  # Beispielkoordinaten auf dem Kabel
+        labels=[1]
     )
 )
 
-# 4. Stream-Propagation & PNG-Export in den Bind-Mount Ordner
+# 4. Stream-Propagation & Multi-Scale Export via Morphologie
 output_dir = "/data/masks"
 os.makedirs(output_dir, exist_ok=True)
 
-# propagate_in_video liefert einen Generator für die Auswertung
+# Definiere Kernel für Erosion und Dilation (Größe auf Kabeldurchmesser anpassen)
+kernel = np.ones((5, 5), np.uint8)
+
+# propagate_in_video liefert einen Generator
 for response in predictor.handle_stream_request(
     request=dict(type="propagate_in_video", session_id=session_id)
 ):
@@ -312,14 +317,29 @@ for response in predictor.handle_stream_request(
     obj_ids = outputs["out_obj_ids"]
     binary_masks = outputs["out_binary_masks"]  # Shape: [num_objects, H, W]
 
+    # Erzeuge einen Unterordner pro Frame-Index
+    frame_dir = os.path.join(output_dir, f"frame_{frame_idx:05d}")
+    os.makedirs(frame_dir, exist_ok=True)
+
     for idx, obj_id in enumerate(obj_ids):
         mask = binary_masks[idx]  # Boolesches Array [H, W]
         if mask.any():
             # Konvertierung: True -> 255, False -> 0
             mask_uint8 = (mask * 255).astype(np.uint8)
-            img = Image.fromarray(mask_uint8)
-            # Speichern im Format: frame_[index]_obj_[id].png
-            img.save(os.path.join(output_dir, f"frame_{frame_idx:05d}_obj_{obj_id:03d}.png"))
+            
+            # 1. Middle (Original)
+            img_middle = Image.fromarray(mask_uint8)
+            img_middle.save(os.path.join(frame_dir, "middle.png"))
+            
+            # 2. Small (Erodiert für den stabilen Kabelkern)
+            mask_small = cv2.erode(mask_uint8, kernel, iterations=1)
+            img_small = Image.fromarray(mask_small)
+            img_small.save(os.path.join(frame_dir, "small.png"))
+            
+            # 3. Default (Dilatiert für den Sicherheitsrand)
+            mask_default = cv2.dilate(mask_uint8, kernel, iterations=1)
+            img_default = Image.fromarray(mask_default)
+            img_default.save(os.path.join(frame_dir, "default.png"))
 
 # 5. Session sauber schließen
 predictor.handle_request(
@@ -367,7 +387,7 @@ colmap model_converter \
 \textit{Breakpoint:} Nach diesem Schritt pausiert das Master-Skript automatisch. Die erzeugte Datei \texttt{points3D.ply} wird auf dem Host-System in CloudCompare geladen, um die manuelle Georeferenzierung via GCP-Point-Picking durchzuführen. Nach dem Speichern der Transformationsmatrix wird das Skript fortgesetzt.
 
 \subsection*{Container C: Segment-then-Splat (Object-specific 3DGS)}
-Führt das objektspezifische 3DGS-Training durch. STS weist jedem initialen COLMAP-Gaussian eine Object-ID zu (basierend auf den SAM 3 Masken) und trainiert mit dem nativen Object-specific Loss ($\mathcal{L}_{obj}$). Das intern vorgesehene AutoSeg-SAM2 wird durch die externen SAM 3 Masken aus Container A ersetzt.
+Führt das objektspezifische 3DGS-Training durch. STS weist jedem initialen COLMAP-Gaussian eine Object-ID zu (basierend auf den SAM 3 Masken) und trainiert mit dem nativen Object-specific Loss ($\mathcal{L}_{obj}$). Das intern vorgesehene AutoSeg-SAM2 wird vollständig deaktiviert und durch die externen SAM 3 Masken aus Container A ersetzt. Hierfür wird der Dataloader (z. B. in \texttt{scene/dataset\_readers.py} oder \texttt{scene/cameras.py}) so angepasst, dass er pro Frame die drei Masken-Dateien (\texttt{small.png}, \texttt{middle.png}, \texttt{default.png}) einliest und in das Dictionary \texttt{viewpoint\_cam.object\_masks} einspeist.
 
 \textbf{Requirements (Docker-Umgebung):}
 \begin{itemize}[noitemsep]
@@ -388,19 +408,40 @@ pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 \
 pip install -r requirements.txt --no-build-isolation
 \end{verbatim}
 
-\textbf{Ausführung (Preprocessing + Training):}
+\textbf{Anpassung des Dataloaders und Trainingsablauf:}
+Im Datensatz-Reader wird die folgende Logik implementiert, um die Maskentensoren direkt zu laden:
 \begin{verbatim}
-# 1. Masken-Preprocessing (SAM 3 Masken aus Container A)
-python ./helpers/preprocess_mask.py \
-    --mask_root /data/masks \
-    --out_root /data/scene/ \
-    --image_path /data/scene/images
+# Pseudo-Code zur Anpassung des Kamera-Ladevorgangs:
+import torch
+from PIL import Image
 
-# 2. Object-specific Initialization (benötigt COLMAP-Output)
+def load_object_masks(frame_dir):
+    scales = ["small", "middle", "default"]
+    object_masks = {}
+    for scale in scales:
+        mask_path = os.path.join(frame_dir, f"{scale}.png")
+        if os.path.exists(mask_path):
+            # Graustufen laden, Normalisieren und als Boolean-Tensor konvertieren
+            mask_img = Image.open(mask_path).convert("L")
+            mask_np = np.array(mask_img) > 127
+            mask_tensor = torch.from_numpy(mask_np).bool() # Shape: [H, W]
+            object_masks[scale] = [mask_tensor]
+        else:
+            object_masks[scale] = []
+    return object_masks
+
+# Zuweisung zur viewpoint_cam während der Szenen-Initialisierung:
+# viewpoint_cam.object_masks = load_object_masks(f"/data/masks/frame_{frame_idx:05d}")
+\end{verbatim}
+
+\textbf{Ausführung des Trainings:}
+\begin{verbatim}
+# 1. Object-specific Initialization (Zuweisung der initialen SfM-Punkte)
+# STS prüft anhand der default/middle/small Masken die Punkt-Sichtbarkeiten
 python ./helpers/object_specific_initialization.py \
     --scene_root /data/scene/
 
-# 3. Training mit Object-specific Loss
+# 2. Training mit dem geänderten Dataloader und Object-specific Loss
 python train.py -s /data/scene/ -m /data/output \
     --eval --iterations 40000 \
     --num_sample_objects 3 \
@@ -408,7 +449,7 @@ python train.py -s /data/scene/ -m /data/output \
     --partial_mask_iou 0.3
 \end{verbatim}
 
-\textbf{Wichtiger Hinweis:} Das Repository ist mit dem Vermerk \textit{``(To be verified)''} beim Object-Tracking markiert. Die Stabilität der Preprocessing-Skripte muss im Rahmen der Projektarbeit validiert werden.
+\textbf{Wichtiger Hinweis:} Durch die Entkopplung der Maskenberechnung läuft die CUDA-spezifische Optimization in Container C völlig autark von den CUDA-Anforderungen des SAM 3 Frontends in Container A.
 
 \subsection*{Container D: SuGaR (Geometrische Regularisierung \& Meshing)}
 Lädt den vortrainierten STS-Checkpoint und wendet die geometrische Regularisierung (DN-Consistency, Normal Alignment) sowie Poisson Surface Reconstruction an. Dies ist der sensitivste Container bezüglich CUDA-Versionen.
@@ -511,11 +552,11 @@ cd /home/digital/git/DGtal/build/examples
 # (Erzeugt /data/centerline_local.csv)
 
 # 2. Ausführen des Python-Skripts zur Georeferenzierung
-# (Wendet 4x4-Transformationsmatrix an und addiert UTM-Koordinaten des Anker-GCPs)
+# (Wendet 4x4-Transformationsmatrix an und addiert UTM-Koordinaten des Anker-GCPs automatisch)
 python /data/scripts/transform_centerline.py \
     --input_csv /data/centerline_local.csv \
     --matrix /data/matrix.txt \
-    --anchor_gcp 32624102.5 5410204.8 123.4 \
+    --anchor_txt /data/01_raw/anchor.txt \
     --output_csv /data/centerline_utm.csv
 
 # 3. Konvertierung des UTM-Ergebnisses in standardisiertes GeoJSON (EPSG:25832)

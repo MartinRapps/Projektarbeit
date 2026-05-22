@@ -9,6 +9,7 @@ services:
     container_name: sam3_preprocess
     volumes:
       - ./data:/data
+      - ./src:/app/src
     deploy:
       resources:
         reservations:
@@ -25,6 +26,7 @@ services:
     container_name: colmap_sfm
     volumes:
       - ./data:/data
+      - ./src:/app/src
     deploy:
       resources:
         reservations:
@@ -41,6 +43,7 @@ services:
     container_name: sts_training
     volumes:
       - ./data:/data
+      - ./src:/app/src
     deploy:
       resources:
         reservations:
@@ -57,6 +60,7 @@ services:
     container_name: sugar_meshing
     volumes:
       - ./data:/data
+      - ./src:/app/src
     deploy:
       resources:
         reservations:
@@ -73,4 +77,6 @@ services:
     container_name: post_processing
     volumes:
       - ./data:/data
+      - ./src:/app/src
     # Pure CPU-container, no GPU reservation needed
+
