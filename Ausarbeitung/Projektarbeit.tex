@@ -209,12 +209,14 @@ pdfkeywords={3DGS, Scan-to-BIM, SAM 3, SuGaR, Docker, Georeferenzierung}
 
 \section{Kombination mit 2D-Segmentierungsmodellen (SAM 3)}
 % Ansätze zur Erhöhung der Geometrieauflösung durch vorgelagerte Maskierung.
+Die aktuelle SAM-3.1-Release zeigt, dass die Segmentierung nicht nur als reiner Vorfilter betrachtet werden sollte, sondern als eigene, GPU-intensive Laufzeitkomponente mit klaren Abh\"angigkeiten an Python 3.12, PyTorch 2.7+ und eine CUDA-12.6+-f\"ahige Umgebung. F\"ur die Pipeline ist das relevant, weil die Qualit\"at der vorsegmentierten Masken direkt den nachfolgenden STS- und SuGaR-Schritten zugutekommt, die Containerisierung aber nur stabil bleibt, wenn das Modellimage und die Modellzugriffe sauber getrennt sind.
 
 
 \chapter{Konzeption der Docker-Infrastruktur} \label{sec:konzeption}
 
 \section{Microservice-Architektur der Pipeline}
 % Vorstellung der 5 Container (SAM 3, COLMAP, STS, SuGaR, Post-Processing).
+Ein zentrales Ergebnis der technischen Evaluation ist, dass Container A nicht mehr als einfacher Python-Helfer behandelt werden darf: Der SAM-3.1-Container ben\"otigt eine eigene CUDA-basierte Runtime und einen expliziten Checkpoint-Zugriff \"uber Hugging Face. Die restlichen Container bleiben davon getrennt und k\"onnen ihre jeweils passenden CUDA-Versionen behalten, was die Versionierungskonflikte der Pipeline reduziert.
 
 \section{Vermeidung von Versionierungskonflikten}
 % CUDA und PyTorch Versionen in den einzelnen Containern (Bind Mounts, WSL2).

@@ -10,7 +10,7 @@ Diese Anleitung führt Sie strukturiert von der Systemvorbereitung mit Administr
 > **Sie müssen KEINE verschiedenen NVIDIA Toolkit-Versionen auf Ihrem Host-System (Windows) installieren!**
 > Einer der größten Vorteile von Docker ist die vollständige Kapselung der Laufzeitumgebungen:
 > - **Auf dem Windows-Host** wird lediglich **ein einziger, aktueller NVIDIA-Grafikkartentreiber** installiert.
-> - **In den Docker-Containern** sind die jeweils benötigten CUDA-Versionen (z. B. CUDA 11.7 für SuGaR in Container D, CUDA 12.1 für STS in Container C) bereits vorinstalliert und isoliert.
+> - **In den Docker-Containern** sind die jeweils benötigten CUDA-Versionen isoliert vorinstalliert. Für SAM 3.1 in Container A sollte die Runtime CUDA 12.6+, Python 3.12 und PyTorch 2.7+ unterstützen.
 > - Der Windows-Host-Treiber leitet die GPU-Befehle über Docker Desktop (WSL2-Backend) weiter, unabhängig davon, welche CUDA-Version im Container läuft.
 
 ---
@@ -54,9 +54,8 @@ Bevor Sie mit der Installation beginnen, müssen folgende Punkte überprüft wer
 ### Schritt 1: NVIDIA Grafiktreiber auf Windows Host
 
 #### Welche Version wird benötigt?
-Da die Container in der Pipeline unterschiedliche CUDA-Runtimes nutzen (z. B. CUDA 12.6 für SAM 3 in Container A), muss der Windows-Host-Treiber CUDA 12.6+ unterstützen.
-* **Erforderliche Treiberversion:** Mindestens **556.12** oder höher.
-* **Empfehlung:** Installieren Sie einfach den neuesten verfügbaren Treiber (Game Ready, Studio oder RTX Enterprise) von NVIDIA, welcher in der Regel Version 560+ ist und somit alle CUDA 12.x-Funktionen abdeckt.
+Da die Container in der Pipeline unterschiedliche CUDA-Runtimes nutzen und SAM 3.1 in Container A eine CUDA-12.6+-fähige Runtime voraussetzt, muss der Windows-Host-Treiber diese GPU-Weiterleitung unterstützen.
+* **Empfehlung:** Installieren Sie einfach den neuesten verfügbaren Treiber (Game Ready, Studio oder RTX Enterprise) von NVIDIA.
 
 #### Aktuelle Version prüfen (Habe ich den richtigen Treiber bereits?):
 Führen Sie eine der folgenden Prüfungen durch (👤 **[BENUTZER]**):
@@ -64,7 +63,7 @@ Führen Sie eine der folgenden Prüfungen durch (👤 **[BENUTZER]**):
   ```cmd
   nvidia-smi
   ```
-  Oben links sehen Sie `Driver Version: XXX.XX` (muss >= 556.12 sein) und oben rechts `CUDA Version: YY.Y` (muss >= 12.6 sein).
+   Oben links sehen Sie `Driver Version: XXX.XX` und oben rechts `CUDA Version: YY.Y`. Für SAM 3.1 sollte die angezeigte CUDA-Version mindestens 12.6 unterstützen.
 * **Möglichkeit B (NVIDIA Systemsteuerung):** Machen Sie einen Rechtsklick auf den Desktop -> *NVIDIA Systemsteuerung* -> unten links auf *Systeminformationen*. Dort steht die Treiberversion direkt unter "Details".
 * **Möglichkeit C (Geräte-Manager):** Drücken Sie Win+X -> *Geräte-Manager* -> *Grafikkarten* -> Rechtsklick auf die NVIDIA-GPU -> *Eigenschaften* -> Reiter *Treiber*. Die letzten 5 Ziffern der Treiberversion entsprechen der NVIDIA-Versionsnummer (z. B. `32.0.15.6070` entspricht Version `560.70`).
 
@@ -150,7 +149,7 @@ Bevor Sie zeitaufwendige Images bauen, prüfen Sie, ob Docker die Grafikkarte ü
 
 1. 👤 **[BENUTZER]** Führen Sie im Ubuntu-Terminal folgenden Test-Container aus:
    ```bash
-   docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
+   docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu22.04 nvidia-smi
    ```
 2. **Ergebnis:** Wenn Sie die gleiche GPU-Tabelle wie in Schritt 1 auf Windows sehen, funktioniert die GPU-Weiterleitung über WSL2 und Docker Desktop fehlerfrei!
    *(Der Container lädt das minimale CUDA-Image herunter, führt `nvidia-smi` aus und löscht sich danach selbst).*
@@ -158,7 +157,7 @@ Bevor Sie zeitaufwendige Images bauen, prüfen Sie, ob Docker die Grafikkarte ü
 ---
 
 ### Schritt 6: Pipeline-Images bauen
-Bauen Sie nun die in [docker-compose.yml](file:///c:/Users/4567r/.gemini/tmp/Projektarbeit/docker-compose.yml) definierten 5 Container-Dienste auf.
+Bauen Sie nun die in [docker-compose.yml](docker-compose.yml) definierten 5 Container-Dienste auf.
 
 1. 👤 **[BENUTZER]** Führen Sie im Projektverzeichnis (`~/Projektarbeit`) den Build-Befehl aus:
    ```bash
@@ -169,7 +168,7 @@ Bauen Sie nun die in [docker-compose.yml](file:///c:/Users/4567r/.gemini/tmp/Pro
 ---
 
 ### Schritt 7: Pipeline ausführen
-Die Ausführung erfolgt über das Master-Skript [run_pipeline.sh](file:///c:/Users/4567r/.gemini/tmp/Projektarbeit/run_pipeline.sh).
+Die Ausführung erfolgt über das Master-Skript [run_pipeline.sh](run_pipeline.sh).
 
 1. 👤 **[BENUTZER]** Kopieren Sie Ihre Videodatei (`video.mp4`) und die GCP-Koordinatendateien in den Ordner `data/01_raw/`.
 2. 👤 **[BENUTZER]** Machen Sie das Skript ausführbar und starten Sie es:
@@ -184,6 +183,14 @@ Nach **Schritt 2 (SfM - COLMAP)** pausiert das Skript automatisch:
 2. 👤 **[BENUTZER]** Laden Sie die Datei `data/04_sfm/points3D.ply` in CloudCompare.
 3. 👤 **[BENUTZER]** Führen Sie das Point Picking anhand Ihrer GCPs durch, berechnen Sie die 4x4-Transformationsmatrix (relative Georeferenzierung) und speichern Sie diese als Textdatei in `data/04_sfm/matrix.txt`.
 4. 👤 **[BENUTZER]** Gehen Sie zurück ins Ubuntu-Terminal und drücken Sie **[Enter]**, um das Training (STS) und Meshing (SuGaR) fortzusetzen.
+
+---
+
+## 📝 Hinweis zu SAM 3.1
+
+Die offiziellen SAM-3.1-Release-Notes zeigen, dass das Modell inzwischen auf **Python 3.12**, **PyTorch 2.7+** und eine **CUDA-12.6+-fähige GPU-Umgebung** ausgelegt ist. Zusätzlich ist für die Checkpoints ein freigeschalteter Hugging-Face-Zugriff nötig.
+
+Für diese Pipeline heißt das: Container A sollte nicht nur GPU-Zugriff haben, sondern auch tatsächlich auf einer CUDA-tauglichen Basis laufen, bevor die SAM-3.1-Modelle produktiv eingesetzt werden. Die restlichen Container können ihre jeweiligen, getrennten CUDA-Runtimes behalten.
 
 ---
 

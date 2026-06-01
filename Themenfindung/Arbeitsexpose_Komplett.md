@@ -178,6 +178,15 @@
 - [ ] Git installiert
 - [ ] Visual Studio Build Tools (C++ Compiler für Windows)
 
+### Vorverarbeitung: SAM 3.1 (Segment Anything Model 3.1)
+**Implementierungsentscheidung: Docker vs. Conda**
+Für die Ausführung der SAM 3.1 Codebasis wurde konzeptionell von einer reinen lokalen Conda-Umgebung Abstand genommen. Stattdessen läuft SAM 3.1 vollständig in einem dedizierten Docker-Container (`sam3-preprocess`).
+**Gründe gegen Conda und für Docker:**
+1. **CUDA-Konflikte:** SAM 3.1 verlangt moderne PyTorch-Versionen (z.B. 2.7.0 mit CUDA 12.6) und greift auf experimentelle C++ Extensions (`sam3_cu`) zurück. In einer lokalen Anaconda-Umgebung kommt es hier mit den bestehenden CUDA 11.8 Treibern von COLMAP/SuGaR ständig zu "Layer Mismatches" und Kompilierungsfehlern. Docker kapselt die CUDA 12.6 Abhängigkeiten sauber vom Host-System ab.
+2. **Abhängigkeits-Knoten (Dependency Hell):** Das SAM 3.1 Facebook-Release benötigt tiefgreifende Systembibliotheken (`pycocotools`, `einops`, `timm`), die nativ im Container über `apt-get` und `pip` verlässlich zusammengestellt werden.
+3. **Hardware-Starvation (Host-Safety):** Das Laden von SAM 3.1 in Full-HD (`sam3.1_multiplex.pt`) benötigt immense RAM- und CPU-Ressourcen beim Instanziieren des Video-Predictors. Im Container können via `docker-compose.yml` die CPU-Berechnungen strikt gedrosselt werden (`OMP_NUM_THREADS=8`), um Systemabstürze oder 100% Core-Auslastungen effektiv zu verhindern (Offloading-Strategien inklusive).
+4. **Hugging Face Token-Sicherheit:** Über Docker-Secrets (`.env`/`HF_TOKEN`) wird die Authentifizierung für Gated Models sicherer gehandhabt, ohne lokale `.bashrc` Verzeichnisse zu blockieren.
+
 ### Schritt 1: COLMAP
 - [ ] Pre-built Binary von https://demuc.de/colmap/ (CUDA-Version!) herunterladen
 - [ ] Entpacken und PATH setzen

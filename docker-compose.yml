@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Container A: Vorverarbeitung (SAM 3 Video Tracking / Mask Export)
   sam3-preprocess:
@@ -7,6 +5,17 @@ services:
       context: .
       dockerfile: ./docker/container-a-sam3/Dockerfile
     container_name: sam3_preprocess
+    gpus: all
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HF_HOME=/data/hf_cache
+      # Optimiere PyTorch CPU Multithreading (8 Threads = 8 P-Cores des i7-12700)
+      - OMP_NUM_THREADS=8
+      - MKL_NUM_THREADS=8
+      - OPENBLAS_NUM_THREADS=8
+      - MAX_JOBS=8
+      # Erlaube PyTorch, fragmentierten VRAM besser zu nutzen
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     volumes:
       - ./data:/data
       - ./src:/app/src
@@ -24,6 +33,7 @@ services:
       context: .
       dockerfile: ./docker/container-b-colmap/Dockerfile
     container_name: colmap_sfm
+    gpus: all
     volumes:
       - ./data:/data
       - ./src:/app/src
@@ -41,6 +51,7 @@ services:
       context: .
       dockerfile: ./docker/container-c-sts/Dockerfile
     container_name: sts_training
+    gpus: all
     volumes:
       - ./data:/data
       - ./src:/app/src
@@ -58,6 +69,7 @@ services:
       context: .
       dockerfile: ./docker/container-d-sugar/Dockerfile
     container_name: sugar_meshing
+    gpus: all
     volumes:
       - ./data:/data
       - ./src:/app/src

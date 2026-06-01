@@ -68,9 +68,17 @@ Um die Automatisierung zu maximieren, wird die Pipeline über ein zentrales Mast
 \end{itemize}
 
 \section{Risikomanagement und Datenhandling}
-Drei kritische Punkte erfordern besondere Aufmerksamkeit:
+Vier kritische Punkte erfordern besondere Aufmerksamkeit:
 \begin{enumerate}
     \item \textbf{Speichermanagement:} Drohnenvideos in 4K bei 60 FPS erzeugen massive Datenmengen. Das Konzept sieht vor, dass diese temporär im nativen Linux-Dateisystem liegen und nach der 6 FPS Extraktion gelöscht werden, um I/O-Engpässe unter WSL2 zu vermeiden.
+    \item \textbf{SAM 3 Tracking-Stabilität (VRAM) und Modellkonsistenz:} \\
+          In der praktischen Ausführung zeigte sich ein nichtlinear wachsender VRAM-Bedarf im \texttt{propagate\_in\_video}-Pfad (insb. während \texttt{F.interpolate} in der Output-Erzeugung). Dadurch trat ein \texttt{CUDA out of memory} nicht deterministisch auf (z. B. um Frame 45, bei anderen Läufen früher oder später), obwohl dieselbe Eingabe verwendet wurde. Ursache ist die Kombination aus langem Sequenzgedächtnis (Memory-Modul), fragmentiertem Allocator-Zustand und voller HD-Auflösung über viele Frames. \\
+          Als technische Gegenmaßnahme wurde die Propagation auf feste Zeitfenster (Chunking) umgestellt: Jeder Lauf verarbeitet nur ein Segment mit \texttt{start\_frame\_index} und \texttt{max\_frame\_num\_to\_track}; die Masken werden unmittelbar pro Frame persistiert, statt alle Outputs bis zum Ende im RAM/VRAM vorzuhalten. Zusammen mit Offloading-Flags (Video/State auf CPU) stabilisiert dies die Pipeline auf 16-GB-Karten. \\
+          Ein zweiter, davon getrennter Befund ist die \textbf{Gewichts-/Architektur-Konsistenz}: Trotz stabilem Lauf können aufgrund von \texttt{Missing keys}/\texttt{Unexpected keys} beim Laden des SAM-Checkpoints formal gültige, aber inhaltlich leere Masken entstehen. Daher wird als Quality-Gate vor Übergabe an STS verbindlich geprüft: (i) Anteil nichtleerer Masken, (ii) temporale Kontinuität über benachbarte Frames, (iii) Sichtprüfung an Stichproben. Nur bei erfüllten Kriterien werden Masken in Container C übernommen.
+        \item \textcolor{blue}{\textbf{[AKTUELLER ERKENNTNISSTAND: SAM 3.1 Laufzeitvalidierung, Stand 06/2026]}} \\
+            Der SAM-Container wurde auf einen kompatiblen SAM-3.1-Stand fixiert (Commit \texttt{9f22cb976fb6e38dad5bb34940fad852dd897d0e}); zusätzliche Laufzeitabhängigkeiten (u. a. \texttt{decord}, \texttt{nvidia-pytriton}) wurden erfolgreich integriert. Funktional konnte der Notebook-Flow (\texttt{start\_session} $\rightarrow$ \texttt{add\_prompt} $\rightarrow$ \texttt{propagate\_in\_video} $\rightarrow$ \texttt{close\_session}) reproduzierbar ausgeführt werden. \\
+            Gleichzeitig zeigte die aktuelle Voll-Propagation (ohne Chunking) weiterhin ein OOM-Risiko auf 16-GB-GPUs; nach OOM trat teils ein instabiler CUDA-Allocator-Zustand auf, weshalb Prompt-Versuche in demselben Lauf abgebrochen werden mussten. Ein expliziter Threshold-Test mit \texttt{output\_prob\_thresh = 0.35} sowie Prompt-Fallbacks (Textvarianten und Point-Fallback) lieferte im aktuellen Datensatz noch keine nichtleeren Masken (\texttt{nonempty = 0}). \\
+            Daraus folgt methodisch: Der nächste Arbeitsschritt ist eine zweistufige Initialisierung nach dem Muster ``Detect first frame $\rightarrow$ Track initialized object'' (angelehnt an den ComfyUI-Workflow), ergänzt um strengere Session-Isolation pro Versuch, um OOM-Folgezustände sicher zu vermeiden.
     \item \textbf{Das Georeferenzierungs-Paradoxon:} Da die objektspezifische Selektion (STS) nur das Kabel-Mesh isoliert, verschwinden im finalen 3D-Modell auch die am Boden ausgelegten Passpunkte (GCPs). Eine Post-Training Transformation des Modells durch manuelles Anklicken ist somit nicht anwendbar. Die Lösung ist eine \textit{Pre-Training Georeferenzierung}: Die Open-Source-Software \textbf{CloudCompare} bietet hierfür ein ideales GUI. Da CloudCompare intern mit 32-Bit Single-Precision-Gleitkommazahlen arbeitet, führt eine direkte Eingabe von großen globalen UTM-Koordinaten ($> 10^5$) zu dramatischem Präzisionsverlust ($1$--$10$\,cm). Daher wird eine \textit{relative Georeferenzierung} durchgeführt: Ein ausgewählter GCP dient als lokaler Ursprung (Ankerpunkt) mit den Koordinaten $(0,0,0)$, und alle anderen GCPs werden relativ zu diesem berechnet ($GCP_{\text{relativ}} = GCP_{\text{UTM}} - GCP_{\text{Anker}}$). Man lädt die unmaskierte, spärliche SfM-Punktwolke aus COLMAP in CloudCompare, ordnet die Passpunkte den relativen GCP-Koordinaten manuell zu (\textit{Point Picking}) und berechnet eine 4x4-Transformationsmatrix (Kombination aus 3x3-Rotation, Translation und optionaler Skalierung).
           SuGaR berechnet danach parallel das rohe, lokale 3D-Mesh. Anstatt jedoch das rechenintensive Millionen-Polygon-Mesh in globale Koordinaten zu überführen, wird zunächst DGtal auf dem lokalen Mesh ausgeführt. Die resultierende lokale Centerline (bestehend aus wenigen hundert Punkten) wird in Container E über ein kurzes Python-Hilfsskript mittels der 4x4-Transformationsmatrix multipliziert, um die Rotation und Skalierung anzuwenden, und danach durch Addition des Anker-GCPs in die globalen UTM-Koordinaten überführt.
 
@@ -245,31 +253,19 @@ Zuständig für die 2D-Maskierung des Drohnenvideos. Dieser Container nutzt mode
     \item CUDA-kompatible GPU mit CUDA >= 12.6
 \end{itemize}
 
-\textbf{Installationsablauf (Conda \& Pip):}
-\begin{verbatim}
-conda create -n sam3 python=3.12
-conda deactivate
-conda activate sam3
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-git clone https://github.com/facebookresearch/sam3.git
-cd sam3
-pip install -e .
-# For running example notebooks
-pip install -e ".[notebooks]"
-# For development
-pip install -e ".[train,dev]"
-# Optional dependencies for faster inference
-pip install einops ninja && \
-    pip install flash-attn --no-build-isolation
-pip install git+https://github.com/ronghanghu/cc_torch.git
+\textbf{Implementierungsentscheidung: Docker vs. Conda}\\
+Für die Ausführung der SAM 3.1 Codebasis wurde konzeptionell von einer reinen lokalen Conda-Umgebung Abstand genommen. Stattdessen läuft SAM 3.1 vollständig in einem dedizierten Docker-Container (\texttt{sam3-preprocess}).
 
-# Model Checkpoints (SAM 3.1) in den Container/Volume herunterladen
-mkdir -p checkpoints
-cd checkpoints
-# Download der aktuellsten SAM 3.1 Checkpoints (Object Multiplex) via wget
-wget -q https://huggingface.co/facebook/sam3-hiera-large/resolve/main/sam3.1_hiera_large.pt
-cd ..
-\end{verbatim}
+\textbf{Gründe gegen Conda und für Docker:}
+\begin{enumerate}[noitemsep]
+    \item \textbf{CUDA-Konflikte:} SAM 3.1 verlangt moderne PyTorch-Versionen (z.\,B. 2.7.0 mit CUDA 12.6) und greift auf experimentelle C++ Extensions (\texttt{sam3\_cu}) zurück. In einer lokalen Anaconda-Umgebung kommt es hier mit den bestehenden CUDA 11.8 Treibern von COLMAP/SuGaR ständig zu "Layer Mismatches" und Kompilierungsfehlern. Docker kapselt die CUDA 12.6 Abhängigkeiten sauber vom Host-System ab.
+    \item \textbf{Abhängigkeits-Knoten (Dependency Hell):} Das SAM 3.1 Release benötigt tiefgreifende Bibliotheken (\texttt{pycocotools}, \texttt{einops}, \texttt{timm}), die nativ im Container über \texttt{apt-get} und \texttt{pip} verlässlich zusammengestellt werden.
+    \item \textbf{Hardware-Starvation (Host-Safety):} Das Laden von SAM 3.1 in Full-HD (\texttt{sam3.1\_multiplex.pt}) absorbiert immense RAM- und CPU-Ressourcen beim Instanziieren des Video-Predictors. Im Container können via \texttt{docker-compose.yml} die CPU-Berechnungen strikt gedrosselt werden (\texttt{OMP\_NUM\_THREADS=8}), um Systemabstürze effektiv zu verhindern. Ein VRAM- und RAM-Offloading ist zusätzlich im inferierenden Python-Skript konfiguriert.
+    \item \textbf{Hugging Face Token-Sicherheit:} Über Docker-Secrets (\texttt{.env} / \texttt{HF\_TOKEN}) wird die Authentifizierung für Gated Models sicher gehandhabt, ohne lokale Systemumgebungen zu belasten.
+\end{enumerate}
+
+\textbf{Installationsablauf (Docker):}\\
+Die Bereitstellung erfolgt vollautomatisch über das dedizierte \texttt{Dockerfile} auf Basis von \texttt{pytorch/pytorch:2.7.0-cuda12.6-cudnn9-devel}. Dies klont das offizielle Repository, baut die C++ Extensions und cacht über das Hugging Face Hub das 3.5\,GB schwere Multiplex-Gewicht persistent ins Host-Volume.
 
 \textbf{Ausführung \& Masken-Export (Python API):}\\
 Hier ist das Python-Skript zur temporalen Propagation des Kabel-Prompts im Video. Da der SAM 3 Video Predictor im Tracking-Modus aus Konsistenzgründen nur eine einzelne, eindeutige Maske pro Frame propagiert (und nicht die drei hierarchischen Skalen des Image Predictors), generiert das Skript die für das Curriculum-Learning von Segment-then-Splat (STS) benötigten Stufen (\texttt{small}, \texttt{middle}, \texttt{default}) künstlich über morphologische Bildoperationen (Erosion und Dilation):
