@@ -3,6 +3,10 @@ import glob
 import os
 import shutil
 import sys
+
+# Disable torch.compile to avoid massive compilation-induced VRAM spikes (>12GB) on 16GB GPUs
+os.environ["TORCH_COMPILE_DISABLE"] = "1"
+
 from contextlib import nullcontext
 
 import cv2
@@ -49,16 +53,51 @@ def write_mask_from_outputs(frame_idx: int, outputs: dict, masks_dir: str, heigh
     merged = np.zeros((height, width), dtype=np.uint8)
 
     if isinstance(outputs, dict):
-        for _, obj_out in outputs.items():
-            if not isinstance(obj_out, dict):
-                continue
-            m = obj_out.get("masks")
-            if m is None:
-                continue
-            if hasattr(m, "cpu"):
-                m = m.squeeze().cpu().numpy()
-            cur = (m > 0.5).astype(np.uint8) * 255
-            merged = np.maximum(merged, cur)
+        if "out_obj_ids" in outputs and "out_binary_masks" in outputs:
+            obj_ids = outputs["out_obj_ids"]
+            masks = outputs["out_binary_masks"]
+            if hasattr(obj_ids, "tolist"):
+                obj_ids_list = obj_ids.tolist()
+            else:
+                obj_ids_list = list(obj_ids)
+            
+            for idx, obj_id in enumerate(obj_ids_list):
+                m = masks[idx]
+                if hasattr(m, "cpu"):
+                    m = m.squeeze().cpu().numpy()
+                else:
+                    m = np.squeeze(m)
+                
+                if m.shape != (height, width):
+                    try:
+                        import cv2
+                        m = cv2.resize(m.astype(np.float32), (width, height), interpolation=cv2.INTER_NEAREST)
+                    except ImportError:
+                        m_pil = Image.fromarray(m.astype(np.uint8)).resize((width, height), resample=Image.NEAREST)
+                        m = np.array(m_pil)
+                
+                cur = (m > 0.5).astype(np.uint8) * 255
+                merged = np.maximum(merged, cur)
+        else:
+            for _, obj_out in outputs.items():
+                if not isinstance(obj_out, dict):
+                    continue
+                m = obj_out.get("masks")
+                if m is None:
+                    continue
+                if hasattr(m, "cpu"):
+                    m = m.squeeze().cpu().numpy()
+                
+                if m.shape != (height, width):
+                    try:
+                        import cv2
+                        m = cv2.resize(m.astype(np.float32), (width, height), interpolation=cv2.INTER_NEAREST)
+                    except ImportError:
+                        m_pil = Image.fromarray(m.astype(np.uint8)).resize((width, height), resample=Image.NEAREST)
+                        m = np.array(m_pil)
+                
+                cur = (m > 0.5).astype(np.uint8) * 255
+                merged = np.maximum(merged, cur)
 
     Image.fromarray(merged).save(os.path.join(masks_dir, f"frame_{frame_idx:05d}_obj_001.png"))
     return int(np.count_nonzero(merged) > 0)
@@ -189,7 +228,7 @@ def main() -> int:
     parser.add_argument("--raw-dir", default="/data/01_raw", type=str)
     parser.add_argument("--frames-dir", default="/data/02_frames", type=str)
     parser.add_argument("--masks-dir", default="/data/03_masks", type=str)
-    parser.add_argument("--frame-max-side", default=int(os.environ.get("SAM3_FRAME_MAX_SIDE", "960")), type=int)
+    parser.add_argument("--frame-max-side", default=int(os.environ.get("SAM3_FRAME_MAX_SIDE", "768")), type=int)
     parser.add_argument("--threshold", default=float(os.environ.get("SAM3_DETECTION_THRESHOLD", "0.5")), type=float)
     args = parser.parse_args()
 
@@ -231,6 +270,33 @@ def main() -> int:
         use_fa3=False,
         use_rope_real=False,
     )
+
+    # Inject memory constraints to prevent OOM on 16GB GPUs
+    try:
+        inner_predictor = predictor.predictor if hasattr(predictor, "predictor") else predictor
+        if hasattr(inner_predictor, "model"):
+            inference_model = inner_predictor.model
+            if hasattr(inference_model, "clear_non_cond_mem_around_input"):
+                # Disable to avoid AssertionError in newer multiplex models
+                inference_model.clear_non_cond_mem_around_input = True
+                print("Dynamisch gesetzt: clear_non_cond_mem_around_input = True")
+            if hasattr(inference_model, "tracker") and hasattr(inference_model.tracker, "max_cond_frames_in_attn"):
+                # Commented out to prevent AssertionError: pos_pred_mask.shape[0] == 1
+                # inference_model.tracker.max_cond_frames_in_attn = 2
+                print("Max conditioning frames left at default to avoid AssertionError")
+            
+            # Reduce video grounding batch size to prevent VRAM spikes during text matching
+            inference_model.use_batched_grounding = True
+            inference_model.batched_grounding_batch_size = 1
+            print("Dynamisch gesetzt: batched_grounding_batch_size = 1")
+            
+            if hasattr(inference_model, "detector"):
+                det = inference_model.detector
+                det.use_batched_grounding = True
+                det.batched_grounding_batch_size = 1
+                print("Dynamisch gesetzt: detector batched_grounding_batch_size = 1")
+    except Exception as e:
+        print(f"Warning: Could not set memory bounds dynamically: {e}")
 
     session_id = None
     selected_prompt = None
@@ -300,7 +366,7 @@ def main() -> int:
                 finally:
                     if hasattr(stream_obj, "close"):
                         stream_obj.close()
-                selected_nonempty_frames = local_nonempty
+                selected_nonempty_frames += local_nonempty
 
             for prompt_text in prompts_to_try:
                 if fatal_cuda_state:
@@ -346,9 +412,11 @@ def main() -> int:
                         processed_frames,
                     )
                 except RuntimeError as prompt_err:
+                    import traceback
+                    traceback.print_exc()
                     msg = str(prompt_err)
                     if "out of memory" in msg.lower():
-                        print("Warnung: CUDA OOM im Full-Mode fuer diesen Prompt.")
+                        print(f"Warnung: CUDA OOM im Full-Mode fuer diesen Prompt: {prompt_err}")
                         if torch.cuda.is_available():
                             torch.cuda.empty_cache()
                         fatal_cuda_state = True
@@ -443,9 +511,11 @@ def main() -> int:
                         processed_frames,
                     )
                 except RuntimeError as point_err:
+                    import traceback
+                    traceback.print_exc()
                     msg = str(point_err)
                     if "out of memory" in msg.lower():
-                        print("Warnung: CUDA OOM im Point-Fallback.")
+                        print(f"Warnung: CUDA OOM im Point-Fallback: {point_err}")
                         if torch.cuda.is_available():
                             torch.cuda.empty_cache()
                     elif "No prompts are received" in msg:
