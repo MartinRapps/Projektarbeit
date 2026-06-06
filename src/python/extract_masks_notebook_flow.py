@@ -23,30 +23,33 @@ def find_input_video(raw_dir: str) -> str:
     return video_files[0]
 
 
-def extract_frames(video_path: str, out_dir: str, max_side: int) -> int:
+def extract_frames(video_path: str, out_dir: str, max_side: int, frame_step: int = 1) -> int:
     os.makedirs(out_dir, exist_ok=True)
     cap = cv2.VideoCapture(video_path)
     frame_idx = 0
+    saved_idx = 0
 
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
-        if max_side > 0:
-            h, w = frame.shape[:2]
-            longest = max(h, w)
-            if longest > max_side:
-                scale = max_side / float(longest)
-                nw = max(1, int(round(w * scale)))
-                nh = max(1, int(round(h * scale)))
-                frame = cv2.resize(frame, (nw, nh), interpolation=cv2.INTER_AREA)
+        if frame_idx % frame_step == 0:
+            if max_side > 0:
+                h, w = frame.shape[:2]
+                longest = max(h, w)
+                if longest > max_side:
+                    scale = max_side / float(longest)
+                    nw = max(1, int(round(w * scale)))
+                    nh = max(1, int(round(h * scale)))
+                    frame = cv2.resize(frame, (nw, nh), interpolation=cv2.INTER_AREA)
 
-        cv2.imwrite(os.path.join(out_dir, f"{frame_idx:05d}.jpg"), frame)
+            cv2.imwrite(os.path.join(out_dir, f"{saved_idx:05d}.jpg"), frame)
+            saved_idx += 1
         frame_idx += 1
 
     cap.release()
-    return frame_idx
+    return saved_idx
 
 
 def write_mask_from_outputs(frame_idx: int, outputs: dict, masks_dir: str, height: int, width: int) -> int:
@@ -224,11 +227,12 @@ def patch_offload_state_bug_if_needed(predictor):
 def main() -> int:
     parser = argparse.ArgumentParser(description="SAM3.1 notebook-style video mask extraction")
     parser.add_argument("--prompt", required=True, type=str)
-    parser.add_argument("--input-mode", choices=["auto", "image", "video"], default="auto", type=str)
+    parser.add_argument("--input-mode", choices=["auto", "image", "video"], default="video", type=str)
     parser.add_argument("--raw-dir", default="/data/01_raw", type=str)
     parser.add_argument("--frames-dir", default="/data/02_frames", type=str)
     parser.add_argument("--masks-dir", default="/data/03_masks", type=str)
     parser.add_argument("--frame-max-side", default=int(os.environ.get("SAM3_FRAME_MAX_SIDE", "768")), type=int)
+    parser.add_argument("--frame-step", default=int(os.environ.get("SAM3_FRAME_STEP", "1")), type=int)
     parser.add_argument("--threshold", default=float(os.environ.get("SAM3_DETECTION_THRESHOLD", "0.5")), type=float)
     args = parser.parse_args()
 
@@ -249,7 +253,7 @@ def main() -> int:
     video_path = find_input_video(args.raw_dir)
     print(f"Input video: {video_path}")
 
-    num_frames = extract_frames(video_path, args.frames_dir, args.frame_max_side)
+    num_frames = extract_frames(video_path, args.frames_dir, args.frame_max_side, args.frame_step)
     if num_frames <= 0:
         raise RuntimeError("No frames extracted from input video")
 
@@ -554,6 +558,43 @@ def main() -> int:
     print(f"Masken in {args.masks_dir} geschrieben.")
     print(f"Ausgewaehlter Prompt: {selected_prompt}")
     print(f"Frames gesamt: {num_frames}, nicht-leere Masken: {selected_nonempty_frames}")
+
+    # Hierarchische STS-Maskengenerierung: Erzeuge small.png, middle.png, default.png
+    print("\n=== Starte Generierung der hierarchischen STS-Masken ===")
+    kernel_size = 5
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
+
+    # Schleife über alle Frames
+    for i in range(num_frames):
+        # Bestimme den Pfad der flat Maske im masks_dir
+        flat_mask_path = os.path.join(args.masks_dir, f"frame_{i:05d}_obj_001.png")
+        
+        # Erstelle den dedizierten Unterordner pro Frame für STS
+        frame_folder = os.path.join(args.masks_dir, f"frame_{i:05d}")
+        os.makedirs(frame_folder, exist_ok=True)
+        
+        # Lese die flache Maske ein
+        if os.path.exists(flat_mask_path):
+            mask_uint8 = cv2.imread(flat_mask_path, cv2.IMREAD_GRAYSCALE)
+        else:
+            # Sicherheits-Fallback falls Datei nicht existiert: Erzeuge leere Maske
+            mask_uint8 = np.zeros((frame_h, frame_w), dtype=np.uint8)
+            
+        if mask_uint8 is None:
+            mask_uint8 = np.zeros((frame_h, frame_w), dtype=np.uint8)
+
+        # 1. middle.png: Original-Maske
+        cv2.imwrite(os.path.join(frame_folder, "middle.png"), mask_uint8)
+        
+        # 2. small.png: Erodiert (sicherer Objektkern)
+        mask_small = cv2.erode(mask_uint8, kernel, iterations=1)
+        cv2.imwrite(os.path.join(frame_folder, "small.png"), mask_small)
+        
+        # 3. default.png: Dilatiert (erweiterter Sicherheitsrand)
+        mask_default = cv2.dilate(mask_uint8, kernel, iterations=1)
+        cv2.imwrite(os.path.join(frame_folder, "default.png"), mask_default)
+
+    print("Hierarchische STS-Maskensätze (small, middle, default) wurden erfolgreich erstellt.")
 
     if selected_nonempty_frames == 0:
         print("Warnung: Prompt wurde verarbeitet, aber es wurden keine nicht-leeren Masken gefunden.")

@@ -368,17 +368,20 @@ Aufgrund der massiven Architekturänderungen (Einführung von GLOMAP) in Release
 \end{itemize}
 
 \textbf{Ausführung \& PLY-Export (für CloudCompare):}\\
-Da COLMAP die Punktwolke standardmäßig in einem proprietären Binärformat (\texttt{.bin}) speichert, welches von CloudCompare nicht direkt gelesen werden kann, wird die Punktwolke direkt im Anschluss an die Rekonstruktion über den \texttt{model\_converter} in eine standardisierte \texttt{.ply}-Datei exportiert.
+Da COLMAP die Punktwolke standardmäßig in einem proprietären Binärformat (\texttt{.bin}) speichert, welches von CloudCompare nicht direkt gelesen werden kann, wird die Punktwolke direkt im Anschluss an die Rekonstruktion über den \texttt{model\_converter} in eine standardisierte \texttt{.ply}-Datei exportiert. Um eine geometrische Verformung der Punktwolke (ebene Entartung/Kollaps) während der Rekonstruktion unkalibrierter Drohnenbilder zu verhindern, wird die Parametrisierung basierend auf modernsten Photogrammetrie-Workflows angepasst (\texttt{SIMPLE\_RADIAL} Kameramodell, erzwungenes gemeinsames Objektiv via \texttt{single\_camera 1} und sequentielles Matching).
 
 \begin{verbatim}
-# 1. Feature-Extraktion
+# 1. Feature-Extraktion (Kameramodell einschränken & gleiches Objektiv forcieren)
 colmap feature_extractor \
     --database_path /data/scene/database.db \
-    --image_path /data/scene/images
+    --image_path /data/scene/images \
+    --ImageReader.camera_model SIMPLE_RADIAL \
+    --ImageReader.single_camera 1
 
-# 2. Keypoint-Matching
-colmap exhaustive_matcher \
-    --database_path /data/scene/database.db
+# 2. Keypoint-Matching (Sequentiell mit Overlap statt Exhaustive für Videoüberhang)
+colmap sequential_matcher \
+    --database_path /data/scene/database.db \
+    --SequentialMatching.overlap 15
 
 # 3. Structure-from-Motion (Sparse Reconstruction)
 mkdir -p /data/scene/sparse
@@ -390,9 +393,18 @@ colmap mapper \
 # 4. Export der Punktwolke als PLY-Format
 colmap model_converter \
     --input_path /data/scene/sparse/0 \
-    --output_path /data/scene/sparse/0/points3D.ply \
+    --output_path /data/scene/sparse/points3D.ply \
     --output_type PLY
 \end{verbatim}
+
+\textbf{Hintergrund zur mathematischen Optimierung (für „Dummis“ erklärt):}\\
+Wenn wir ein Drohnenvideo Frame-für-Frame in COLMAP einspeisen, stehen wir vor zwei massiven mathematischen Hürden:
+\begin{enumerate}[noitemsep]
+    \item \textbf{Die Overfitting-Falle (Zu viele Freiheitsgrade):} Wenn wir COLMAP ein extrem komplexes Kameramodell (wie \texttt{OPENCV}) geben, versucht der Algorithmus, für jedes der hunderte Bilder Brennweiten und Objektivkrümmungen völlig unabhängig voneinander zu schätzen. Das führt zu einer geometrischen Katastrophe: COLMAP „schummelt“ mathematisch, verbiegt die Parameter extrem und presst die gesamte 3D-Welt flach wie eine Flunder auf eine einzige Ebene zusammen, um Restfehler zu minimieren. Mit \texttt{SIMPLE\_RADIAL} verbieten wir diese Schummelei, indem wir nur noch vier physikalische Kern-Parameter zulassen. Gleichzeitig zentrieren wir über \texttt{--ImageReader.single_camera 1} alle Rechnungen auf genau \textit{ein} einziges, geteiltes Objektiv.
+    \item \textbf{Die Basislinien-Falle (Fast-parallele Sehstrahlen):} Wenn zwei aufeinanderfolgende Bilder nur Millisekunden auseinander liegen, bewegt sich die Drohne kaum fort. Die Sehstrahlen der Kameras schneiden sich unter einem extrem spitzen Winkel ($0^\circ$). COLMAP kann die Tiefe dadurch nicht verlässlich berechnen und flacht die Punktwolke ab. Indem wir über \texttt{SAM3_FRAME_STEP} künstlich nur jedes z.\,B. 5. oder 10. Bild rekonstruieren, vergrößern wir den physischen Abstand (die Basislinie) zwischen den Kamera-Standorten. Dadurch schneiden sich die Sehstrahlen in einem gesunden, steilen Dreieck und zaubern eine plastische, tiefe, dreidimensionale 3D-Struktur hervor.
+    \item \textbf{Die Treffsicherheits-Falle (Falsche Übereinstimmungen):} Das standardmäßige \texttt{exhaustive\_matcher} vergleicht jedes Bild mit absolut jedem anderen Bild. Bei sich wiederholenden Texturen (z.\,B. Gleisen, Rohren oder Asphaltmustern) führt das zu fatalen Fehlverknüpfungen (False Loop Closures). Indem wir auf den \texttt{sequential\_matcher} mit einem Overlap von 15 Frames umschalten, vergleicht COLMAP Bilder nur noch mit ihren unmittelbaren zeitlichen Nachbarn (im Video naheliegend). Das ist nicht nur hunderte Male schneller, sondern schützt die 3D-Punktwolke hochgradig effektiv vor geometrischer Verwerfung.
+    \item \textbf{Die CLI-Versions-Falle (Veraltete Befehle):} Beim Upgrade auf modernere, offizielle Docker-Images (wie \texttt{colmap/colmap:latest} ab Version \texttt{4.0}) scheitern klassische, ältere Skripte an deprecated Parametern. Parameter wie \texttt{--SiftExtraction.use_gpu} oder \texttt{--SiftExtraction.max_image_size} wurden aus dem CLI-Befehlssatz gestrichen, da die moderne CUDA-Hardware-Beschleunigung und das Auto-Resizing heute vollautomatisch und optimal aufeinander abgestimmt nativ im Kernel von COLMAP implementiert sind. Das Entfernen dieser Parameter garantiert die reibungslose Ausführung auf modernen GPGPU-Knoten.
+\end{enumerate}
 
 \textit{Breakpoint:} Nach diesem Schritt pausiert das Master-Skript automatisch. Die erzeugte Datei \texttt{points3D.ply} wird auf dem Host-System in CloudCompare geladen, um die manuelle Georeferenzierung via GCP-Point-Picking durchzuführen. Nach dem Speichern der Transformationsmatrix wird das Skript fortgesetzt.
 

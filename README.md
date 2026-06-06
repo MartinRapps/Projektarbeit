@@ -32,6 +32,12 @@ chmod +x run_pipeline.sh
 ./run_pipeline.sh
 ```
 
+If you have already processed the video, extracted SAM 3.1 masks, and computed the COLMAP camera poses, you can bypass the early stages and run the pipeline specifically starting from Segment-then-Splat (STS) onwards:
+```bash
+chmod +x run_from_sts.sh
+./run_from_sts.sh
+```
+
 ---
 
 ## Directory Reference

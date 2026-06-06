@@ -14,7 +14,8 @@
 \usepackage{lmodern}
 \usepackage{microtype}
 \usepackage{csquotes}
-\usepackage[ngerman]{babel}
+\usepackage[provide=*]{babel}
+\babelprovide[import=de, main]{de}
 \usepackage{subcaption} % modern alternative to subfigure
 \usepackage[pdftex]{graphicx}
 \usepackage[hidelinks]{hyperref}
@@ -32,8 +33,8 @@
 \usepackage{longtable}
 \usepackage{setspace}
 \usepackage{booktabs}
-\usepackage[style=ieee,backend=biber,sorting=none]{biblatex}
-\bibliography{literatur}
+\usepackage[numbers,sort&compress]{natbib}
+\bibliographystyle{ieeetr}
 \usepackage[htt]{hyphenat} % texttt do line breaks
 \usepackage{tabularx}
 \usepackage{multirow}
@@ -320,7 +321,7 @@ Ein zentrales Ergebnis der technischen Evaluation ist, dass Container A nicht me
 \cleardoublepage
 \phantomsection
 \addcontentsline{toc}{chapter}{Literatur}
-\printbibliography
+\bibliography{../Vorlage/Portfolio_Ausarbeitung/Review_Version/literatur}
 
 %%%%%%%%%%%%%%%%%%%
 %% declaration on oath

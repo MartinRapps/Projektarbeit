@@ -11,11 +11,13 @@ echo "1. Feature extraction..."
 colmap feature_extractor \
     --database_path $WORKSPACE_PATH/database.db \
     --image_path $IMAGE_PATH \
-    --ImageReader.camera_model OPENCV
+    --ImageReader.camera_model SIMPLE_PINHOLE \
+    --ImageReader.single_camera 1
 
-echo "2. Feature matching..."
-colmap exhaustive_matcher \
-    --database_path $WORKSPACE_PATH/database.db
+echo "2. Feature matching (Sequential)..."
+colmap sequential_matcher \
+    --database_path $WORKSPACE_PATH/database.db \
+    --SequentialMatching.overlap 15
 
 echo "3. Mapper..."
 mkdir -p $WORKSPACE_PATH/sparse
@@ -23,5 +25,18 @@ colmap mapper \
     --database_path $WORKSPACE_PATH/database.db \
     --image_path $IMAGE_PATH \
     --output_path $WORKSPACE_PATH/sparse
+
+echo "4. Export point cloud to PLY..."
+if [ -d "$WORKSPACE_PATH/sparse/0" ]; then
+    colmap model_converter \
+        --input_path $WORKSPACE_PATH/sparse/0 \
+        --output_path $WORKSPACE_PATH/points3D.ply \
+        --output_type PLY
+else
+    colmap model_converter \
+        --input_path $WORKSPACE_PATH/sparse \
+        --output_path $WORKSPACE_PATH/points3D.ply \
+        --output_type PLY
+fi
 
 echo "COLMAP SfM completed."

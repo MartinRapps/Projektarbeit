@@ -580,4 +580,46 @@ Eine unabh\"angige Machbarkeitspr\"ufung best\"atigt f\"ur dieses Forschungsdesi
     \item \textbf{Survey:} He et al. (2025) als Grundlage f\"ur SotA-Kapitel (50+ Methoden).
 \end{enumerate}
 
+% ============================================================
+\section{13. Technische Erkenntnisse der Prototyp-Implementierung (Stand Juni 2026)}
+
+W\"ahrend der praktischen Aufsetzung der Pipeline-Container und der ersten Testl\"aufe wurden entscheidende technische Erkenntnisse gewonnen, die als wertvolle Arbeitsgrundlage f\"ur die Bachelorarbeit dienen:
+
+\subsection{A. Container-Kompatibilit\"at und CUDA-Gegen\"uberstellung}
+\begin{itemize}
+    \item \textbf{Problem:} Die Integration von SAM 3.1, COLMAP, STS-Training (mit custom CUDA autograd-backprop) und SuGaR in eine einzige Docker-Umgebung scheitert an inkompatiblen Abh\"angigkeiten.
+    \item \textbf{Erkenntnis:} Eine Service-Orientierung ist unverzichtbar.
+    \begin{enumerate}
+        \item \texttt{sam3-preprocess} l\"auft optimal mit modernem \textbf{PyTorch (CUDA 12.6)} und Python 3.12, um die C++ optimierten \texttt{sam3\_cu} Extensions fehlerfrei zu binden.
+        \item \texttt{sts-training} ben\"otigt \textbf{CUDA 12.1} (PyTorch 2.3.1), um die CUDA-Submodule \texttt{depth-diff-gaussian-rasterization} und \texttt{simple-knn} ohne Build-Isolation (\texttt{--no-build-isolation}) stabil kompilieren zu k\"onnen.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{B. Behebung des Nerfstudio-Abh\"angigkeitskonflikts}
+\begin{itemize}
+    \item \textbf{Problem:} Die Installation von \textit{nerfstudio} mit dem Parameter \texttt{--no-deps} (um Versionskonflikte bei tiefen CUDA-Ressourcen zu umgehen) f\"uhrt bei der Ausführung des COLMAP-Datenimports (\texttt{object\_specific\_initialization.py}) zu wiederholten \texttt{ModuleNotFoundError} (z.\,B. \textit{appdirs}, \textit{rich}, \textit{tyro}, \textit{matplotlib}, \textit{scikit-image}, \textit{rawpy}, \textit{viser}).
+    \item \textbf{Erkenntnis:} Diese Kernbibliotheken m\"ussen explizit vor \textit{nerfstudio} in Container C installiert werden. Das Dockerfile wurde robust angepasst.
+\end{itemize}
+
+\subsection{C. Hierarchische Masken-Generierung (Vorder-/Hintergrund-Trennung)}
+\begin{itemize}
+    \item \textbf{Design:} Segment-then-Splat (STS) erfordert zur Abgrenzung des Objekts vom umgebenden Trassensand eine hierarchische Maskenstruktur, bestehend aus drei Masken je Bildframe:
+    \begin{enumerate}
+        \item \texttt{middle.png}: Die urspr\"ungliche flache Maske aus dem SAM-3.1-Videotracking.
+        \item \texttt{small.png} (\textbf{Erosion}): Mittels eines $5\times5$ gro\ss{}en, rechteckigen Strukturelements (\texttt{cv2.MORPH\_RECT}) wird die Maske erodiert, um einen geometrisch absolut sicheren Kernbereich des Objekts zu markieren.
+        \item \texttt{default.png} (\textbf{Dilation}): Die Maske wird um 1 Iteration dilatiert, um einen gro\ss{}z\"ugigen \"au\ss{}eren Schutzbereich einzuschlie\ss{}en, der Fehlsplits am Objektrand verhindert.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{D. Python-G\"ultigkeitsbereich (Scope-Shadowing)}
+\begin{itemize}
+    \item \textbf{Problem:} Bei der nachtr\"aglichen Implementierung der morphologischen Transformationen kam es innerhalb des Vorverarbeitungsskripts \texttt{extract\_masks\_notebook_flow.py} zu einem \texttt{UnboundLocalError}.
+    \item \textbf{Erkenntnis:} Python stuft einen Bezeichner als lokal ein, wenn er an beliebiger Stelle in einer Funktion gebunden wird (z.\,B. lokaler Import \texttt{import cv2} am Ende der Funktion). Wenn dieser Name weiter oben gelesen wird (z.\,B. \texttt{cv2.imread} bei der Frame-Validierung am Anfang), st\"urzt die Ausf\"uhrung ab. Alle Imports m\"ussen zwingend auf globaler Ebene (Modul-Kopf) deklariert werden.
+\end{itemize}
+
+\subsection{E. One-Click Bypass (Runtime-Optimierung)}
+\begin{itemize}
+    \item \textbf{L\"osung:} Da das SAM-Videosegmentieren und die COLMAP-SfM-Bildeinmessung bei 4K-Drohnenmaterial extrem rechenintensiv sind, wurde ein Bypass-Skript (\texttt{run\_from\_sts.sh}) implementiert. Damit kann das 3D-Gaussian-Splatting-Training ab Schritt 3 unkompliziert mit bereits kalkulierten Zwischenergebnissen neu gestartet werden.
+\end{itemize}
+
 \end{document}

@@ -295,3 +295,32 @@ pip install numpy scipy
 5. **KI-Nutzung:** Copilot/ChatGPT/Claude für Code – Dokumentation gemäß PABA-Hinweise Kap. 3.5.
 6. **Hardware:** Eigene GPU oder Hochschul-Rechner / Cloud?
 7. **Centerline:** DGtal (C++) oder eigene Python-Reimplementierung?
+
+---
+
+## 11. Technische Erkenntnisse der Prototyp-Implementierung (Stand Juni 2026)
+
+Während der praktischen Aufsetzung der Pipeline-Container und der ersten Testläufe wurden entscheidende technische Erkenntnisse gewonnen, die als wertvolle Arbeitsgrundlage für die Bachelorarbeit dienen:
+
+### A. Container-Kompatibilität & CUDA-Gegenüberstellung
+* **Problem:** Die Integration von SAM 3.1, COLMAP, STS-Training (mit custom CUDA autograd-backprop) und SuGaR in eine einzige Docker-Umgebung scheitert an inkompatiblen Abhängigkeiten.
+* **Erkenntnis:** Eine Microservice-Separation ist unverzichtbar. 
+  1. `sam3-preprocess` läuft optimal mit modernem **PyTorch (CUDA 12.6)** und Python 3.12, um die C++ optimierten `sam3_cu` Extensions fehlerfrei zu binden.
+  2. `sts-training` benötigt **CUDA 12.1** (PyTorch 2.3.1), um die CUDA-Submodule `depth-diff-gaussian-rasterization` und `simple-knn` ohne Build-Isolation (`--no-build-isolation`) stabil kompilieren zu können.
+
+### B. Behebung des Nerfstudio-Abhängigkeitskonflikts
+* **Problem:** Die Installation von `nerfstudio` mit dem Parameter `--no-deps` (um Versionskonflikte bei tiefen CUDA-Ressourcen zu umgehen) führt bei der Ausführung des COLMAP-Datenimports (`object_specific_initialization.py`) zu wiederholten `ModuleNotFoundError` (z. B. `appdirs`, `rich`, `tyro`, `matplotlib`, `scikit-image`, `rawpy`, `viser`).
+* **Erkenntnis:** Diese Kernbibliotheken müssen explizit vor `nerfstudio` in Container C installiert werden. Das Dockerfile wurde dahingehend robust angepasst.
+
+### C. Hierarchische Masken-Generierung (Vorder-/Hintergrund-Trennung)
+* **Design:** Segment-then-Splat (STS) erfordert zur Abgrenzung des Objekts vom umgebenden Trassensand eine hierarchische Maskenstruktur, bestehend aus drei Masken je Bildframe:
+  1. `middle.png`: Die ursprüngliche flache Maske aus dem SAM-3.1-Videotracking.
+  2. `small.png` (**Erosion**): Mittels eines 5x5 großen, rechteckigen Strukturelements (`cv2.MORPH_RECT`) wird die Maske erodiert, um einen geometrisch absolut sicheren Kernbereich des Objekts zu markieren.
+  3. `default.png` (**Dilation**): Die Maske wird um 1 Iteration dilatiert, um einen großzügigen äußeren Schutzbereich einzuschließen, der Fehlsplits am Objektrand verhindert.
+
+### D. Python-Gültigkeitsbereich (Scope-Shadowing)
+* **Problem:** Bei der nachträglichen Implementierung der morphologischen Transformationen kam es innerhalb des Vorverarbeitungsskripts `extract_masks_notebook_flow.py` zu einem `UnboundLocalError`.
+* **Erkenntnis:** Python stuft einen Bezeichner als lokal ein, wenn er an beliebiger Stelle in einer Funktion gebunden wird (z. B. lokaler Import `import cv2` am Ende der Funktion). Wenn dieser Name weiter oben gelesen wird (z. B. `cv2.imread` bei der Frame-Validierung am Anfang), stürzt die Ausführung ab. Alle Imports müssen zwingend auf globaler Ebene (Modul-Kopf) deklariert werden.
+
+### E. One-Click Bypass (Runtime-Optimierung)
+* **Lösung:** Da das SAM-Videosegmentieren und die COLMAP-SfM-Bildeinmessung bei 4K-Drohnenmaterial extrem rechenintensiv sind, wurde ein Bypass-Skript (`run_from_sts.sh`) implementiert. Damit kann das 3D-Gaussian-Splatting-Training ab Schritt 3 unkompliziert mit bereits kalkulierten Zwischenergebnissen neu gestartet werden.
