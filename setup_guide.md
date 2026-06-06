@@ -177,6 +177,9 @@ Die Ausführung erfolgt über das Master-Skript [run_pipeline.sh](run_pipeline.s
    ./run_pipeline.sh
    ```
 
+> [!NOTE]
+> Das SAM-Preprocessing in [run_sam3.sh](run_sam3.sh) erkennt jetzt automatisch ein Bild aus `data/01_raw` (`.jpg`, `.jpeg`, `.png`) und nutzt dafür die SAM-3.1-Bildsegmentierung. Wenn stattdessen ein Video vorhanden ist, wird weiter der Video-Flow verwendet.
+
 #### 📌 Der manuelle Breakpoint (CloudCompare)
 Nach **Schritt 2 (SfM - COLMAP)** pausiert das Skript automatisch:
 1. 👤 **[BENUTZER]** Öffnen Sie **CloudCompare** auf Ihrem Windows-System.

@@ -80,6 +80,95 @@ def sanitize_prompt_for_dir(name: str) -> str:
     return clean or "prompt"
 
 
+def find_input_media(raw_dir: str, input_mode: str) -> tuple[str, str]:
+    image_files = sorted(
+        glob.glob(os.path.join(raw_dir, "*.jpg"))
+        + glob.glob(os.path.join(raw_dir, "*.jpeg"))
+        + glob.glob(os.path.join(raw_dir, "*.png"))
+    )
+    video_files = sorted(glob.glob(os.path.join(raw_dir, "*.mp4")) + glob.glob(os.path.join(raw_dir, "*.mov")))
+
+    if input_mode == "image":
+        if not image_files:
+            raise FileNotFoundError(f"No image found in {raw_dir}")
+        return "image", image_files[0]
+    if input_mode == "video":
+        if not video_files:
+            raise FileNotFoundError(f"No video found in {raw_dir}")
+        return "video", video_files[0]
+
+    if image_files:
+        return "image", image_files[0]
+    if video_files:
+        return "video", video_files[0]
+    raise FileNotFoundError(f"No supported media found in {raw_dir}")
+
+
+def bpe_vocab_path() -> str:
+    import sam3
+
+    return os.path.join(os.path.dirname(sam3.__file__), "assets", "bpe_simple_vocab_16e6.txt.gz")
+
+
+def mask_tensor_to_uint8(mask_tensor, height: int, width: int) -> np.ndarray:
+    if mask_tensor is None:
+        return np.zeros((height, width), dtype=np.uint8)
+
+    if hasattr(mask_tensor, "detach"):
+        mask_tensor = mask_tensor.detach()
+    if hasattr(mask_tensor, "cpu"):
+        mask_tensor = mask_tensor.cpu()
+
+    mask_array = np.asarray(mask_tensor)
+    if mask_array.size == 0:
+        return np.zeros((height, width), dtype=np.uint8)
+
+    if mask_array.ndim == 4:
+        mask_array = mask_array[:, 0, :, :]
+    if mask_array.ndim == 3:
+        mask_array = mask_array.max(axis=0)
+    if mask_array.ndim != 2:
+        return np.zeros((height, width), dtype=np.uint8)
+
+    return (mask_array > 0.5).astype(np.uint8) * 255
+
+
+def run_image_segmentation(image_path: str, args) -> int:
+    from sam3 import build_sam3_image_model
+    from sam3.model.sam3_image_processor import Sam3Processor
+
+    os.makedirs(args.frames_dir, exist_ok=True)
+    os.makedirs(args.masks_dir, exist_ok=True)
+
+    image = Image.open(image_path).convert("RGB")
+    frame_w, frame_h = image.size
+    image.save(os.path.join(args.frames_dir, "00000.jpg"))
+
+    print(f"Input image: {image_path}")
+    print(f"Using device: {'cuda' if torch.cuda.is_available() else 'cpu'}")
+
+    from sam3.model_builder import download_ckpt_from_hf
+    print("Lade SAM3.1 Checkpoint fuer Bildsegmentierung...")
+    ckpt_path = download_ckpt_from_hf(version="sam3.1")
+    model = build_sam3_image_model(checkpoint_path=ckpt_path, bpe_path=bpe_vocab_path())
+    processor = Sam3Processor(model, confidence_threshold=args.threshold)
+
+    autocast_ctx = torch.autocast(device_type="cuda", dtype=torch.bfloat16) if torch.cuda.is_available() else nullcontext()
+    with autocast_ctx:
+        state = processor.set_image(image)
+        state = processor.set_text_prompt(state=state, prompt=args.prompt)
+
+    mask = mask_tensor_to_uint8(state.get("masks"), frame_h, frame_w)
+    out_path = os.path.join(args.masks_dir, "frame_00000_obj_001.png")
+    Image.fromarray(mask).save(out_path)
+
+    nonempty_frames = int(np.count_nonzero(mask) > 0)
+    print(f"Image mask written to {out_path}")
+    if nonempty_frames == 0:
+        print("Warnung: Der Bild-Prompt erzeugte keine nicht-leere Maske.")
+    return 0
+
+
 def patch_offload_state_bug_if_needed(predictor):
     if not hasattr(predictor, "model") or not hasattr(predictor.model, "init_state"):
         return
@@ -96,6 +185,7 @@ def patch_offload_state_bug_if_needed(predictor):
 def main() -> int:
     parser = argparse.ArgumentParser(description="SAM3.1 notebook-style video mask extraction")
     parser.add_argument("--prompt", required=True, type=str)
+    parser.add_argument("--input-mode", choices=["auto", "image", "video"], default="auto", type=str)
     parser.add_argument("--raw-dir", default="/data/01_raw", type=str)
     parser.add_argument("--frames-dir", default="/data/02_frames", type=str)
     parser.add_argument("--masks-dir", default="/data/03_masks", type=str)
@@ -107,6 +197,10 @@ def main() -> int:
     if hf_token:
         print("HF_TOKEN gefunden. Logge bei HuggingFace ein...")
         login(token=hf_token)
+
+    media_kind, media_path = find_input_media(args.raw_dir, args.input_mode)
+    if media_kind == "image":
+        return run_image_segmentation(media_path, args)
 
     from sam3.model_builder import build_sam3_multiplex_video_predictor, download_ckpt_from_hf
 

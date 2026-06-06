@@ -26,6 +26,6 @@ read -p "Geben Sie den Begriff ein, der maskiert werden soll (z.B. 'cable', 'pip
 
 echo "Starte SAM 3.1 Container..."
 echo "Prüfe HuggingFace Identität im Container (sollte deinen HF Benutzernamen anzeigen):"
-docker compose run --rm sam3-preprocess huggingface-cli whoami || echo "FEHLER: Der Token ist ungültig oder hat keine Lese-Rechte."
+docker compose run --rm sam3-preprocess hf auth whoami || echo "FEHLER: Der Token ist ungültig oder hat keine Lese-Rechte."
 
 docker compose run --rm sam3-preprocess python3 /app/src/python/extract_masks_notebook_flow.py --prompt "$TEXT_PROMPT"
