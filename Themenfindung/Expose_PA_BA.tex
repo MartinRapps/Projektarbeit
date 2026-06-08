@@ -64,7 +64,8 @@ Um die Automatisierung zu maximieren, wird die Pipeline über ein zentrales Mast
     \item \textbf{Container A (Vorverarbeitung):} Beinhaltet PyTorch 2.x und SAM 3. Benötigt das Nvidia Container Toolkit (CUDA >= 12.6).
     \item \textbf{Container B (SfM):} Ein offizielles NVIDIA-Image für COLMAP (CUDA 11.8 oder 12.1). \textit{Nach Ausführung dieses Containers pausiert das Master-Skript automatisch (Breakpoint). Der Nutzer öffnet CloudCompare auf dem Host-System, pickt die GCPs und speichert die Transformationsmatrix. Anschließend wird das Skript mit ``Enter'' fortgesetzt.}
     \item \textbf{Container C (Object-specific 3DGS):} Beinhaltet Segment-then-Splat (STS). Empfängt die SAM 3 Masken und die COLMAP-Kameraposen und führt das objektspezifische 3DGS-Training mit dem nativen Object-specific Loss ($\mathcal{L}_{obj}$) durch. Benötigt CUDA 12.1 (PyTorch 2.3.1). SAM 3 ersetzt hierbei das intern vorgesehene AutoSeg-SAM2 als Masken-Frontend.
-    \item \textbf{Container D (Meshing):} Beinhaltet SuGaR. Lädt den vortrainierten STS-Checkpoint und wendet die geometrische Regularisierung (DN-Consistency) sowie Poisson Surface Reconstruction an. Wegen tiefer Abhängigkeiten zum \texttt{diff-gaussian-rasterization} Modul wird hier strikt CUDA 11.8 erzwungen. Das intern geforderte Conda-Environment wird systemweit über eine Anpassung der \texttt{ENV PATH} Variable im Dockerfile nativ zugänglich gemacht.
+    \item \textbf{Zwischenschritt 3.5 (Kabel-Isolierung):} Ein dediziertes Python-Skript \texttt{filter\_cable\_pc.py} filtert die dichte STS 3D-Punktwolke direkt vor der Übergabe an das Meshing-Tool. Es extrahiert gezielt die Kabel-Vordergrund-Splats (Standardwert auf mittlerer Ebene \texttt{obj\_id\_m == 1}) und verwirft alle Hintergrundpunkte, um SuGaR-Artefakte (schwarze Floating-Wolken) drastisch zu reduzieren.
+    \item \textbf{Container D (Meshing):} Beinhaltet SuGaR. Lädt den gefilterten, isolierten Kabel-Checkpoint und wendet die geometrische Regularisierung (DN-Consistency) sowie Poisson Surface Reconstruction an. Wegen tiefer Abhängigkeiten zum \texttt{diff-gaussian-rasterization} Modul wird hier strikt CUDA 11.8 erzwungen. Das intern geforderte Conda-Environment wird systemweit über eine Anpassung der \texttt{ENV PATH} Variable im Dockerfile nativ zugänglich gemacht.
     \item \textbf{Container E (Post-Processing):} Ein reiner \textbf{CPU-Container} (ohne GPU/CUDA-Abhängigkeit). Beinhaltet die C++ Bibliothek DGtal sowie die GDAL-Tools (\texttt{ogr2ogr}). Durch die Auslagerung dieser CPU-basierten Nachbearbeitung in einen eigenen Microservice bleibt die Architektur extrem leichtgewichtig, da keine massiven Nvidia-Images geladen werden müssen.
 \end{itemize}
 
@@ -534,6 +535,23 @@ RUN git clone https://github.com/Anttwo/SuGaR.git && \
 # Conda-Umgebung im PATH systemweit als Standard setzen
 ENV PATH=/opt/conda/envs/sugar/bin:$PATH
 \end{verbatim}
+
+\textbf{Details zur Build-Dauer und Kompilierungskomplexität (Container D):}\\
+In der praktischen Umsetzung stellte der Docker-Build für SuGaR eine signifikante Hürde dar, die mehrere Optimierungszyklen erforderte:
+\begin{enumerate}[noitemsep]
+    \item \textbf{Explizite CUDA-Architektur-Spezifikation (\texttt{TORCH\_CUDA\_ARCH\_LIST}):} Um die Ausführbarkeit auf einer breiten Hardwarelandschaft (z.\,B. RTX 30er, 40er, Server-GPUs) abzusichern, mussten mehrere CUDA-Architekturen (\texttt{"7.0;7.5;8.0;8.6;8.9;9.0"}) explizit beim Build hinterlegt werden. Der NVCC-Compiler kompiliert die C++ Extensions von \texttt{diff-gaussian-rasterization} und \texttt{simple-knn} für jede Architektur einzeln, was die Kompilierungszeit erheblich verlängert.
+    \item \textbf{Conda-Umgebung und Build-Isolation (\texttt{-{}-no-build-isolation}):} Standardmäßig isoliert \texttt{pip} Builds in temporären virtuellen Umgebungen. Weil darin jedoch kein Zugriff auf die installierten PyTorch- und CUDA-Laufzeitbibliotheken von Conda besteht, kommt es zu fatalen Kompilierungsabbrüchen (z.\,B. bzgl. fehlender \texttt{torch}-Vektoren). Erst durch Hinzufügen von \texttt{-{}-no-build-isolation} greift der Build-Prozess direkt auf den vorkonfigurierten Conda-Compiler-Stack zu.
+    \item \textbf{Parallelisierung via \texttt{ninja-build}:} Ohne eine parallele Kompilierungssteuerung fallen manche Python-Installer auf serielle Single-Thread-Kompilierung zurück, was zu extremen Timeouts oder Speicherüberläufen führt. Das Vorinstallieren des systemweiten Compilers \texttt{ninja-build} im Docker-Base-Image ermöglichte hierbei die maximal parallele Lastverteilung auf alle CPU-Kerne.
+\end{enumerate}
+
+\textbf{Automatisierte Punktwolkenfilterung zur Rauschminimierung (\texttt{filter\_cable\_pc.py}):}\\
+Ein schwerwiegender konzeptioneller Fehler bei der direkten Rekonstruktion mittels SuGaR ist die unkontrollierte Generierung von Hintergrund-Splats. SuGaR besitzt keine eingebaute Logik, Hintergrundbereiche zu verwerfen -- ohne Filter arbeitet der Algorithmus an einer dichten Punktwolke des gesamten Raumes. Ein eigens implementiertes Python-Hilfsprogramm \texttt{filter\_cable\_pc.py} wurde als Bindeglied (Scheduler Schritt 3.5) zwischen Phase 3 und Phase 4 geschaltet:
+\begin{itemize}[noitemsep]
+    \item \textbf{Funktionsweise:} Das Skript parst den binären PLY-Header des STS-Outputs und liest die Segmentierungs-Vektoren aus. Zu jedem 3D-Gaussian existieren die durch STS zugewiesenen Objektspalten (\texttt{obj\_id\_s}, \texttt{obj\_id\_m}, \texttt{obj\_id\_l}). 
+    \item \textbf{Selektive Extraktion:} Über das Argument \texttt{-{}-level m} und \texttt{-{}-object\_id 1} wählt das Skript gezielt nur die Datenzeilen aus, die der mittleren Kategorie der Kabeltrasse entsprechen (Kabel = ID 1, Hintergrund = ID 0). Alle unkorrelierten Raumpunkte werden vollständig aus den Vektormatrizen gelöscht.
+    \item \textbf{Fallback-Mechanismus:} Code-Fehler oder leere Segmente fängt das Skript über einen automatischen Fallback-Prüfschritt ab. Sollte das gefilterte Segment exakt 0 Punkte liefern (z.\,B. durch vertauschte Klassenindizes im Trainingslauf), greift die Logik selbstständig auf alle nicht-leeren Masken zurück oder reicht die Originalpunktwolke durch, um ein Abbrechen der Pipeline im Batch-Lauf zu verhindern.
+\end{itemize}
+Durch diesen Filter-Lauf wird verhindert, dass SuGaR Millionen ungenutzter schwarzer Gaussians (sog. \textit{Floating Artifacts}) in den leeren Raum außerhalb des Kabelgrabens hineinrechnet.
 
 \textbf{Wichtige Best-Practices \& Parameter-Tuning (SuGaR):}\\
 Für qualitativ hochwertige Rekonstruktionen (insb. dünne Kabelstrukturen) sind folgende Parameter entscheidend (siehe \href{https://github.com/Anttwo/SuGaR}{SuGaR Tips}):

@@ -5,6 +5,7 @@ services:
       context: .
       dockerfile: ./docker/container-a-sam3/Dockerfile
     container_name: sam3_preprocess
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     gpus: all
     environment:
       - HF_TOKEN=${HF_TOKEN:-}
@@ -33,6 +34,7 @@ services:
       context: .
       dockerfile: ./docker/container-b-colmap/Dockerfile
     container_name: colmap_sfm
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     gpus: all
     volumes:
       - ./data:/data
@@ -51,6 +53,7 @@ services:
       context: .
       dockerfile: ./docker/container-c-sts/Dockerfile
     container_name: sts_training
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     gpus: all
     volumes:
       - ./data:/data
@@ -69,6 +72,7 @@ services:
       context: .
       dockerfile: ./docker/container-d-sugar/Dockerfile
     container_name: sugar_meshing
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     gpus: all
     volumes:
       - ./data:/data
@@ -87,6 +91,7 @@ services:
       context: .
       dockerfile: ./docker/container-e-postprocess/Dockerfile
     container_name: post_processing
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./data:/data
       - ./src:/app/src

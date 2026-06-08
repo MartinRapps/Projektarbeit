@@ -146,6 +146,15 @@ def find_input_media(raw_dir: str, input_mode: str) -> tuple[str, str]:
     raise FileNotFoundError(f"No supported media found in {raw_dir}")
 
 
+def infer_media_kind_from_path(media_path: str) -> str:
+    lower_path = media_path.lower()
+    if lower_path.endswith((".jpg", ".jpeg", ".png")):
+        return "image"
+    if lower_path.endswith((".mp4", ".mov")):
+        return "video"
+    raise ValueError(f"Unsupported media extension for input path: {media_path}")
+
+
 def bpe_vocab_path() -> str:
     import sam3
 
@@ -228,6 +237,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="SAM3.1 notebook-style video mask extraction")
     parser.add_argument("--prompt", required=True, type=str)
     parser.add_argument("--input-mode", choices=["auto", "image", "video"], default="video", type=str)
+    parser.add_argument("--input-path", default=None, type=str)
     parser.add_argument("--raw-dir", default="/data/01_raw", type=str)
     parser.add_argument("--frames-dir", default="/data/02_frames", type=str)
     parser.add_argument("--masks-dir", default="/data/03_masks", type=str)
@@ -241,7 +251,14 @@ def main() -> int:
         print("HF_TOKEN gefunden. Logge bei HuggingFace ein...")
         login(token=hf_token)
 
-    media_kind, media_path = find_input_media(args.raw_dir, args.input_mode)
+    if args.input_path:
+        if not os.path.exists(args.input_path):
+            raise FileNotFoundError(f"Explicit input path not found: {args.input_path}")
+        media_kind = infer_media_kind_from_path(args.input_path)
+        media_path = args.input_path
+    else:
+        media_kind, media_path = find_input_media(args.raw_dir, args.input_mode)
+
     if media_kind == "image":
         return run_image_segmentation(media_path, args)
 
@@ -250,7 +267,7 @@ def main() -> int:
     os.makedirs(args.frames_dir, exist_ok=True)
     os.makedirs(args.masks_dir, exist_ok=True)
 
-    video_path = find_input_video(args.raw_dir)
+    video_path = media_path
     print(f"Input video: {video_path}")
 
     num_frames = extract_frames(video_path, args.frames_dir, args.frame_max_side, args.frame_step)
@@ -583,16 +600,17 @@ def main() -> int:
         if mask_uint8 is None:
             mask_uint8 = np.zeros((frame_h, frame_w), dtype=np.uint8)
 
-        # 1. middle.png: Original-Maske
-        cv2.imwrite(os.path.join(frame_folder, "middle.png"), mask_uint8)
-        
-        # 2. small.png: Erodiert (sicherer Objektkern)
-        mask_small = cv2.erode(mask_uint8, kernel, iterations=1)
-        cv2.imwrite(os.path.join(frame_folder, "small.png"), mask_small)
-        
-        # 3. default.png: Dilatiert (erweiterter Sicherheitsrand)
-        mask_default = cv2.dilate(mask_uint8, kernel, iterations=1)
+        # default.png: Original-Maske als grosszuegiger Kontext fuer STS
+        mask_default = mask_uint8.copy()
         cv2.imwrite(os.path.join(frame_folder, "default.png"), mask_default)
+
+        # middle.png: leicht erodiert, um Randartefakte zu reduzieren
+        mask_middle = cv2.erode(mask_uint8, kernel, iterations=1)
+        cv2.imwrite(os.path.join(frame_folder, "middle.png"), mask_middle)
+
+        # small.png: staerker erodiert als sicherer Objektkern
+        mask_small = cv2.erode(mask_middle, kernel, iterations=1)
+        cv2.imwrite(os.path.join(frame_folder, "small.png"), mask_small)
 
     print("Hierarchische STS-Maskensätze (small, middle, default) wurden erfolgreich erstellt.")
 
