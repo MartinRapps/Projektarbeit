@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan-to-BIM Pipeline Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <header id="header">
+    <div class="header-left">
+      <span class="logo">&#9670; Scan-to-BIM</span>
+    </div>
+    <div class="header-center">
+      <span id="pipeline-title">KI-gestützte 3D-Rekonstruktion linearer Infrastruktur</span>
+    </div>
+    <div class="header-right">
+      <button id="btn-refresh" title="Daten neu laden" onclick="loadAll()">&#8635;</button>
+      <span id="status-dot" class="status-dot" title="Pipeline Status"></span>
+    </div>
+  </header>
+
+  <div id="main">
+    <!-- Left Panel: Scripts / Steps -->
+    <aside id="panel-left">
+      <div class="panel-header">
+        <h3>Pipeline-Schritte</h3>
+        <span id="step-count" class="badge"></span>
+      </div>
+      <nav id="step-list"></nav>
+    </aside>
+
+    <!-- Center Area: Flowchart + Scripts -->
+    <div id="center-area">
+      <section id="panel-center">
+        <div class="panel-header">
+          <h3>Workflow</h3>
+        </div>
+        <div id="flowchart-container">
+          <svg id="flowchart" viewBox="0 0 900 1200" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </section>
+
+      <!-- Scripts Panel -->
+      <section id="panel-scripts">
+        <div class="panel-header">
+          <h3>Skripte &amp; Ausführung</h3>
+          <span id="script-status" class="badge">Bereit</span>
+        </div>
+        <div id="scripts-body">
+          <div id="script-list"></div>
+          <div id="script-detail">
+            <div id="script-info" class="script-info-placeholder">
+              <span>&#128221;</span>
+              <p>W&auml;hle ein Skript aus der Liste links, um es zu starten</p>
+            </div>
+            <div id="script-progress" style="display:none"></div>
+            <div id="script-terminal" style="display:none"></div>
+            <div id="script-input-area" style="display:none"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Panel: Preview -->
+    <aside id="panel-right">
+      <div class="panel-header">
+        <h3>Vorschau</h3>
+        <span id="preview-step-name" class="badge"></span>
+      </div>
+      <div id="preview-content">
+        <div class="preview-placeholder">
+          <span>&#128202;</span>
+          <p>Wähle einen Schritt aus der Liste links, um Ergebnisse zu sehen</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer id="footer">
+    <span id="footer-info">Lade Daten...</span>
+  </footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

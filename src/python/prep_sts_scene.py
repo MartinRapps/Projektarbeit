@@ -4,6 +4,74 @@ import shutil
 import cv2
 import numpy as np
 
+
+def to_binary_mask(mask: np.ndarray) -> np.ndarray:
+    # Normalize SAM outputs that may be 0/1 into strict 0/255 masks.
+    return np.where(mask > 0, 255, 0).astype(np.uint8)
+
+
+def count_nonempty_hierarchical_masks(masks_dir: str, level: str = "middle") -> int:
+    count = 0
+    for path in sorted(glob.glob(os.path.join(masks_dir, "frame_*", f"{level}.png"))):
+        m = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        if m is not None and np.count_nonzero(m) > 0:
+            count += 1
+    return count
+
+
+def find_best_attempt_dir(masks_dir: str) -> tuple[str | None, int]:
+    attempt_root = os.path.join(masks_dir, "_attempts")
+    if not os.path.isdir(attempt_root):
+        return None, 0
+
+    best_dir = None
+    best_nonempty = 0
+    for candidate in sorted(glob.glob(os.path.join(attempt_root, "*"))):
+        if not os.path.isdir(candidate):
+            continue
+        nonempty = 0
+        for path in sorted(glob.glob(os.path.join(candidate, "frame_*_obj_001.png"))):
+            m = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            if m is not None and np.count_nonzero(m) > 0:
+                nonempty += 1
+        if nonempty > best_nonempty:
+            best_nonempty = nonempty
+            best_dir = candidate
+    return best_dir, best_nonempty
+
+def find_best_sparse_model(sfm_sparse_dir: str) -> str:
+    if not os.path.exists(sfm_sparse_dir):
+        return sfm_sparse_dir
+
+    # Falls der Ordner direkt points3D enthält, nutzen wir ihn
+    if os.path.isfile(os.path.join(sfm_sparse_dir, "points3D.bin")) or os.path.isfile(os.path.join(sfm_sparse_dir, "points3D.txt")):
+        return sfm_sparse_dir
+
+    subdirs = [d for d in os.listdir(sfm_sparse_dir) if os.path.isdir(os.path.join(sfm_sparse_dir, d))]
+    if not subdirs:
+        return sfm_sparse_dir
+
+    best_dir = None
+    max_size = -1
+    for subdir in subdirs:
+        candidate_path = os.path.join(sfm_sparse_dir, subdir)
+        p3d_bin = os.path.join(candidate_path, "points3D.bin")
+        p3d_txt = os.path.join(candidate_path, "points3D.txt")
+        size = 0
+        if os.path.exists(p3d_bin):
+            size = os.path.getsize(p3d_bin)
+        elif os.path.exists(p3d_txt):
+            size = os.path.getsize(p3d_txt)
+        
+        if size > max_size:
+            max_size = size
+            best_dir = candidate_path
+
+    if best_dir is not None:
+        print(f"Auto-selected best COLMAP sparse model subdirectory: {best_dir} (size: {max_size} bytes)")
+        return best_dir
+    return os.path.join(sfm_sparse_dir, "0")
+
 def clean_and_create_dir(path):
     if os.path.islink(path):
         os.unlink(path)
@@ -43,10 +111,11 @@ def main():
     elif os.path.exists(sparse_link):
         shutil.rmtree(sparse_link)
         
-    sfm_sparse_src = os.path.join(sfm_dir, "sparse/0")
-    if not os.path.exists(sfm_sparse_src):
-        # Fallback to sparse if mapper output folder name is not '0'
-        sfm_sparse_src = os.path.join(sfm_dir, "sparse")
+    sfm_sparse_src = find_best_sparse_model(os.path.join(sfm_dir, "sparse"))
+    if not os.path.exists(sfm_sparse_src) or sfm_sparse_src == os.path.join(sfm_dir, "sparse"):
+        sfm_sparse_src = os.path.join(sfm_dir, "sparse/0")
+        if not os.path.exists(sfm_sparse_src):
+            sfm_sparse_src = os.path.join(sfm_dir, "sparse")
         
     shutil.copytree(sfm_sparse_src, sparse_link)
     print(f"Copied sparse model to workspace: {sparse_link} From {sfm_sparse_src}")
@@ -99,6 +168,18 @@ def main():
 
     # 4. Copy and resize/format multi-level masks
     print("Formatting hierarchical masks for STS loader requirements...")
+    hierarchical_nonempty = count_nonempty_hierarchical_masks(masks_dir, level="middle")
+    best_attempt_dir, best_attempt_nonempty = find_best_attempt_dir(masks_dir)
+
+    use_attempt_masks = hierarchical_nonempty == 0 and best_attempt_dir is not None and best_attempt_nonempty > 0
+    if use_attempt_masks:
+        print(
+            f"Warning: Hierarchical masks appear empty in {masks_dir}. "
+            f"Using best attempt fallback: {best_attempt_dir} ({best_attempt_nonempty} non-empty frames)."
+        )
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+
     for idx, frame_path in enumerate(frames):
         frame_name = os.path.basename(frame_path)
         image_stem = os.path.splitext(frame_name)[0]
@@ -106,25 +187,39 @@ def main():
         # Frame index corresponds to the subdirectory name structure (padded to 5 digits)
         frame_subdir = os.path.join(masks_dir, f"frame_{idx:05d}")
         
-        # Build paths for each level
-        for lvl in mask_levels:
-            src_png = os.path.join(frame_subdir, f"{lvl}.png")
-            dst_jpg = os.path.join(scene_root, f"multiview_masks_{lvl}", "000", f"{image_stem}.jpg")
-            
-            if os.path.exists(src_png):
-                # Read mask array and save as JPG grayscale to match hardcoded requirements
-                mask = cv2.imread(src_png, cv2.IMREAD_GRAYSCALE)
-                if mask is not None:
-                    # Write out as .jpg
-                    cv2.imwrite(dst_jpg, mask)
-                else:
-                    print(f"Warning: Mask {src_png} could not be parsed by OpenCV.")
+        if use_attempt_masks:
+            flat_png = os.path.join(best_attempt_dir, f"frame_{idx:05d}_obj_001.png")
+            if os.path.exists(flat_png):
+                base_mask = cv2.imread(flat_png, cv2.IMREAD_GRAYSCALE)
             else:
-                # If a mask doesn't exist, build a black mask matching frame dimensions
+                base_mask = None
+
+            if base_mask is None:
                 frame_img = cv2.imread(frame_path)
                 h, w = frame_img.shape[:2] if frame_img is not None else (768, 1024)
-                black_mask = np.zeros((h, w), dtype=np.uint8)
-                cv2.imwrite(dst_jpg, black_mask)
+                base_mask = np.zeros((h, w), dtype=np.uint8)
+
+            base_mask = to_binary_mask(base_mask)
+            masks_by_level = {
+                "default": base_mask,
+                "middle": cv2.erode(base_mask, kernel, iterations=1),
+                "small": cv2.erode(base_mask, kernel, iterations=2),
+            }
+        else:
+            masks_by_level = {}
+            for lvl in mask_levels:
+                src_png = os.path.join(frame_subdir, f"{lvl}.png")
+                mask = cv2.imread(src_png, cv2.IMREAD_GRAYSCALE) if os.path.exists(src_png) else None
+                if mask is None:
+                    frame_img = cv2.imread(frame_path)
+                    h, w = frame_img.shape[:2] if frame_img is not None else (768, 1024)
+                    mask = np.zeros((h, w), dtype=np.uint8)
+                masks_by_level[lvl] = to_binary_mask(mask)
+
+        # Build output paths for each level
+        for lvl in mask_levels:
+            dst_png = os.path.join(scene_root, f"multiview_masks_{lvl}", "000", f"{image_stem}.png")
+            cv2.imwrite(dst_png, masks_by_level[lvl])
                 
     print("Hierarchical mask mapping complete. Prepared directory shapes: ")
     print(f" - /data/05_3dgs/multiview_masks_default/000/")
