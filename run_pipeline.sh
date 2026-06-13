@@ -26,6 +26,11 @@ configure_video_input() {
 
     if [[ -n "$compressed_video" ]]; then
         echo "Gefundenes komprimiertes Video: $compressed_video"
+        if [[ "$AUTOPILOT" == "true" ]]; then
+            echo "Autopilot aktiv: Verwende standardmaessig das komprimierte Video."
+            SELECTED_VIDEO="$compressed_video"
+            return
+        fi
         read -p "Dieses komprimierte Video fuer SAM3 verwenden? (y/n) [Default: y]: " USE_COMPRESSED
         if [[ -z "$USE_COMPRESSED" || "$USE_COMPRESSED" =~ ^[Yy]$ ]]; then
             SELECTED_VIDEO="$compressed_video"
@@ -59,14 +64,19 @@ configure_video_input() {
         echo "Hinweis: Konnte Videoorientierung nicht automatisch erkennen."
     fi
 
-    echo "Optional kann vor SAM3 ein komprimiertes Arbeitsvideo erzeugt werden."
-    echo "Warum das sinnvoll ist: kleinere Aufloesung/FPS sparen VRAM, I/O und Laufzeit; das Rohvideo bleibt unveraendert erhalten."
-    echo "Empfohlene Defaults: transpose=0 (keine Rotation), fps=10, codec=libx264, crf=23, preset=medium"
-    echo "Hinweis: Die Skalierung erhaelt das Seitenverhaeltnis und fuellt mit schwarzem Rand auf."
-    if [[ "$orientation_hint" == "portrait" ]]; then
-        echo "WICHTIG: Das Eingabevideo wirkt wie Hochkant. Bitte nur drehen, wenn das Bild sichtbar falsch ausgerichtet ist."
+    if [[ "$AUTOPILOT" == "true" ]]; then
+        echo "Autopilot aktiv: Erzeuge komprimiertes Arbeitsvideo mit Standard-Vorgaben..."
+        CREATE_COMPRESSED="y"
+    else
+        echo "Optional kann vor SAM3 ein komprimiertes Arbeitsvideo erzeugt werden."
+        echo "Warum das sinnvoll ist: kleinere Aufloesung/FPS sparen VRAM, I/O und Laufzeit; das Rohvideo bleibt unveraendert erhalten."
+        echo "Empfohlene Defaults: transpose=0 (keine Rotation), fps=10, codec=libx264, crf=23, preset=medium"
+        echo "Hinweis: Die Skalierung erhaelt das Seitenverhaeltnis und fuellt mit schwarzem Rand auf."
+        if [[ "$orientation_hint" == "portrait" ]]; then
+            echo "WICHTIG: Das Eingabevideo wirkt wie Hochkant. Bitte nur drehen, wenn das Bild sichtbar falsch ausgerichtet ist."
+        fi
+        read -p "Komprimiertes Arbeitsvideo erzeugen, falls keines vorhanden ist? (y/n) [Default: y]: " CREATE_COMPRESSED
     fi
-    read -p "Komprimiertes Arbeitsvideo erzeugen, falls keines vorhanden ist? (y/n) [Default: y]: " CREATE_COMPRESSED
 
     if [[ -z "$CREATE_COMPRESSED" || "$CREATE_COMPRESSED" =~ ^[Yy]$ ]]; then
         local default_width=1920
@@ -76,23 +86,32 @@ configure_video_input() {
             default_height=1920
         fi
 
-        read -p "Transpose anwenden? 0 = keine Rotation, 1 = 90 Grad CW, 2 = 90 Grad CCW [Default: 0]: " USER_TRANSPOSE
-        local transpose_value=${USER_TRANSPOSE:-0}
+        local transpose_value=0
+        local target_width=$default_width
+        local target_height=$default_height
+        local target_fps=10
+        local target_crf=23
+        local target_preset="medium"
 
-        read -p "Zielbreite [Default: ${default_width}]: " USER_WIDTH
-        local target_width=${USER_WIDTH:-$default_width}
+        if [[ "$AUTOPILOT" != "true" ]]; then
+            read -p "Transpose anwenden? 0 = keine Rotation, 1 = 90 Grad CW, 2 = 90 Grad CCW [Default: 0]: " USER_TRANSPOSE
+            transpose_value=${USER_TRANSPOSE:-0}
 
-        read -p "Zielhoehe [Default: ${default_height}]: " USER_HEIGHT
-        local target_height=${USER_HEIGHT:-$default_height}
+            read -p "Zielbreite [Default: ${default_width}]: " USER_WIDTH
+            target_width=${USER_WIDTH:-$default_width}
 
-        read -p "Ziel-FPS [Default: 10]: " USER_FPS
-        local target_fps=${USER_FPS:-10}
+            read -p "Zielhoehe [Default: ${default_height}]: " USER_HEIGHT
+            target_height=${USER_HEIGHT:-$default_height}
 
-        read -p "CRF Qualitaet (kleiner = bessere Qualitaet, groesser = kleinere Datei) [Default: 23]: " USER_CRF
-        local target_crf=${USER_CRF:-23}
+            read -p "Ziel-FPS [Default: 10]: " USER_FPS
+            target_fps=${USER_FPS:-10}
 
-        read -p "x264 Preset (ultrafast ... placebo) [Default: medium]: " USER_PRESET
-        local target_preset=${USER_PRESET:-medium}
+            read -p "CRF Qualitaet (kleiner = bessere Qualitaet, groesser = kleinere Datei) [Default: 23]: " USER_CRF
+            target_crf=${USER_CRF:-23}
+
+            read -p "x264 Preset (ultrafast ... placebo) [Default: medium]: " USER_PRESET
+            target_preset=${USER_PRESET:-medium}
+        fi
 
         if [[ "$orientation_hint" == "portrait" && "$target_width" -gt "$target_height" ]]; then
             echo "Warnung: Hochkant erkannt, aber Ziel ist Querformat (${target_width}x${target_height})."
@@ -145,6 +164,15 @@ fi
 
 read -p "Geben Sie den Begriff ein, der maskiert werden soll (z.B. 'cable', 'pipe'): " TEXT_PROMPT
 
+# Autopilot Prompt configuration
+read -p "Moechten Sie die Pipeline im Autopilot-Modus ausfuehren? (Alle Standardvorgaben automatisch waehlen) (y/n) [Default: n]: " USER_AUTOPILOT
+if [[ "$USER_AUTOPILOT" =~ ^[Yy]$ ]]; then
+    AUTOPILOT="true"
+    echo "Autopilot-Modus AKTIVIERT. Interaktive Abfragen werden mit Standardwerten beantwortet."
+else
+    AUTOPILOT="false"
+fi
+
 SELECTED_VIDEO=""
 configure_video_input
 
@@ -180,20 +208,28 @@ docker compose run --rm sts-training python3 helpers/object_specific_initializat
 echo "=========================================================="
 echo "STS Gaussian Splatting Training Configuration"
 echo "=========================================================="
-read -p "Enter total training iterations (recommended: 7000 to 15000) [Default: 7000]: " USER_ITERATIONS
-ITERATIONS=${USER_ITERATIONS:-7000}
-
-# Suggest Stage 2 iteration limit based on total iterations
-DEFAULT_STAGE2=$(( ITERATIONS * 5 / 7 )) # Scales stage 2 to be roughly 5/7th of total iterations (like 5000/7000)
-read -p "Enter Stage 2 fine-tuning iterations [Default: $DEFAULT_STAGE2]: " USER_STAGE2
-STAGE2_ITERS=${USER_STAGE2:-$DEFAULT_STAGE2}
-
-# Densification coordinates and scaling
-read -p "Enable GPU-saving 'on-the-fly' image loading? (y/n) [Default: n]: " USER_LY
-if [[ "$USER_LY" =~ ^[Yy]$ ]]; then
-    ON_THE_FLY="--load2gpu_on_the_fly"
-else
+if [[ "$AUTOPILOT" == "true" ]]; then
+    ITERATIONS=7000
+    DEFAULT_STAGE2=5000
+    STAGE2_ITERS=5000
     ON_THE_FLY=""
+    echo "Autopilot aktiv: Setze standardmaessig 7000 Iterationen (Stage 2: 5000) ohne On-The-Fly-Laden."
+else
+    read -p "Enter total training iterations (recommended: 7000 to 15000) [Default: 7000]: " USER_ITERATIONS
+    ITERATIONS=${USER_ITERATIONS:-7000}
+
+    # Suggest Stage 2 iteration limit based on total iterations
+    DEFAULT_STAGE2=$(( ITERATIONS * 5 / 7 )) # Scales stage 2 to be roughly 5/7th of total iterations (like 5000/7000)
+    read -p "Enter Stage 2 fine-tuning iterations [Default: $DEFAULT_STAGE2]: " USER_STAGE2
+    STAGE2_ITERS=${USER_STAGE2:-$DEFAULT_STAGE2}
+
+    # Densification coordinates and scaling
+    read -p "Enable GPU-saving 'on-the-fly' image loading? (y/n) [Default: n]: " USER_LY
+    if [[ "$USER_LY" =~ ^[Yy]$ ]]; then
+        ON_THE_FLY="--load2gpu_on_the_fly"
+    else
+        ON_THE_FLY=""
+    fi
 fi
 
 echo "--------------------------------------------------------"

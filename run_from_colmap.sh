@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== Starting Scan-to-BIM Reconstruction Pipeline FROM STS ONWARDS ==="
+echo "=== Starting Scan-to-BIM Reconstruction Pipeline FROM COLMAP ONWARDS ==="
 
 # Autopilot Prompt configuration directly at the beginning
 read -p "Moechten Sie die Pipeline im Autopilot-Modus ausfuehren? (Alle Standardvorgaben automatisch waehlen) (y/n) [Default: n]: " USER_AUTOPILOT
@@ -11,6 +11,17 @@ if [[ "$USER_AUTOPILOT" =~ ^[Yy]$ ]]; then
 else
     AUTOPILOT="false"
 fi
+
+# Step 2: SfM (COLMAP camera poses & sparse point cloud)
+echo "[Step 2/5] Running COLMAP Structure from Motion..."
+docker compose run --rm colmap-sfm /app/src/scripts/run_sfm.sh
+
+echo "=========================================================="
+echo "BREAKPOINT: Please open the sparse point cloud in CloudCompare"
+echo "on the host system. Pick the GCP coordinate points, compute"
+echo "the 4x4 transformation matrix, and save it in data/04_sfm/matrix.txt"
+echo "=========================================================="
+read -p "Once you have saved the transformation matrix, press [Enter] to continue..."
 
 # Step 3: Object-Specific 3DGS (Segment-then-Splat STS)
 echo "[Step 3/5] Setting up Segment-then-Splat (STS) workspace structure..."
@@ -83,4 +94,4 @@ docker compose run --rm sugar-meshing python3 extract_mesh.py --regularization d
 echo "[Step 5/5] Extracting centerline and georeferencing to UTM..."
 docker compose run --rm post-processing /app/src/scripts/postprocess.sh
 
-echo "=== Pipeline (STS to Georeferencing) Completed Successfully. Final outputs saved in data/08_gis/ ==="
+echo "=== Pipeline (COLMAP to Georeferencing) Completed Successfully. Final outputs saved in data/08_gis/ ==="
