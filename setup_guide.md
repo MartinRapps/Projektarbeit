@@ -315,3 +315,36 @@ Nachdem der Administrator das Setup durchgeführt hat und Sie sich **einmal ab- 
    docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu22.04 nvidia-smi
    ```
    *Wenn hier die GPU-Tabelle von nvidia-smi ausgegeben wird, ist das System vollständig einsatzbereit für die Pipeline-Images in [Schritt 6](#schritt-6-pipeline-images-bauen).*
+
+   Text:
+   Hallo Admin-Team,
+
+ich habe aktuell keine sudo-Rechte auf meinem System und benötige Unterstützung bei der Einrichtung der Arbeitsumgebung für ein Docker-basiertes GPU-Projekt.
+
+Aktueller Stand auf meinem Rechner:
+
+    NVIDIA-GPU wird erkannt (RTX 4000 Ada)
+    nvidia-smi ist vorhanden, kann aber nicht mit dem Treiber kommunizieren
+    DKMS zeigt nur Status „added“
+    Das NVIDIA-Kernelmodul für den laufenden Kernel ist nicht geladen/verfügbar
+    Zusätzlich benötige ich Docker inkl. GPU-Unterstützung für Container
+
+Könnt ihr bitte folgende Punkte einrichten bzw. prüfen:
+
+    NVIDIA-Treiber für den aktuellen Kernel korrekt bauen/laden (inkl. passender Kernel-Header, DKMS-Rebuild, modprobe, Funktionstest mit nvidia-smi)
+    Docker Engine + Docker Compose Plugin installieren
+    NVIDIA Container Toolkit installieren und Docker-Runtime für GPU konfigurieren
+    Meinen Benutzer zur docker-Gruppe hinzufügen, damit Docker ohne sudo nutzbar ist
+
+Benötigte Verifikation nach der Einrichtung:
+
+    nvidia-smi zeigt die GPU korrekt an
+    docker run hello-world funktioniert ohne sudo
+    docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu22.04 nvidia-smi funktioniert
+
+Vielen Dank für die Unterstützung.
+
+Viele Grüße
+[Dein Name]
+[Hostname: FKV-W0041]
+[Benutzer: k66700@fhws.de]
