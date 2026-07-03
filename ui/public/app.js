@@ -566,7 +566,7 @@ function renderScriptList() {
 }
 
 function getScriptIcon(id) {
-  return { run_pipeline: '▶', run_from_sts: '⏩', run_sam3: '🎯', clean_data: '🧹' }[id] || '📜';
+  return { run_pipeline: '▶', run_from_sts: '⏩', run_from_colmap: '📐', run_from_sugar: '🧊', run_sam3: '🎯', clean_data: '🧹' }[id] || '📜';
 }
 
 function selectScript(scriptId) {
@@ -613,11 +613,19 @@ function showScriptDetail(script) {
   term.innerHTML = '<div class="terminal-line info"># Wähle "Ausführen" um das Skript zu starten</div>';
   term.style.display = '';
 
-  // Input area
+  // Input area (text field + quick-answer buttons for interactive prompts)
   const inputArea = $('#script-input-area');
   inputArea.innerHTML = `
-    <input type="text" id="script-input" placeholder="Eingabe für das Skript..." ${running ? '' : 'disabled'}>
-    <button id="script-send-btn" ${running ? '' : 'disabled'} onclick="sendScriptInput()">Senden</button>`;
+    <div class="quick-answers">
+      <button class="quick-btn" ${running ? '' : 'disabled'} onclick="sendQuick('y')">y (Ja)</button>
+      <button class="quick-btn" ${running ? '' : 'disabled'} onclick="sendQuick('n')">n (Nein)</button>
+      <button class="quick-btn" ${running ? '' : 'disabled'} onclick="sendQuick('EXPLAIN')">EXPLAIN</button>
+      <button class="quick-btn" ${running ? '' : 'disabled'} onclick="sendQuick('')">&#9166; Enter (Default)</button>
+    </div>
+    <div class="input-row">
+      <input type="text" id="script-input" placeholder="Eingabe für das Skript..." ${running ? '' : 'disabled'}>
+      <button id="script-send-btn" ${running ? '' : 'disabled'} onclick="sendScriptInput()">Senden</button>
+    </div>`;
   inputArea.style.display = '';
   inputArea.querySelector('#script-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') sendScriptInput();
@@ -632,15 +640,41 @@ function showScriptDetail(script) {
 
 function appendTerminal(text, className) {
   const term = $('#script-terminal');
-  const lines = text.split('\n');
-  lines.forEach(line => {
-    if (line === '') return;
-    const div = document.createElement('div');
-    div.className = 'terminal-line ' + (className || '');
-    div.textContent = line;
-    term.appendChild(div);
+  // PTY output arrives in raw chunks (prompts have no trailing newline).
+  // We keep an 'open' line at the bottom and append to it until a \n arrives.
+  let openLine = term.querySelector('.terminal-line.open');
+  // Strip ANSI escape sequences and carriage returns (PTY artifacts)
+  text = text.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').replace(/\r(?!\n)/g, '\n').replace(/\r\n/g, '\n');
+  const parts = text.split('\n');
+  parts.forEach((part, i) => {
+    const isLast = i === parts.length - 1;
+    if (!openLine) {
+      openLine = document.createElement('div');
+      openLine.className = 'terminal-line open ' + (className || '');
+      term.appendChild(openLine);
+    }
+    openLine.textContent += part;
+    // Highlight interactive prompts so the user notices them
+    if (/\(y\/n\)|\[Default|dr(ü|ue)cken|press \[Enter\]|eingeben|token/i.test(openLine.textContent)) {
+      openLine.classList.add('prompt');
+    }
+    if (!isLast) {
+      openLine.classList.remove('open');
+      openLine = null;
+    }
   });
   term.scrollTop = term.scrollHeight;
+}
+
+function sendQuick(answer) {
+  if (!scriptSessionId) return;
+  fetch('/api/script/input/' + scriptSessionId, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ input: answer })
+  }).then(() => {
+    appendTerminal('\n> ' + (answer === '' ? '[Enter]' : answer) + '\n', 'sent');
+  }).catch(e => console.error('Quick input failed:', e));
 }
 
 function setProgressStep(index, state) {
@@ -778,5 +812,65 @@ async function sendScriptInput() {
   }
 }
 
+// == Upload (Drag & Drop) ==
+function initUploadZone() {
+  const zone = $('#upload-zone');
+  const input = $('#upload-input');
+  if (!zone) return;
+
+  zone.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => {
+    if (input.files.length) uploadFile(input.files[0]);
+    input.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach(ev =>
+    zone.addEventListener(ev, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      zone.classList.add('drag-over');
+    })
+  );
+  ['dragleave', 'drop'].forEach(ev =>
+    zone.addEventListener(ev, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      zone.classList.remove('drag-over');
+    })
+  );
+  zone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  });
+}
+
+async function uploadFile(file) {
+  const target = $('#upload-target').value;
+  const progress = $('#upload-progress');
+  progress.style.display = '';
+  progress.className = '';
+  progress.textContent = `\u23f3 Lade "${file.name}" hoch... (${fmtSize(file.size)})`;
+
+  const form = new FormData();
+  form.append('target', target);
+  form.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    progress.className = 'upload-success';
+    progress.textContent = `\u2705 Gespeichert: ${data.path} (${fmtSize(data.size)})`;
+    loadAll(); // refresh file listings
+    setTimeout(() => { progress.style.display = 'none'; }, 6000);
+  } catch (err) {
+    progress.className = 'upload-error';
+    progress.textContent = `\u274c Fehler: ${err.message}`;
+  }
+}
+
 // == Init ==
-document.addEventListener('DOMContentLoaded', loadAll);
+document.addEventListener('DOMContentLoaded', () => {
+  loadAll();
+  initUploadZone();
+});

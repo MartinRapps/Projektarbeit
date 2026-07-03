@@ -48,6 +48,24 @@
           <h3>Skripte &amp; Ausführung</h3>
           <span id="script-status" class="badge">Bereit</span>
         </div>
+        <div id="upload-zone" title="Datei hierher ziehen oder klicken">
+          <div class="upload-zone-inner">
+            <span class="upload-icon">&#128228;</span>
+            <div class="upload-text">
+              <strong>Drag &amp; Drop Upload</strong>
+              <small id="upload-hint">Screenshot / Video / CSV hierher ziehen</small>
+            </div>
+            <select id="upload-target" onclick="event.stopPropagation()">
+              <option value="matrix_screenshot">Matrix-Screenshot (OCR) &rarr; 01_raw</option>
+              <option value="raw_video">Drohnen-Video &rarr; 01_raw</option>
+              <option value="raw_image">Einzelbild &rarr; 01_raw</option>
+              <option value="gcp_csv">GCP-Koordinaten (CSV) &rarr; 01_raw</option>
+              <option value="matrix_txt">Matrix-Textdatei &rarr; 04_sfm</option>
+            </select>
+          </div>
+          <div id="upload-progress" style="display:none"></div>
+          <input type="file" id="upload-input" style="display:none">
+        </div>
         <div id="scripts-body">
           <div id="script-list"></div>
           <div id="script-detail">

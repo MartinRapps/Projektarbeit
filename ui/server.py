@@ -6,14 +6,18 @@ Serves the UI and API endpoints for the Scan-to-BIM pipeline.
 import os
 import json
 import mimetypes
+import pty
+import select
 import subprocess
 import threading
 import queue
 import uuid
 import signal
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from socketserver import ThreadingMixIn
 from pathlib import Path
 from datetime import datetime
+from urllib.parse import urlparse, parse_qs, unquote
 
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), 'public')
@@ -79,9 +83,47 @@ SCRIPTS_INFO = [
             "GIS-Export",
         ],
         "inputs": [
+            {"prompt": "Autopilot-Modus (y/n)", "var": "AUTOPILOT", "type": "confirm"},
             {"prompt": "STS Trainingsiterationen", "var": "ITERATIONS", "default": "7000"},
             {"prompt": "Stage 2 Iterationen", "var": "STAGE2_ITERS"},
             {"prompt": "On-the-fly GPU-Modus", "var": "ON_THE_FLY", "type": "confirm"},
+            {"prompt": "Regularisierung (dn_consistency/density/sdf oder EXPLAIN)", "var": "REGULARIZATION"},
+            {"prompt": "Refinement-Dauer (short/medium/long oder EXPLAIN)", "var": "REFINEMENT_TIME"},
+        ],
+    },
+    {
+        "id": "run_from_colmap",
+        "name": "run_from_colmap.sh",
+        "description": "F\u00fchrt die Pipeline ab COLMAP SfM aus. \u00dcberspringt die SAM 3.1 Maskengenerierung. N\u00fctzlich wenn die Masken bereits vorhanden sind und nur die 3D-Rekonstruktion wiederholt werden soll.",
+        "steps": [
+            "COLMAP SfM",
+            "Manueller Breakpoint: GCP in CloudCompare",
+            "STS Workspace Setup",
+            "STS 3DGS Training",
+            "Punktwolken-Filterung",
+            "SuGaR Meshing",
+            "DGtal Centerline",
+            "GIS-Export",
+        ],
+        "inputs": [
+            {"prompt": "Autopilot-Modus (y/n)", "var": "AUTOPILOT", "type": "confirm"},
+            {"prompt": "STS Trainingsiterationen", "var": "ITERATIONS", "default": "7000"},
+        ],
+    },
+    {
+        "id": "run_from_sugar",
+        "name": "run_from_sugar.sh",
+        "description": "F\u00fchrt nur SuGaR-Meshing und Post-Processing aus. Ben\u00f6tigt einen fertigen STS-Checkpoint (point_cloud.ply). Ideal zum schnellen Testen des Meshing-Schritts.",
+        "steps": [
+            "SuGaR Coarse-Training + Meshing + Refinement",
+            "DGtal Centerline",
+            "GIS-Export",
+        ],
+        "inputs": [
+            {"prompt": "Autopilot-Modus (y/n)", "var": "AUTOPILOT", "type": "confirm"},
+            {"prompt": "Checkpoint-Iteration", "var": "ITERATIONS", "default": "7000"},
+            {"prompt": "Regularisierung (dn_consistency/density/sdf oder EXPLAIN)", "var": "REGULARIZATION"},
+            {"prompt": "Refinement-Dauer (short/medium/long oder EXPLAIN)", "var": "REFINEMENT_TIME"},
         ],
     },
     {
@@ -130,36 +172,68 @@ script_sessions_lock = threading.Lock()
 
 
 def run_script_thread(script_path, session_id):
+    """Run a shell script inside a pseudo-terminal (PTY).
+
+    A PTY (instead of plain pipes) is essential for interactive scripts:
+    'read -p' prompts are written without a trailing newline and bash also
+    detects a TTY, so prompts are flushed immediately and appear live in
+    the browser terminal. It also lets us forward user answers to stdin.
+    """
     q = script_sessions[session_id]["queue"]
     proc = None
+    master_fd = None
     try:
+        master_fd, slave_fd = pty.openpty()
         proc = subprocess.Popen(
-            [script_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            stdin=subprocess.PIPE,
-            text=True,
-            bufsize=1,
+            ["/bin/bash", script_path],
+            stdin=slave_fd,
+            stdout=slave_fd,
+            stderr=slave_fd,
             cwd=PROJECT_ROOT,
-            preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL),
+            close_fds=True,
+            preexec_fn=os.setsid,  # own process group -> we can kill children (docker compose run) too
+            env={**os.environ, "TERM": "dumb", "PYTHONUNBUFFERED": "1"},
         )
+        os.close(slave_fd)
         with script_sessions_lock:
             script_sessions[session_id]["process"] = proc
-        for line in iter(proc.stdout.readline, ""):
+            script_sessions[session_id]["master_fd"] = master_fd
+
+        while True:
             with script_sessions_lock:
-                if script_sessions.get(session_id, {}).get("cancel"):
-                    proc.terminate()
+                cancelled = script_sessions.get(session_id, {}).get("cancel")
+            if cancelled:
+                try:
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                except (ProcessLookupError, OSError):
+                    pass
+                break
+            rlist, _, _ = select.select([master_fd], [], [], 0.5)
+            if rlist:
+                try:
+                    data = os.read(master_fd, 8192)
+                except OSError:
+                    break  # PTY closed (process exited)
+                if not data:
                     break
-            q.put(("output", line))
+                q.put(("output", data.decode("utf-8", errors="replace")))
+            elif proc.poll() is not None:
+                break
         proc.wait()
         q.put(("exit", proc.returncode))
     except Exception as e:
         q.put(("output", f"\n[FEHLER] {e}\n"))
         q.put(("exit", -1))
     finally:
+        if master_fd is not None:
+            try:
+                os.close(master_fd)
+            except OSError:
+                pass
         with script_sessions_lock:
             if session_id in script_sessions:
                 script_sessions[session_id]["process"] = None
+                script_sessions[session_id]["master_fd"] = None
 
 
 def handle_script_serve(handler, session_id):
@@ -196,22 +270,26 @@ def cleanup_script_session(session_id):
             proc = script_sessions[session_id].get("process")
             if proc:
                 try:
-                    proc.terminate()
-                except Exception:
-                    pass
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                except (ProcessLookupError, OSError):
+                    try:
+                        proc.terminate()
+                    except Exception:
+                        pass
             del script_sessions[session_id]
 
 
 def send_script_input(session_id, text):
+    """Forward user input from the browser to the script's PTY (stdin)."""
     with script_sessions_lock:
         session = script_sessions.get(session_id)
         if not session:
             return False
         proc = session.get("process")
-    if proc and proc.stdin and proc.poll() is None:
+        master_fd = session.get("master_fd")
+    if proc and master_fd is not None and proc.poll() is None:
         try:
-            proc.stdin.write(text + "\n")
-            proc.stdin.flush()
+            os.write(master_fd, (text + "\n").encode())
             return True
         except OSError:
             return False
@@ -499,12 +577,127 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     proc = script_sessions[session_id].get("process")
                     if proc:
                         try:
-                            proc.terminate()
-                        except Exception:
-                            pass
+                            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                        except (ProcessLookupError, OSError):
+                            try:
+                                proc.terminate()
+                            except Exception:
+                                pass
             self.send_json({"stopped": True})
+        elif self.path == "/api/upload":
+            self.handle_upload()
         else:
             self.send_json({"error": "Not found"}, 404)
+
+    # Allowed upload targets (whitelist!) - key is the 'target' form value
+    UPLOAD_TARGETS = {
+        "matrix_screenshot": {
+            "dir": "01_raw",
+            "filename": "matrix_screenshot",   # extension appended from upload
+            "extensions": [".png", ".jpg", ".jpeg"],
+        },
+        "raw_video": {
+            "dir": "01_raw",
+            "filename": None,                    # keep original (sanitized) name
+            "extensions": [".mp4", ".mov"],
+        },
+        "raw_image": {
+            "dir": "01_raw",
+            "filename": None,
+            "extensions": [".png", ".jpg", ".jpeg"],
+        },
+        "gcp_csv": {
+            "dir": "01_raw",
+            "filename": None,
+            "extensions": [".csv", ".txt"],
+        },
+        "matrix_txt": {
+            "dir": "04_sfm",
+            "filename": "matrix",
+            "extensions": [".txt"],
+        },
+    }
+
+    def handle_upload(self):
+        """Receive a multipart/form-data upload (drag & drop) and store it
+        into the whitelisted data folder. Streams to a temp file so large
+        videos do not need to fit in memory twice."""
+        try:
+            content_type = self.headers.get("Content-Type", "")
+            if "multipart/form-data" not in content_type:
+                self.send_json({"error": "Erwarte multipart/form-data"}, 400)
+                return
+            boundary = content_type.split("boundary=")[-1].strip().strip('"')
+            if not boundary:
+                self.send_json({"error": "Boundary fehlt"}, 400)
+                return
+            content_len = int(self.headers.get("Content-Length", 0))
+            if content_len <= 0:
+                self.send_json({"error": "Leerer Upload"}, 400)
+                return
+            body = self.rfile.read(content_len)
+
+            # --- Parse multipart parts ---
+            delim = ("--" + boundary).encode()
+            parts = body.split(delim)
+            target_key = None
+            file_bytes = None
+            orig_filename = None
+            for part in parts:
+                if not part or part in (b"--", b"--\r\n"):
+                    continue
+                header_end = part.find(b"\r\n\r\n")
+                if header_end < 0:
+                    continue
+                raw_headers = part[:header_end].decode("utf-8", errors="replace")
+                content = part[header_end + 4:]
+                # Strip trailing CRLF of the part
+                if content.endswith(b"\r\n"):
+                    content = content[:-2]
+                if 'name="target"' in raw_headers:
+                    target_key = content.decode("utf-8", errors="replace").strip()
+                elif 'name="file"' in raw_headers:
+                    file_bytes = content
+                    for line in raw_headers.split("\r\n"):
+                        if "filename=" in line:
+                            orig_filename = line.split("filename=")[-1].strip().strip('"')
+
+            if not target_key or target_key not in self.UPLOAD_TARGETS:
+                self.send_json({"error": f"Unbekanntes Upload-Ziel: {target_key}"}, 400)
+                return
+            if file_bytes is None or not orig_filename:
+                self.send_json({"error": "Keine Datei empfangen"}, 400)
+                return
+
+            target = self.UPLOAD_TARGETS[target_key]
+            ext = os.path.splitext(orig_filename)[1].lower()
+            if ext not in target["extensions"]:
+                self.send_json({
+                    "error": f"Dateityp {ext} nicht erlaubt. Erlaubt: {', '.join(target['extensions'])}"
+                }, 400)
+                return
+
+            # Sanitize filename: never allow path traversal
+            if target["filename"]:
+                final_name = target["filename"] + ext
+            else:
+                final_name = os.path.basename(orig_filename).replace("..", "_")
+
+            dest_dir = os.path.join(DATA_DIR, target["dir"])
+            os.makedirs(dest_dir, exist_ok=True)
+            dest_path = os.path.join(dest_dir, final_name)
+            with open(dest_path, "wb") as f:
+                f.write(file_bytes)
+
+            rel = os.path.relpath(dest_path, PROJECT_ROOT)
+            self.send_json({
+                "saved": True,
+                "path": rel,
+                "size": len(file_bytes),
+                "target": target_key,
+            })
+        except Exception as e:
+            self.send_json({"error": f"Upload fehlgeschlagen: {e}"}, 500)
 
     def send_json(self, data, status=200):
         safe_send_json(self, data, status)
@@ -513,13 +706,20 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         pass
 
 
+class ThreadingHTTPServerV(ThreadingMixIn, HTTPServer):
+    """Threaded server: each request gets its own thread. Essential because
+    SSE terminal streams are long-lived connections - without threading a
+    single running script would block all other API calls and uploads."""
+    daemon_threads = True
+
+
 def main():
     host = "0.0.0.0"
     port = 8080
     print(f" Pipeline Dashboard: http://localhost:{port}")
     print(f" Datenverzeichnis: {DATA_DIR}")
     print(" Drück Ctrl+C zum Beenden")
-    server = HTTPServer((host, port), DashboardHandler)
+    server = ThreadingHTTPServerV((host, port), DashboardHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -137,6 +137,28 @@ configure_video_input() {
     SELECTED_VIDEO="$raw_video"
 }
 
+# Explanations for SuGaR configuration options (invoked via the 'EXPLAIN' keyword at the prompts)
+explain_regularization() {
+    echo ""
+    echo "  dn_consistency : (EMPFOHLEN) Kombiniert Dichte- und Normalen-Konsistenz-Regularisierung."
+    echo "                   Erzwingt, dass die Gaussians sich flach an echte Oberflaechen anschmiegen und"
+    echo "                   ihre Normalen mit der lokalen Tiefenkarte uebereinstimmen. Liefert laut SuGaR-Autoren"
+    echo "                   die beste Mesh-Qualitaet, besonders fuer duenne/zylindrische Objekte wie Kabel."
+    echo "  density        : Nutzt nur eine Dichte-basierte Regularisierung (SDF ueber Gaussian-Dichtefunktion)."
+    echo "                   Schneller, aber tendenziell 'wolkigere', weniger scharfe Oberflaechen."
+    echo "  sdf            : Nutzt eine reine Signed-Distance-Function-Regularisierung. Historisch aeltester Ansatz"
+    echo "                   von SuGaR, in der Praxis meist von dn_consistency in der Qualitaet uebertroffen."
+    echo ""
+}
+
+explain_refinement_time() {
+    echo ""
+    echo "  short  : ~2000 Refinement-Iterationen. Schnell (Minuten), ideal zum Testen der Pipeline/Parameter."
+    echo "  medium : ~7000 Refinement-Iterationen. Guter Kompromiss aus Qualitaet und Rechenzeit."
+    echo "  long   : ~15000 Refinement-Iterationen. Hoechste Detailtreue, aber deutlich laengere Trainingszeit."
+    echo ""
+}
+
 echo "=== Starting Scan-to-BIM Reconstruction Pipeline ==="
 
 # Step 0: GCP Coordinate Preparation (Relative Coordinates)
@@ -194,9 +216,61 @@ docker compose run --rm colmap-sfm /app/src/scripts/run_sfm.sh
 echo "=========================================================="
 echo "BREAKPOINT: Please open the sparse point cloud in CloudCompare"
 echo "on the host system. Pick the GCP coordinate points, compute"
-echo "the 4x4 transformation matrix, and save it in data/04_sfm/matrix.txt"
+echo "the 4x4 transformation matrix."
 echo "=========================================================="
-read -p "Once you have saved the transformation matrix, press [Enter] to continue..."
+
+while true; do
+    read -p "Moechten Sie die Matrix per OCR aus einem Screenshot einlesen? (y/n) [Default: n]: " USER_OCR
+    if [[ "$USER_OCR" =~ ^[Yy]$ ]]; then
+        echo ""
+        echo "--> Anleitung fuer OCR-Einlesen:"
+        echo "    1. Mache einen Screenshot von dem gesamten Matrix-Ausgabefeld in CloudCompare."
+        echo "    2. Speichere das Bild als PNG oder JPG unter dem Namen:"
+        echo "       data/01_raw/matrix_screenshot.png (oder .jpg)"
+        echo ""
+        
+        while true; do
+            read -p "Haben Sie den Screenshot unter 'data/01_raw/matrix_screenshot.png' abgelegt? (y/n): " SCREENSHOT_OK
+            if [[ "$SCREENSHOT_OK" =~ ^[Yy]$ ]]; then
+                echo "Starte OCR-Einlesevorgang mit Tesseract in Container A..."
+                # Run OCR in Container A and write output directly to data/04_sfm/matrix.txt
+                if docker compose run --rm sam3-preprocess python3 /app/src/python/ocr_matrix.py /data/01_raw/matrix_screenshot.png /data/04_sfm/matrix.txt; then
+                    echo ""
+                    echo "--- Eingelesene Transformationsmatrix ---"
+                    cat data/04_sfm/matrix.txt
+                    echo "----------------------------------------"
+                    echo ""
+                    
+                    read -p "Ist diese Matrix fehlerfrei erkannt und korrekt eingelesen worden? (y/n): " MATRIX_OK
+                    if [[ "$MATRIX_OK" =~ ^[Yy]$ ]]; then
+                        echo "Matrix erfolgreich geprueft und uebernommen!"
+                        break 2
+                    else
+                        echo "Schade, OCR war ungenau. Sie koennen das Bild korrigieren/besser zuschneiden und es erneut versuchen, oder die Datei data/04_sfm/matrix.txt jetzt manuell bearbeiten."
+                        read -p "Moechten Sie es erneut mit OCR versuchen? (y/n) [Default: y]: " RETRY_OCR
+                        if [[ ! "$RETRY_OCR" =~ ^[Nn]$ ]]; then
+                            continue
+                        fi
+                    fi
+                else
+                    echo "Fehler bei der OCR-Verarbeitung des Screenshots!"
+                fi
+            fi
+            
+            # If they don't want to retry or OCR failed and they chose not to retry
+            echo "Wechsle zur manuellen Kontrolle..."
+            echo "Bitte trage die Transformationsmatrix manuell unter 'data/04_sfm/matrix.txt' ein."
+            read -p "Haben Sie die Datei 'data/04_sfm/matrix.txt' kontrolliert/manuell gespeichert? Druecken Sie [Enter] zum Fortfahren..."
+            break 2
+        done
+    else
+        echo "Manuelle Eingabe gewaehlt (kein OCR)."
+        echo "Bitte speichere die 4x4-Transformationsmatrix aus CloudCompare zeilenweise (kommagetrennt) unter:"
+        echo "data/04_sfm/matrix.txt"
+        read -p "Sobald die Matrix-Datei gespeichert ist, druecken Sie [Enter] zum Fortfahren..."
+        break
+    fi
+done
 
 # Step 3: Object-Specific 3DGS (Segment-then-Splat STS)
 echo "[Step 3/5] Setting up Segment-then-Splat (STS) workspace structure..."
@@ -262,8 +336,53 @@ echo "[Step 3.5/5] Enforcing filtered cable-only point cloud as standard input f
 docker compose run --rm sts-training python3 -c "import os, shutil, sys; base='/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}'; src=f'{base}/point_cloud_cable.ply'; orig=f'{base}/point_cloud.ply'; bak=f'{base}/point_cloud_original.ply'; (shutil.copy(orig, bak), shutil.copy(src, orig)) if os.path.exists(src) else (print(f'Error: filtered point cloud not found: {src}'), sys.exit(1))"
 
 # Step 4: Meshing (SuGaR regularized mesh extraction)
-echo "[Step 4/5] Running SuGaR Mesh Reconstruction..."
-docker compose run --rm sugar-meshing python3 extract_mesh.py --regularization dn_consistency
+echo "=========================================================="
+echo "SuGaR Mesh Reconstruction Configuration"
+echo "=========================================================="
+if [[ "$AUTOPILOT" == "true" ]]; then
+    REGULARIZATION="dn_consistency"
+    REFINEMENT_TIME="short"
+    echo "Autopilot aktiv: Regularisierung=dn_consistency, Refinement-Dauer=short (2000 Iterationen)."
+else
+    while true; do
+        read -p "Regularization type (sdf/density/dn_consistency, oder 'EXPLAIN' fuer Erklaerung) [Default: dn_consistency]: " USER_REG
+        if [[ "${USER_REG,,}" == "explain" ]]; then
+            explain_regularization
+            continue
+        fi
+        REGULARIZATION=${USER_REG:-dn_consistency}
+        break
+    done
+
+    while true; do
+        read -p "Refinement time (short/medium/long, oder 'EXPLAIN' fuer Erklaerung) [Default: short]: " USER_REFTIME
+        if [[ "${USER_REFTIME,,}" == "explain" ]]; then
+            explain_refinement_time
+            continue
+        fi
+        REFINEMENT_TIME=${USER_REFTIME:-short}
+        break
+    done
+fi
+echo "--------------------------------------------------------"
+echo "Active Configuration:"
+echo " - Regularization Type: $REGULARIZATION"
+echo " - Refinement Time: $REFINEMENT_TIME"
+echo " - Vanilla 3DGS Checkpoint Iteration: $ITERATIONS"
+echo "--------------------------------------------------------"
+
+# NOTE: extract_mesh.py alone cannot regularize a coarse SuGaR model - it only extracts a mesh
+# from an already-trained coarse checkpoint. The '-r/--regularization_type' flag belongs to the
+# root-level train.py, which runs: coarse SuGaR training (regularized) -> mesh extraction -> refinement.
+echo "[Step 4/5] Running SuGaR Full Pipeline (Coarse Training -> Mesh Extraction -> Refinement)..."
+# Make sure the checkpoint path has a trailing slash because SuGaR simply concatenates 'cameras.json' to it!
+docker compose run --rm sugar-meshing python3 train.py \
+    -s /data/05_3dgs \
+    -c /data/05_3dgs/output/ \
+    -i "$ITERATIONS" \
+    -r "$REGULARIZATION" \
+    --refinement_time "$REFINEMENT_TIME" \
+    --eval True
 
 # Step 5: Post-Processing & Georeferencing (DGtal & Python & GDAL)
 echo "[Step 5/5] Extracting centerline and georeferencing to UTM..."

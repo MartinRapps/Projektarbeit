@@ -31,22 +31,43 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
 # Create Conda Environment and configure shell
 RUN conda create --name sugar -y python=3.9
 
-# Install PyTorch, CUDA, and PyTorch3D inside 'sugar' environment
-RUN conda install -n sugar -y pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 -c pytorch -c nvidia && \
-    conda install -n sugar -y -c fvcore -c iopath -c conda-forge fvcore iopath && \
-    conda install -n sugar -y pytorch3d==0.7.4 -c pytorch3d -c conda-forge && \
-    conda install -n sugar -y -c plotly plotly && \
-    conda install -n sugar -y -c conda-forge rich plyfile==0.8.1
+# Install PyTorch, CUDA, and PyTorch3D inside 'sugar' environment in a single transaction to prevent MKL channel dilution
+# NOTE: mkl is pinned to 2024.0.0 because mkl>=2025 removed the 'iJIT_NotifyEvent' symbol
+# that PyTorch 2.0.1 requires. Without this pin, 'import torch' crashes with
+# 'libtorch_cpu.so: undefined symbol: iJIT_NotifyEvent'.
+RUN conda install -n sugar -y \
+    "numpy<2" \
+    "mkl==2024.0.0" \
+    pytorch==2.0.1 \
+    torchvision==0.15.2 \
+    torchaudio==2.0.2 \
+    pytorch-cuda=11.8 \
+    fvcore \
+    iopath \
+    pytorch3d==0.7.4 \
+    plotly \
+    rich \
+    plyfile==0.8.1 \
+    -c pytorch3d -c pytorch -c nvidia -c fvcore -c iopath -c conda-forge
 
 # Enable 'sugar' environment globally as default command path
 ENV PATH=/opt/conda/envs/sugar/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/conda/envs/sugar/lib:$LD_LIBRARY_PATH
 
-# Clone SuGaR repository and compile submodules
+# Clone SuGaR repository (recursive so gaussian_splatting submodules are populated) and compile submodules
 WORKDIR /opt/sugar
-RUN git clone https://github.com/Anttwo/SuGaR.git .
+RUN git clone --recursive https://github.com/Anttwo/SuGaR.git .
 
-RUN pip install open3d PyMCubes && \
+RUN conda run -n sugar pip install "numpy<2" open3d PyMCubes && \
     cd /opt/sugar/gaussian_splatting/submodules/diff-gaussian-rasterization/ && \
-    pip install -e . --no-build-isolation && \
+    conda run -n sugar pip install . --no-build-isolation && \
     cd /opt/sugar/gaussian_splatting/submodules/simple-knn/ && \
-    pip install -e . --no-build-isolation
+    conda run -n sugar pip install . --no-build-isolation
+
+# The container runs at runtime as the host UID/GID (see docker-compose.yml 'user:' directive),
+# not as root. Since /opt/sugar was created entirely as root during the build (git clone, pip
+# install), the non-root runtime user cannot create new output directories (e.g. './output/coarse/...')
+# inside it, causing 'PermissionError: [Errno 13] Permission denied'. Make the whole workdir
+# world-writable so runtime-created checkpoints/meshes can always be written.
+WORKDIR /opt/sugar
+RUN chmod -R 777 /opt/sugar

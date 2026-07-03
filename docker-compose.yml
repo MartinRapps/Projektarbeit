@@ -77,6 +77,9 @@ services:
     volumes:
       - ./data:/data
       - ./src:/app/src
+      # Map the container's internal output directory dynamically to the host
+      # so that all checkpoints, ply meshes, and textured obj models survive--rm
+      - ./data/sugar_output:/opt/sugar/output
     deploy:
       resources:
         reservations:
