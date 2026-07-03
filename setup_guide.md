@@ -202,3 +202,146 @@ Für diese Pipeline heißt das: Container A sollte nicht nur GPU-Zugriff haben, 
   * *Lösung:* Die Integration in Docker Desktop ist fehlerhaft. Stellen Sie sicher, dass in Docker Desktop unter Settings > Resources > WSL Integration die Checkbox für Ihre Ubuntu-Distribution aktiv ist und starten Sie Docker neu.
 * **Sehr langsames Dateihandling unter WSL2**
   * *Lösung:* Stellen Sie sicher, dass Ihr Projektverzeichnis im Linux-Dateisystem liegt (`/home/<user>/...` oder `~/...`) und **nicht** auf dem Windows-Mount `/mnt/c/...`.
+
+---
+
+## 🖥️ Setup-Anleitung für eine Ubuntu Workstation (Native Linux)
+
+Falls Sie die Pipeline auf einer dedizierten Ubuntu Workstation statt unter Windows WSL2 einrichten, müssen Sie die GPU-Treiber und Docker direkt im Host-System installieren. 
+
+Da hierfür **root/sudo-Rechte erforderlich** sind, können Sie diese Liste direkt an Ihre Systemadministration weiterleiten, um alle benötigten Komponenten in einem Rutsch installieren zu lassen.
+
+### 1. 🔍 Grafikkarte & Treiber prüfen (Benutzer/Admin)
+
+Bevor Sie Änderungen vornehmen, prüfen Sie den Status der NVIDIA-Grafikkarte:
+
+* **Hardware-Erkennung prüfen (PCI-Bus):**
+  ```bash
+  lspci | grep -i nvidia
+  ```
+  *Erwartetes Ergebnis:* Die NVIDIA-Grafikkarte sollte aufgelistet werden (z. B. `VGA compatible controller: NVIDIA Corporation...`).
+  
+* **Geladenen Treiber im Kernel prüfen:**
+  ```bash
+  cat /proc/driver/nvidia/version
+  ```
+  *Erwartetes Ergebnis:* Zeigt die geladene Treiberversion (z. B. `NVIDIA UNIX x86_64 Kernel Module  550.90...`). Falls die Datei nicht existiert, ist kein NVIDIA-Treiber geladen.
+
+* **GPU-Status und CUDA-Unterstützung prüfen:**
+  ```bash
+  nvidia-smi
+  ```
+  *Erwartetes Ergebnis:* Tabelle mit der aktuell installierten Treiberversion und der maximal unterstützten CUDA-Version (oben rechts). Für SAM 3.1 wird eine Version benötigt, die **CUDA 12.6+** unterstützt (Treiberversion >= 560 oder neuere 550er-Versionen).
+
+---
+
+### 2. 🔐 Paketliste für die Systemadministration (Erfordert `sudo`)
+
+Bitten Sie Ihren Administrator, die folgenden Schritte auszuführen:
+
+#### A) NVIDIA Grafiktreiber installieren
+Falls noch kein passender Treiber installiert ist (oder ein Update nötig ist):
+```bash
+sudo apt update
+sudo apt install -y nvidia-driver-550
+# WICHTIG: Nach der Treiberinstallation ist ein Systemneustart erforderlich!
+sudo reboot
+```
+
+#### B) Docker Engine & Docker Compose installieren
+Installation der offiziellen Docker Engine (nicht Docker Desktop):
+```bash
+# Alte Docker-Pakete entfernen, um Konflikte zu vermeiden
+for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
+
+# Docker Repository hinzufügen
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Docker-Pakete installieren
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+#### C) NVIDIA Container Toolkit installieren & konfigurieren
+Das Toolkit wird zwingend benötigt, damit Docker-Container direkten Zugriff auf die Grafikkarte (GPU) erhalten.
+```bash
+# Repository für NVIDIA Container Toolkit einrichten
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+# Toolkit installieren
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
+
+# NVIDIA-Laufzeitumgebung in der Docker-Konfiguration registrieren
+sudo nvidia-ctk runtime configure --driver=docker
+
+# Docker-Dienst neu starten, um die Konfiguration anzuwenden
+sudo systemctl restart docker
+```
+
+#### D) Docker-Berechtigungen für den Benutzer einrichten
+Fügen Sie den Benutzer der `docker`-Gruppe hinzu, damit dieser Docker-Befehle ohne `sudo`-Rechte ausführen kann:
+```bash
+sudo usermod -aG docker <ihr-benutzername>
+```
+
+---
+
+### 3. 👤 Verifizierung (Benutzer-Aktionen nach der Installation)
+
+Nachdem der Administrator das Setup durchgeführt hat und Sie sich **einmal ab- und wieder angemeldet** haben (bzw. `newgrp docker` ausgeführt haben), verifizieren Sie das Setup:
+
+1. **Docker-Berechtigungen ohne Sudo testen:**
+   ```bash
+   docker run hello-world
+   ```
+2. **GPU-Zugriff in Docker-Containern testen (CUDA 12.6):**
+   ```bash
+   docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu22.04 nvidia-smi
+   ```
+   *Wenn hier die GPU-Tabelle von nvidia-smi ausgegeben wird, ist das System vollständig einsatzbereit für die Pipeline-Images in [Schritt 6](#schritt-6-pipeline-images-bauen).*
+
+   Text:
+   Hallo Admin-Team,
+
+ich habe aktuell keine sudo-Rechte auf meinem System und benötige Unterstützung bei der Einrichtung der Arbeitsumgebung für ein Docker-basiertes GPU-Projekt.
+
+Aktueller Stand auf meinem Rechner:
+
+    NVIDIA-GPU wird erkannt (RTX 4000 Ada)
+    nvidia-smi ist vorhanden, kann aber nicht mit dem Treiber kommunizieren
+    DKMS zeigt nur Status „added“
+    Das NVIDIA-Kernelmodul für den laufenden Kernel ist nicht geladen/verfügbar
+    Zusätzlich benötige ich Docker inkl. GPU-Unterstützung für Container
+
+Könnt ihr bitte folgende Punkte einrichten bzw. prüfen:
+
+    NVIDIA-Treiber für den aktuellen Kernel korrekt bauen/laden (inkl. passender Kernel-Header, DKMS-Rebuild, modprobe, Funktionstest mit nvidia-smi)
+    Docker Engine + Docker Compose Plugin installieren
+    NVIDIA Container Toolkit installieren und Docker-Runtime für GPU konfigurieren
+    Meinen Benutzer zur docker-Gruppe hinzufügen, damit Docker ohne sudo nutzbar ist
+
+Benötigte Verifikation nach der Einrichtung:
+
+    nvidia-smi zeigt die GPU korrekt an
+    docker run hello-world funktioniert ohne sudo
+    docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu22.04 nvidia-smi funktioniert
+
+Vielen Dank für die Unterstützung.
+
+Viele Grüße
+[Dein Name]
+[Hostname: FKV-W0041]
+[Benutzer: k66700@fhws.de]
