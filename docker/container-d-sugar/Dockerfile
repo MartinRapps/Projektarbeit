@@ -54,9 +54,14 @@ RUN conda install -n sugar -y \
 ENV PATH=/opt/conda/envs/sugar/bin:$PATH
 ENV LD_LIBRARY_PATH=/opt/conda/envs/sugar/lib:$LD_LIBRARY_PATH
 
-# Clone SuGaR repository (recursive so gaussian_splatting submodules are populated) and compile submodules
+# Clone the tested SuGaR revision (recursive so gaussian_splatting submodules are populated)
+# Keep this in sync with third_party/SuGaR, which can be mounted through
+# docker-compose.sugar-dev.yml for reproducible project-specific overrides.
+ARG SUGAR_REF=7c10c4ae4a267dece512f5c7f40ed212a0a2ab44
 WORKDIR /opt/sugar
-RUN git clone --recursive https://github.com/Anttwo/SuGaR.git .
+RUN git clone --recursive https://github.com/Anttwo/SuGaR.git . && \
+    git checkout "${SUGAR_REF}" && \
+    git submodule update --init --recursive
 
 RUN conda run -n sugar pip install "numpy<2" open3d PyMCubes && \
     cd /opt/sugar/gaussian_splatting/submodules/diff-gaussian-rasterization/ && \

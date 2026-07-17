@@ -6,6 +6,19 @@ let selectedScriptId = null;
 let scriptSessionId = null;
 let scriptEventSource = null;
 
+const THEME = {
+  accent: '#cabeff',
+  accentStrong: '#b9aaff',
+  green: '#45dfa4',
+  greenLight: '#68fcbf',
+  yellow: '#fbbf24',
+  red: '#ffb4ab',
+  blue: '#c4c5da',
+  line: '#46464c',
+  text: '#e0e0fa',
+  muted: '#8b8fa3',
+};
+
 function $(sel) { return document.querySelector(sel); }
 function $$(sel) { return document.querySelectorAll(sel); }
 
@@ -42,8 +55,32 @@ async function loadAll() {
     } else {
       selectStep(0);
     }
+    
+    // Check if there is already an active running script session on load
+    // (allows seamless reconnection on page refresh!)
+    checkAndReconnectSession();
   } catch (e) {
     $('#footer-info').textContent = 'Fehler beim Laden der Daten: ' + e.message;
+  }
+}
+
+async function checkAndReconnectSession() {
+  if (scriptSessionId !== null && scriptEventSource !== null) return; // already connected
+  try {
+    const res = await fetch('/api/script/active');
+    const activeSessions = await res.json();
+    if (activeSessions && activeSessions.length > 0) {
+      const active = activeSessions[0]; // pick the first active session
+      console.log('Seamlesly reconnecting to script session:', active.session_id);
+      
+      // Auto-select this script in the left nav list
+      selectScript(active.script_id);
+      
+      // Seamlessly reconnect!
+      connectToStream(active.script_id, active.session_id);
+    }
+  } catch (e) {
+    console.error('Reconnection check failed:', e);
   }
 }
 
@@ -97,40 +134,40 @@ function renderFlowchart() {
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
   defs.innerHTML = `
     <linearGradient id="g-active" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#7c5cfc"/>
-      <stop offset="100%" stop-color="#a78bfa"/>
+      <stop offset="0%" stop-color="${THEME.accent}"/>
+      <stop offset="100%" stop-color="${THEME.accentStrong}"/>
     </linearGradient>
     <linearGradient id="g-done" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#34d399"/>
-      <stop offset="100%" stop-color="#6ee7b7"/>
+      <stop offset="0%" stop-color="${THEME.green}"/>
+      <stop offset="100%" stop-color="${THEME.greenLight}"/>
     </linearGradient>
     <filter id="glow-active">
       <feGaussianBlur stdDeviation="3" result="blur"/>
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-      <path d="M0,0 L10,5 L0,10 Z" fill="#3a3d52"/>
+      <path d="M0,0 L10,5 L0,10 Z" fill="${THEME.line}"/>
     </marker>
     <marker id="arrow-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M0,0 L10,5 L0,10 Z" fill="#7c5cfc"/>
+      <path d="M0,0 L10,5 L0,10 Z" fill="${THEME.accent}"/>
     </marker>`;
   svg.innerHTML = '';
   svg.appendChild(defs);
 
   const nodes = [
-    { id:'raw', x:350, y:40, w:240, h:44, label:'Drohnen-Video + GNSS', sub:'60 FPS RAW + Referenzmessung', color:'#60a5fa', icon:'🎬' },
+    { id:'raw', x:350, y:40, w:240, h:44, label:'Drohnen-Video + GNSS', sub:'60 FPS RAW + Referenzmessung', color:'#c4c5da', icon:'🎬' },
     { id:'decision', x:350, y:130, w:180, h:44, label:'Kabel sichtbar?', sub:'', color:'#fbbf24', diamond:true },
-    { id:'pathA', x:160, y:210, w:200, h:44, label:'SAM 3 Video Predictor', sub:'Temporales Tracking', color:'#7c5cfc' },
-    { id:'pathB', x:540, y:210, w:200, h:44, label:'SAHI + SAM 3 Image', sub:'Fallback', color:'#f87171' },
-    { id:'extractA', x:160, y:300, w:200, h:44, label:'Frame-Extraktion', sub:'6 FPS Masken + Bilder', color:'#7c5cfc' },
-    { id:'extractB', x:540, y:300, w:200, h:44, label:'Maskengenerierung', sub:'6 FPS Masken', color:'#f87171' },
-    { id:'colmap', x:350, y:390, w:240, h:44, label:'COLMAP SfM', sub:'Sparse Punktwolke + Posen', color:'#fb923c' },
-    { id:'cc', x:560, y:480, w:190, h:44, label:'CloudCompare (Host)', sub:'GCP Point Picking', color:'#ef4444' },
-    { id:'sts', x:140, y:480, w:200, h:44, label:'Segment-then-Splat', sub:'Object-specific 3DGS', color:'#06b6d4' },
-    { id:'sugar', x:240, y:570, w:220, h:44, label:'SuGaR Meshing', sub:'Poisson Reconstruction', color:'#a855f7' },
-    { id:'dgtal', x:240, y:660, w:220, h:44, label:'DGtal Centerline', sub:'Kabel-Sub-Mesh -> 1D-Kurve', color:'#14b8a6' },
-    { id:'final', x:350, y:750, w:240, h:44, label:'GDAL Georeferenzierung', sub:'UTM-Transformation', color:'#14b8a6' },
-    { id:'eval', x:350, y:840, w:240, h:44, label:'Wissenschaftliche Evaluation', sub:'RMSE + Hausdorff', color:'#34d399' },
+    { id:'pathA', x:160, y:210, w:200, h:44, label:'SAM 3 Video Predictor', sub:'Temporales Tracking', color:'#cabeff' },
+    { id:'pathB', x:540, y:210, w:200, h:44, label:'SAHI + SAM 3 Image', sub:'Fallback', color:'#ffb4ab' },
+    { id:'extractA', x:160, y:300, w:200, h:44, label:'Frame-Extraktion', sub:'6 FPS Masken + Bilder', color:'#cabeff' },
+    { id:'extractB', x:540, y:300, w:200, h:44, label:'Maskengenerierung', sub:'6 FPS Masken', color:'#ffb4ab' },
+    { id:'colmap', x:350, y:390, w:240, h:44, label:'COLMAP SfM', sub:'Sparse Punktwolke + Posen', color:'#c4c5da' },
+    { id:'cc', x:560, y:480, w:190, h:44, label:'CloudCompare (Host)', sub:'GCP Point Picking', color:'#ffb4ab' },
+    { id:'sts', x:140, y:480, w:200, h:44, label:'Segment-then-Splat', sub:'Object-specific 3DGS', color:'#45dfa4' },
+    { id:'sugar', x:240, y:570, w:220, h:44, label:'SuGaR Meshing', sub:'Poisson Reconstruction', color:'#cabeff' },
+    { id:'dgtal', x:240, y:660, w:220, h:44, label:'DGtal Centerline', sub:'Kabel-Sub-Mesh -> 1D-Kurve', color:'#45dfa4' },
+    { id:'final', x:350, y:750, w:240, h:44, label:'GDAL Georeferenzierung', sub:'UTM-Transformation', color:'#45dfa4' },
+    { id:'eval', x:350, y:840, w:240, h:44, label:'Wissenschaftliche Evaluation', sub:'RMSE + Hausdorff', color:'#45dfa4' },
   ];
 
   const edges = [
@@ -161,7 +198,7 @@ function renderFlowchart() {
     const d = routeEdge(from, to);
     line.setAttribute('d', d);
     line.setAttribute('fill', 'none');
-    line.setAttribute('stroke', '#3a3d52');
+    line.setAttribute('stroke', THEME.line);
     line.setAttribute('stroke-width', '2');
     line.setAttribute('marker-end', 'url(#arrow)');
     line.dataset.from = e.from;
@@ -180,7 +217,7 @@ function renderFlowchart() {
       const pts = `${n.x},${n.y-30} ${n.x+90},${n.y} ${n.x},${n.y+30} ${n.x-90},${n.y}`;
       poly.setAttribute('points', pts);
       poly.setAttribute('fill', 'rgba(251,191,36,0.08)');
-      poly.setAttribute('stroke', '#fbbf24');
+      poly.setAttribute('stroke', THEME.yellow);
       poly.setAttribute('stroke-width', '2');
       g.appendChild(poly);
     } else {
@@ -201,7 +238,7 @@ function renderFlowchart() {
     title.setAttribute('x', n.x);
     title.setAttribute('y', n.diamond ? n.y - 4 : n.y - 5);
     title.setAttribute('text-anchor', 'middle');
-    title.setAttribute('fill', '#e2e4f0');
+    title.setAttribute('fill', THEME.text);
     title.setAttribute('font-size', '12');
     title.setAttribute('font-weight', '600');
     title.textContent = n.icon ? n.icon + ' ' + n.label : n.label;
@@ -212,7 +249,7 @@ function renderFlowchart() {
       sub.setAttribute('x', n.x);
       sub.setAttribute('y', n.diamond ? n.y + 12 : n.y + 14);
       sub.setAttribute('text-anchor', 'middle');
-      sub.setAttribute('fill', '#8b8fa3');
+      sub.setAttribute('fill', THEME.muted);
       sub.setAttribute('font-size', '9');
       sub.textContent = n.sub;
       g.appendChild(sub);
@@ -229,10 +266,10 @@ function renderFlowchart() {
 
   const legendY = 930;
   const containers = [
-    { label:'Container A (SAM 3)', color:'#7c5cfc', x:80 },
-    { label:'Container B (COLMAP)', color:'#fb923c', x:260 },
-    { label:'Host (manuell)', color:'#ef4444', x:440 },
-    { label:'Container C (STS)', color:'#06b6d4', x:600 },
+    { label:'Container A (SAM 3)', color:THEME.accent, x:80 },
+    { label:'Container B (COLMAP)', color:'#c4c5da', x:260 },
+    { label:'Host (manuell)', color:THEME.red, x:440 },
+    { label:'Container C (STS)', color:THEME.green, x:600 },
   ];
   containers.forEach(c => {
     const cx = c.x;
@@ -247,16 +284,16 @@ function renderFlowchart() {
     const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     txt.setAttribute('x', cx + 16);
     txt.setAttribute('y', legendY + 9);
-    txt.setAttribute('fill', '#8b8fa3');
+    txt.setAttribute('fill', THEME.muted);
     txt.setAttribute('font-size', '10');
     txt.textContent = c.label;
     svg.appendChild(txt);
   });
 
   const cont2 = [
-    { label:'Container D (SuGaR)', color:'#a855f7', x:80 },
-    { label:'Container E (DGtal/GDAL)', color:'#14b8a6', x:260 },
-    { label:'Evaluation', color:'#34d399', x:440 },
+    { label:'Container D (SuGaR)', color:THEME.accent, x:80 },
+    { label:'Container E (DGtal/GDAL)', color:THEME.green, x:260 },
+    { label:'Evaluation', color:THEME.green, x:440 },
   ];
   cont2.forEach(c => {
     const cx = c.x;
@@ -271,7 +308,7 @@ function renderFlowchart() {
     const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     txt.setAttribute('x', cx + 16);
     txt.setAttribute('y', legendY + 31);
-    txt.setAttribute('fill', '#8b8fa3');
+    txt.setAttribute('fill', THEME.muted);
     txt.setAttribute('font-size', '10');
     txt.textContent = c.label;
     svg.appendChild(txt);
@@ -309,7 +346,7 @@ function updateFlowchartActive(activeId) {
     r.setAttribute('opacity', '0.6');
   });
   svg.querySelectorAll('.flow-edge').forEach(e => {
-    e.setAttribute('stroke', '#3a3d52');
+    e.setAttribute('stroke', THEME.line);
     e.setAttribute('stroke-width', '2');
     e.setAttribute('marker-end', 'url(#arrow)');
   });
@@ -348,7 +385,7 @@ function updateFlowchartActive(activeId) {
     if (toIdx <= activeIdx && toIdx >= 0) {
       const edge = svg.querySelector(`path[data-from="${e.from}"][data-to="${e.to}"]`);
       if (edge) {
-        edge.setAttribute('stroke', '#7c5cfc');
+        edge.setAttribute('stroke', THEME.accent);
         edge.setAttribute('stroke-width', '2.5');
         edge.setAttribute('marker-end', 'url(#arrow-active)');
       }
@@ -632,7 +669,7 @@ function showScriptDetail(script) {
   });
 
   // Remove placeholder
-  const placeholder = detail.querySelector('.script-info-placeholder');
+  const placeholder = $('#script-placeholder');
   if (placeholder) placeholder.style.display = 'none';
 
   $('#script-status').textContent = running ? 'Läuft...' : 'Bereit';
@@ -690,8 +727,10 @@ function setProgressStep(index, state) {
 async function runScript(scriptId) {
   const runBtn = $('#btn-run-script');
   const stopBtn = $('#btn-stop-script');
-  runBtn.disabled = true;
-  runBtn.textContent = '⏳ Starte...';
+  if (runBtn) {
+    runBtn.disabled = true;
+    runBtn.textContent = '⏳ Starte...';
+  }
 
   try {
     const res = await fetch('/api/script/run', {
@@ -702,82 +741,112 @@ async function runScript(scriptId) {
     const data = await res.json();
     if (data.error) { throw new Error(data.error); }
 
-    scriptSessionId = data.session_id;
-    runBtn.style.display = 'none';
-    stopBtn.style.display = '';
-    $('#script-status').textContent = 'Läuft...';
-    $('#script-input').disabled = false;
-    $('#script-send-btn').disabled = false;
-
-    const term = $('#script-terminal');
-    term.innerHTML = '';
-    setProgressStep(0, 'active');
-
-    // Connect to SSE stream
-    scriptEventSource = new EventSource('/api/script/stream/' + scriptSessionId);
-    let currentStepIndex = 0;
-    let buffer = '';
-
-    scriptEventSource.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      if (msg.type === 'heartbeat') return;
-      if (msg.type === 'output') {
-        appendTerminal(msg.data);
-        buffer += msg.data;
-        // Try to detect progress from output keywords
-        const script = allScripts.find(s => s.id === scriptId);
-        if (script) {
-          const lower = buffer.toLowerCase();
-          script.steps.forEach((_, i) => {
-            const keywords = ['gcp', 'sam 3', 'sam3', 'colmap', 'cloudcompare',
-              'sts', 'training', 'sugar', 'meshing', 'dgtal', 'centerline',
-              'gdal', 'gis', 'berein', 'clean', 'lösch', 'hf cache'];
-            // Check if this step index seems active based on cumulative output
-          });
-        }
-      }
-      if (msg.type === 'exit') {
-        scriptEventSource.close();
-        scriptEventSource = null;
-        scriptSessionId = null;
-        runBtn.style.display = '';
-        stopBtn.style.display = 'none';
-        runBtn.disabled = false;
-        runBtn.textContent = '▶ Ausführen';
-        $('#script-status').textContent = msg.data === 0 ? 'Abgeschlossen' : 'Fehler';
-        $('#script-input').disabled = true;
-        $('#script-send-btn').disabled = true;
-        if (msg.data === 0) {
-          appendTerminal('\n[Prozess beendet mit Exit-Code 0]', 'success');
-          $$('.progress-step').forEach(el => el.classList.add('done'));
-          $$('.progress-step').forEach(el => el.classList.remove('active'));
-        } else {
-          appendTerminal(`\n[Prozess beendet mit Exit-Code ${msg.data}]`, 'error');
-        }
-      }
-    };
-
-    scriptEventSource.onerror = () => {
-      if (scriptEventSource) {
-        scriptEventSource.close();
-        scriptEventSource = null;
-      }
-      scriptSessionId = null;
-      runBtn.style.display = '';
-      stopBtn.style.display = 'none';
-      runBtn.disabled = false;
-      runBtn.textContent = '▶ Ausführen';
-      $('#script-status').textContent = 'Getrennt';
-      $('#script-input').disabled = true;
-      $('#script-send-btn').disabled = true;
-    };
-
+    connectToStream(scriptId, data.session_id);
   } catch (e) {
     appendTerminal('\n[FEHLER] ' + e.message, 'error');
-    runBtn.disabled = false;
-    runBtn.textContent = '▶ Ausführen';
+    if (runBtn) {
+      runBtn.disabled = false;
+      runBtn.textContent = '▶ Ausführen';
+    }
     $('#script-status').textContent = 'Fehler';
   }
+}
+
+function connectToStream(scriptId, sessionId) {
+  scriptSessionId = sessionId;
+  
+  const runBtn = $('#btn-run-script');
+  const stopBtn = $('#btn-stop-script');
+  if (runBtn) runBtn.style.display = 'none';
+  if (stopBtn) stopBtn.style.display = '';
+  
+  $('#script-status').textContent = 'Läuft...';
+  $('#script-input').disabled = false;
+  $('#script-send-btn').disabled = false;
+  $$('.quick-answers button').forEach(b => b.disabled = false);
+
+  const term = $('#script-terminal');
+  term.innerHTML = '';
+  setProgressStep(0, 'active');
+
+  // Connect to SSE stream
+  scriptEventSource = new EventSource('/api/script/stream/' + scriptSessionId);
+  let currentStepIndex = 0;
+  let buffer = '';
+
+  scriptEventSource.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    if (msg.type === 'heartbeat') return;
+    if (msg.type === 'output') {
+      appendTerminal(msg.data);
+      buffer += msg.data;
+      
+      // Real-time keyword scanning to visually tick off progress steps in Web-UI!
+      const script = allScripts.find(s => s.id === scriptId);
+      if (script) {
+        const lower = buffer.toLowerCase();
+        // A mapper to highlight the current active step in the steps list!
+        const stepKeywords = [
+          ['gcp', 'passpunkt'],
+          ['sam 3', 'sam3', 'propag', 'tracking', 'pre-process', 'frame'],
+          ['colmap', 'sfm', 'mapper', 'matcher'],
+          ['breakpoint', 'compare', 'matrix'],
+          ['sts', 'splat', 'training', 'optimizer'],
+          ['sugar', 'mesh', 'poisson', 'dn_consistency'],
+          ['dgtal', 'centerline', 'scheitel'],
+          ['gdal', 'geojson', 'utm', 'transform']
+        ];
+        
+        let highestActive = 0;
+        stepKeywords.forEach((keys, idx) => {
+          if (keys.some(k => lower.includes(k))) {
+            highestActive = idx;
+          }
+        });
+        setProgressStep(highestActive, 'active');
+      }
+    }
+    if (msg.type === 'exit') {
+      scriptEventSource.close();
+      scriptEventSource = null;
+      scriptSessionId = null;
+      if (runBtn) {
+        runBtn.style.display = '';
+        runBtn.disabled = false;
+        runBtn.textContent = '▶ Ausführen';
+      }
+      if (stopBtn) stopBtn.style.display = 'none';
+      $('#script-status').textContent = msg.data === 0 ? 'Abgeschlossen' : 'Fehler';
+      $('#script-input').disabled = true;
+      $('#script-send-btn').disabled = true;
+      $$('.quick-answers button').forEach(b => b.disabled = true);
+      if (msg.data === 0) {
+        appendTerminal('\n[Prozess beendet mit Exit-Code 0]', 'success');
+        $$('.progress-step').forEach(el => el.classList.add('done'));
+        $$('.progress-step').forEach(el => el.classList.remove('active'));
+      } else {
+        appendTerminal(`\n[Prozess beendet mit Exit-Code ${msg.data}]`, 'error');
+      }
+    }
+  };
+
+  scriptEventSource.onerror = () => {
+    if (scriptEventSource) {
+      scriptEventSource.close();
+      scriptEventSource = null;
+    }
+    scriptSessionId = null;
+    if (runBtn) {
+      runBtn.style.display = '';
+      runBtn.disabled = false;
+      runBtn.textContent = '▶ Ausführen';
+    }
+    if (stopBtn) stopBtn.style.display = 'none';
+    $('#script-status').textContent = 'Getrennt';
+    $('#script-input').disabled = true;
+    $('#script-send-btn').disabled = true;
+    $$('.quick-answers button').forEach(b => b.disabled = true);
+  };
 }
 
 async function stopScript() {
@@ -873,4 +942,18 @@ async function uploadFile(file) {
 document.addEventListener('DOMContentLoaded', () => {
   loadAll();
   initUploadZone();
+});
+
+// Automatic resource cleanup on Tab / Window Close!
+// If the user closes the browser or tab, we immediately notify the backend
+// to terminate the running python script instance, freeing up precious GPU and RAM resources.
+window.addEventListener('beforeunload', () => {
+  if (scriptSessionId) {
+    // navigator.sendBeacon is highly recommended for 'beforeunload' as it guarantees
+    // the HTTP POST request is reliably sent to the server even after the window closes.
+    const url = '/api/script/stop';
+    const payload = JSON.stringify({ session_id: scriptSessionId });
+    const blob = new Blob([payload], { type: 'application/json' });
+    navigator.sendBeacon(url, blob);
+  }
 });

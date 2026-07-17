@@ -86,16 +86,19 @@ docker compose run --rm sts-training python3 train.py \
     --test_iterations "$ITERATIONS" \
     $ON_THE_FLY
 
-# Step 3.5: Filter STS point cloud targeting only the cable (Value=0) on Medium Level (obj_id_m)
-echo "[Step 3.5/5] Backing up and filtering STS point cloud for target cable..."
+# Step 3.5: Export an object-only STS cloud without mutating the standard
+# full-scene checkpoint. Stock SuGaR uses full RGB supervision, so replacing
+# point_cloud.ply here would recreate an object-cloud/full-image mismatch.
+echo "[Step 3.5/5] Preserving the full STS cloud and exporting a filtered object cloud..."
+docker compose run --rm sts-training python3 -c "import os, shutil; base='/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}'; src=f'{base}/point_cloud.ply'; dst=f'{base}/point_cloud_full_scene.ply'; os.path.exists(src) or (_ for _ in ()).throw(FileNotFoundError(src)); shutil.copy2(src, dst)"
 docker compose run --rm sts-training python3 /app/src/python/filter_cable_pc.py \
     --input_ply "/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud.ply" \
     --output_ply "/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud_cable.ply" \
     --level m \
     --object_id 0
 
-echo "[Step 3.5/5] Enforcing filtered cable-only point cloud as standard input for SuGaR..."
-docker compose run --rm sts-training python3 -c "import os, shutil, sys; base='/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}'; src=f'{base}/point_cloud_cable.ply'; orig=f'{base}/point_cloud.ply'; bak=f'{base}/point_cloud_original.ply'; (shutil.copy(orig, bak), shutil.copy(src, orig)) if os.path.exists(src) else (print(f'Error: filtered point cloud not found: {src}'), sys.exit(1))"
+echo "[Step 3.5/5] Standard point_cloud.ply remains full-scene for a consistent stock-SuGaR baseline."
+echo "              Run ./run_masked_sugar.sh for the object-only, mask-aware SuGaR workflow."
 
 # Step 4: Meshing (SuGaR regularized mesh extraction)
 echo "=========================================================="

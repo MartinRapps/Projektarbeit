@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scan-to-BIM Pipeline Dashboard</title>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=1.2">
 </head>
 <body>
 <div id="app">
@@ -50,10 +50,12 @@
         </div>
         <div id="upload-zone" title="Datei hierher ziehen oder klicken">
           <div class="upload-zone-inner">
-            <span class="upload-icon">&#128228;</span>
-            <div class="upload-text">
-              <strong>Drag &amp; Drop Upload</strong>
-              <small id="upload-hint">Screenshot / Video / CSV hierher ziehen</small>
+            <div class="upload-left">
+              <span class="upload-icon">&#128228;</span>
+              <div class="upload-text">
+                <strong>Drag &amp; Drop Upload</strong>
+                <small id="upload-hint">Screenshot / Video / CSV</small>
+              </div>
             </div>
             <select id="upload-target" onclick="event.stopPropagation()">
               <option value="matrix_screenshot">Matrix-Screenshot (OCR) &rarr; 01_raw</option>
@@ -69,10 +71,11 @@
         <div id="scripts-body">
           <div id="script-list"></div>
           <div id="script-detail">
-            <div id="script-info" class="script-info-placeholder">
+            <div id="script-placeholder" class="script-info-placeholder">
               <span>&#128221;</span>
               <p>W&auml;hle ein Skript aus der Liste links, um es zu starten</p>
             </div>
+            <div id="script-info" style="display:none"></div>
             <div id="script-progress" style="display:none"></div>
             <div id="script-terminal" style="display:none"></div>
             <div id="script-input-area" style="display:none"></div>
@@ -101,6 +104,6 @@
   </footer>
 </div>
 
-<script src="app.js"></script>
+<script src="app.js?v=1.2"></script>
 </body>
 </html>

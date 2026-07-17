@@ -2,7 +2,8 @@
 set -e
 
 echo "=== Starting Scan-to-BIM Reconstruction Pipeline FROM SUGAR ONWARDS ==="
-echo "(Assumes STS training + cable filtering already produced point_cloud.ply)"
+echo "(Uses the unfiltered standard point_cloud.ply with full-image stock-SuGaR supervision.)"
+echo "For the object-only mask-aware workflow, run ./run_masked_sugar.sh instead."
 
 # Explanations for SuGaR configuration options (invoked via the 'EXPLAIN' keyword at the prompts)
 explain_regularization() {

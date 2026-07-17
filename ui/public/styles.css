@@ -1,7 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 /* === Reset & Base === */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
   /* Google Stitch Synthetic Precision Design Tokens */
@@ -43,7 +43,10 @@
 html, body { height: 100%; overflow: hidden; }
 body {
   font-family: var(--font-interface);
-  background: var(--bg-primary);
+  background:
+    radial-gradient(circle at top left, rgba(196, 197, 218, 0.08), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(69, 223, 164, 0.08), transparent 24%),
+    var(--bg-primary);
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.6;
@@ -249,13 +252,12 @@ body {
 
 /* === Scripts Panel === */
 #panel-scripts {
-  height: 290px;
-  min-height: 290px;
+  height: 50%;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
 }
 #panel-scripts .panel-header {
   border-bottom-color: var(--border);
@@ -352,7 +354,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
   padding: 16px 20px;
   min-width: 0;
   background: var(--bg-secondary);
@@ -419,7 +421,7 @@ body {
 }
 
 /* Script progress steps */
-#script-progress { margin-bottom: 12px; flex-shrink: 0; }
+#script-progress { margin-bottom: 12px; flex-shrink: 0; height: 50px; overflow-y: auto; }
 .progress-step {
   display: flex;
   align-items: center;
@@ -453,6 +455,7 @@ body {
 /* Terminal output */
 #script-terminal {
   flex: 1;
+  height: 100px; 
   overflow-y: auto;
   background: var(--bg-secondary); /* surface-container-lowest */
   border: 1px solid var(--border);
@@ -713,13 +716,15 @@ body {
 
 /* === Upload Zone (Drag & Drop) === */
 #upload-zone {
-  margin: 10px 16px;
+  height: auto;
+  margin: 8px 16px;
   border: 1px dashed var(--border);
   border-radius: var(--radius-lg);
-  padding: 14px 18px;
+  padding: 8px 12px;
   cursor: pointer;
   transition: all 0.2s;
   background: var(--bg-tertiary);
+  flex-shrink: 0;
 }
 #upload-zone:hover { 
   border-color: var(--accent); 
@@ -733,15 +738,22 @@ body {
 }
 .upload-zone-inner {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  text-align: center;
+  justify-content: space-between;
   gap: 12px;
+  width: 100%;
 }
-.upload-icon { font-size: 26px; color: var(--accent); }
-.upload-text { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.upload-text strong { font-size: 13px; color: var(--text-primary); font-family: var(--font-interface); }
-.upload-text small { font-size: 11px; color: var(--text-muted); }
+.upload-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.upload-icon { font-size: 18px; color: var(--accent); flex-shrink: 0; }
+.upload-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.upload-text strong { font-size: 12px; color: var(--text-primary); font-family: var(--font-interface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.upload-text small { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #upload-target {
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -749,16 +761,18 @@ body {
   border-radius: var(--radius-sm);
   font-family: var(--font-interface);
   font-size: 11px;
-  padding: 6px 12px;
-  width: 100%;
+  padding: 4px 8px;
+  width: auto;
+  max-width: 180px;
   cursor: pointer;
   outline: none;
+  flex-shrink: 0;
 }
 #upload-target:focus {
   border-color: var(--accent);
 }
 #upload-progress {
-  margin-top: 10px;
+  margin-top: 6px;
   font-size: 11px;
   color: var(--text-muted);
   text-align: center;

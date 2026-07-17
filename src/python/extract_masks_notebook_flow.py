@@ -376,6 +376,9 @@ def main() -> int:
                 try:
                     for response_stream in stream_obj:
                         fidx = response_stream["frame_index"]
+                        # Print precise progress to stdout so the Web UI terminal captures it
+                        # Format: Processing frame 15 / 100
+                        print(f"Processing frame {fidx + 1} / {num_frames}...", flush=True)
                         local_nonempty += write_mask_from_outputs(
                             frame_idx=fidx,
                             outputs=response_stream.get("outputs", {}),

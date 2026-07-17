@@ -1,13 +1,30 @@
-import os
 import csv
+import glob
+import os
+
+
+def find_gcp_csv(raw_dir):
+    preferred = os.path.join(raw_dir, 'gcp_coordinates.csv')
+    if os.path.exists(preferred):
+        return preferred
+
+    candidates = sorted(
+        path for path in glob.glob(os.path.join(raw_dir, '*.csv'))
+        if os.path.basename(path).lower() not in {'gcp_relative.csv'}
+    )
+    if candidates:
+        return candidates[0]
+
+    return None
 
 def main():
-    csv_path = '/data/01_raw/gcp_coordinates.csv'
+    raw_dir = '/data/01_raw'
+    csv_path = find_gcp_csv(raw_dir)
     out_rel_path = '/data/01_raw/gcp_relative.csv'
     out_anchor_path = '/data/01_raw/anchor.txt'
     
-    if not os.path.exists(csv_path):
-        print(f"Error: {csv_path} not found. Please place your raw GCP coordinates in the raw data folder.")
+    if not csv_path:
+        print(f"Error: No CSV file found in {raw_dir}. Please upload any GCP coordinate CSV there.")
         return
         
     print(f"Reading global GCP coordinates from {csv_path}...")

@@ -216,13 +216,21 @@ def run_script_thread(script_path, session_id):
                     break  # PTY closed (process exited)
                 if not data:
                     break
-                q.put(("output", data.decode("utf-8", errors="replace")))
+                clean_text = data.decode("utf-8", errors="replace")
+                with script_sessions_lock:
+                    if session_id in script_sessions:
+                        script_sessions[session_id]["log"].append(clean_text)
+                q.put(("output", clean_text))
             elif proc.poll() is not None:
                 break
         proc.wait()
         q.put(("exit", proc.returncode))
     except Exception as e:
-        q.put(("output", f"\n[FEHLER] {e}\n"))
+        err_msg = f"\n[FEHLER] {e}\n"
+        with script_sessions_lock:
+            if session_id in script_sessions:
+                script_sessions[session_id]["log"].append(err_msg)
+        q.put(("output", err_msg))
         q.put(("exit", -1))
     finally:
         if master_fd is not None:
@@ -251,6 +259,15 @@ def handle_script_serve(handler, session_id):
         handler.end_headers()
     except (ConnectionResetError, BrokenPipeError, OSError):
         return
+
+    # First stream any cached historical terminal outputs (allows restoring state on refresh!)
+    with script_sessions_lock:
+        historical_logs = list(session.get("log", []))
+    for log_item in historical_logs:
+        payload = json.dumps({"type": "output", "data": log_item})
+        if not safe_write(handler, f"data: {payload}\n\n"):
+            return
+
     q = session["queue"]
     while True:
         try:
@@ -490,6 +507,19 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_json([get_step_info(s) for s in PIPELINE_STEPS])
         elif self.path == "/api/scripts":
             self.send_json(SCRIPTS_INFO)
+        elif self.path == "/api/script/active":
+            # Return active sessions to allow any client reload to seamlessly reconnect!
+            active_list = []
+            with script_sessions_lock:
+                for sid, s in script_sessions.items():
+                    proc = s.get("process")
+                    running = proc is not None and proc.poll() is None
+                    if running:
+                        active_list.append({
+                            "session_id": sid,
+                            "script_id": s["script_id"]
+                        })
+            self.send_json(active_list)
         elif self.path.startswith("/api/script/stream/"):
             session_id = self.path.split("/")[-1]
             handle_script_serve(self, session_id)
@@ -504,7 +534,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             else:
                 self.send_json({"running": False, "session_id": session_id})
         elif self.path.startswith("/api/file/"):
-            rel_path = self.path[len("/api/file/"):]
+            rel_path = unquote(self.path[len("/api/file/"):])
             abs_path = os.path.abspath(os.path.join(DATA_DIR, "..", rel_path))
             if os.path.isfile(abs_path):
                 try:
@@ -521,7 +551,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             else:
                 self.send_json({"error": "File not found"}, 404)
         elif self.path.startswith("/api/dir/"):
-            rel_path = self.path[len("/api/dir/"):]
+            rel_path = unquote(self.path[len("/api/dir/"):])
             abs_path = os.path.abspath(os.path.join(DATA_DIR, rel_path))
             if os.path.isdir(abs_path):
                 self.send_json(scan_dir(abs_path))
@@ -556,6 +586,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     "process": None,
                     "cancel": False,
                     "script_id": script_id,
+                    "log": [] # Persistent log of terminal output for page refreshes
                 }
             t = threading.Thread(target=run_script_thread, args=(script_path, session_id), daemon=True)
             t.start()
@@ -711,6 +742,7 @@ class ThreadingHTTPServerV(ThreadingMixIn, HTTPServer):
     SSE terminal streams are long-lived connections - without threading a
     single running script would block all other API calls and uploads."""
     daemon_threads = True
+    allow_reuse_address = True  # FIX: instantly reuse port 8080 if restarted!
 
 
 def main():

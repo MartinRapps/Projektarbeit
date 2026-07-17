@@ -38,6 +38,49 @@ chmod +x run_from_sts.sh
 ./run_from_sts.sh
 ```
 
+### Object-Only, Mask-Aware SuGaR (Recommended)
+
+For a segmented cable or pipe, an object-only Gaussian cloud must not be
+optimized against unmasked full-frame RGB images. The standard pipeline now
+keeps `point_cloud.ply` as the full-scene baseline and additionally exports the
+filtered cloud as `point_cloud_cable.ply`. Use the isolated mask-aware SuGaR
+runner for the object reconstruction:
+
+```bash
+chmod +x run_masked_sugar.sh run_multiview_crop.sh
+./run_masked_sugar.sh
+```
+
+The runner stages a private copy of the filtered cloud, applies semantic masks
+to RGB, depth-normal, and UV-texture supervision, and then performs a
+conservative occlusion-aware multi-view consensus crop. It writes SuGaR
+checkpoints below `data/sugar_output/masked_*/` and the final mesh below
+`data/06_mesh/`; no standard STS checkpoint is overwritten. Its defaults are
+`dn_consistency`, medium refinement, a two-pixel RGB/UV dilation, and the
+middle mask level for depth-normal consistency. Set `SUGAR_RUN_TAG` to keep
+several experiments, or use `REPLACE=1` only when deliberately replacing the
+same tagged result.
+
+The project keeps a pinned SuGaR checkout in `third_party/SuGaR`. The runner
+automatically applies `docker-compose.sugar-dev.yml`, which mounts that local
+checkout over `/opt/sugar` in the existing SuGaR container. Thus changing the
+local fork needs neither a fresh clone nor an image rebuild during development.
+After validation, the same tracked source can be baked into the Docker image
+for a release build.
+
+To crop an already exported textured SuGaR OBJ without retraining, run:
+
+```bash
+./run_multiview_crop.sh
+```
+
+This uses the existing `sugar-meshing` service and needs no additional
+container. The default pass preserves faces with insufficient observations;
+review its JSON report before using more aggressive crop options. For an already
+dense full-scene mesh, use `CROP_PROFILE=semantic-core` to retain only faces
+with semantic support and remove unobserved faces. It writes a separate
+`*_semantic_core.obj` result and never replaces the conservative output.
+
 ---
 
 ## Directory Reference
