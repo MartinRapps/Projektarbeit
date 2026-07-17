@@ -86,71 +86,58 @@ docker compose run --rm sts-training python3 train.py \
     --test_iterations "$ITERATIONS" \
     $ON_THE_FLY
 
-# Step 3.5: Export an object-only STS cloud without mutating the standard
-# full-scene checkpoint. Stock SuGaR uses full RGB supervision, so replacing
-# point_cloud.ply here would recreate an object-cloud/full-image mismatch.
-echo "[Step 3.5/5] Preserving the full STS cloud and exporting a filtered object cloud..."
+# Step 3.5: Preserve the full STS cloud and prepare the standard geometry-first
+# object input for the local mask-aware SuGaR route.
+echo "[Step 3.5/5] Preserving the full STS cloud and preparing the SuGaR geometry input..."
 docker compose run --rm sts-training python3 -c "import os, shutil; base='/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}'; src=f'{base}/point_cloud.ply'; dst=f'{base}/point_cloud_full_scene.ply'; os.path.exists(src) or (_ for _ in ()).throw(FileNotFoundError(src)); shutil.copy2(src, dst)"
-docker compose run --rm sts-training python3 /app/src/python/filter_cable_pc.py \
-    --input_ply "/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud.ply" \
-    --output_ply "/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud_cable.ply" \
-    --level m \
-    --object_id 0
-
-echo "[Step 3.5/5] Standard point_cloud.ply remains full-scene for a consistent stock-SuGaR baseline."
-echo "              Run ./run_masked_sugar.sh for the object-only, mask-aware SuGaR workflow."
-
-# Step 4: Meshing (SuGaR regularized mesh extraction)
-echo "=========================================================="
-echo "SuGaR Mesh Reconstruction Configuration"
-echo "=========================================================="
-if [[ "$AUTOPILOT" == "true" ]]; then
-    REGULARIZATION="dn_consistency"
-    REFINEMENT_TIME="short"
-    echo "Autopilot aktiv: Regularisierung=dn_consistency, Refinement-Dauer=short (2000 Iterationen)."
+FILTER_MIN_OPACITY="${FILTER_MIN_OPACITY:-0.01}"
+FILTER_BLACK_THRESHOLD="${FILTER_BLACK_THRESHOLD:-0.08}"
+SUGAR_INPUT_ALPHA="${SUGAR_INPUT_ALPHA:-0.999999}"
+MESH_VERTICES="${MESH_VERTICES:-200000}"
+SURFACE_SAMPLE_COUNT="${SURFACE_SAMPLE_COUNT:-5000000}"
+MASK_LEVEL="${MASK_LEVEL:-default}"
+MASK_DILATION_PX="${MASK_DILATION_PX:-0}"
+NORMAL_MASK_LEVEL="${NORMAL_MASK_LEVEL:-default}"
+TEXTURE_MASK_LEVEL="${TEXTURE_MASK_LEVEL:-default}"
+TEXTURE_MASK_DILATION_PX="${TEXTURE_MASK_DILATION_PX:-0}"
+STOP_AFTER_COARSE_MESH="${STOP_AFTER_COARSE_MESH:-0}"
+RUN_CONSENSUS_CROP="${RUN_CONSENSUS_CROP:-0}"
+if [[ "$REGULARIZATION" == "dn_consistency" ]]; then
+    COARSE_ITERATIONS="${COARSE_ITERATIONS:-9001}"
 else
-    while true; do
-        read -p "Regularization type (sdf/density/dn_consistency, oder 'EXPLAIN' fuer Erklaerung) [Default: dn_consistency]: " USER_REG
-        if [[ "${USER_REG,,}" == "explain" ]]; then
-            explain_regularization
-            continue
-        fi
-        REGULARIZATION=${USER_REG:-dn_consistency}
-        break
-    done
-
-    while true; do
-        read -p "Refinement time (short/medium/long, oder 'EXPLAIN' fuer Erklaerung) [Default: short]: " USER_REFTIME
-        if [[ "${USER_REFTIME,,}" == "explain" ]]; then
-            explain_refinement_time
-            continue
-        fi
-        REFINEMENT_TIME=${USER_REFTIME:-short}
-        break
-    done
+    COARSE_ITERATIONS=""
 fi
-echo "--------------------------------------------------------"
-echo "Active Configuration:"
-echo " - Regularization Type: $REGULARIZATION"
-echo " - Refinement Time: $REFINEMENT_TIME"
-echo " - Vanilla 3DGS Checkpoint Iteration: $ITERATIONS"
-echo "--------------------------------------------------------"
 
-# NOTE: extract_mesh.py alone cannot regularize a coarse SuGaR model - it only extracts a mesh
-# from an already-trained coarse checkpoint. The '-r/--regularization_type' flag belongs to the
-# root-level train.py, which runs: coarse SuGaR training (regularized) -> mesh extraction -> refinement.
-echo "[Step 4/5] Running SuGaR Full Pipeline (Coarse Training -> Mesh Extraction -> Refinement)..."
-# Make sure the checkpoint path has a trailing slash because SuGaR simply concatenates 'cameras.json' to it!
-docker compose run --rm sugar-meshing python3 train.py \
-    -s /data/05_3dgs \
-    -c /data/05_3dgs/output/ \
-    -i "$ITERATIONS" \
-    -r "$REGULARIZATION" \
-    --refinement_time "$REFINEMENT_TIME" \
-    --eval True
+ITERATIONS="$ITERATIONS" \
+FILTER_MIN_OPACITY="$FILTER_MIN_OPACITY" \
+FILTER_BLACK_THRESHOLD="$FILTER_BLACK_THRESHOLD" \
+SUGAR_INPUT_ALPHA="$SUGAR_INPUT_ALPHA" \
+./prepare_sugar_input.sh
+
+SUGAR_RUN_TAG="${SUGAR_RUN_TAG:-sts_i${ITERATIONS}_${REGULARIZATION}_${REFINEMENT_TIME}}"
+SUGAR_MESH_EXPORT_NAME="${SUGAR_MESH_EXPORT_NAME:-$SUGAR_RUN_TAG}"
+echo "[Step 4/5] Running mask-aware SuGaR (Coarse Training -> Mesh Extraction -> Refinement)..."
+MASKED_SUGAR_INTERACTIVE=0 \
+ITERATIONS="$ITERATIONS" \
+REGULARIZATION="$REGULARIZATION" \
+COARSE_ITERATIONS="$COARSE_ITERATIONS" \
+REFINEMENT_TIME="$REFINEMENT_TIME" \
+MESH_VERTICES="$MESH_VERTICES" \
+SURFACE_SAMPLE_COUNT="$SURFACE_SAMPLE_COUNT" \
+MASK_LEVEL="$MASK_LEVEL" \
+MASK_DILATION_PX="$MASK_DILATION_PX" \
+NORMAL_MASK_LEVEL="$NORMAL_MASK_LEVEL" \
+TEXTURE_MASK_LEVEL="$TEXTURE_MASK_LEVEL" \
+TEXTURE_MASK_DILATION_PX="$TEXTURE_MASK_DILATION_PX" \
+STOP_AFTER_COARSE_MESH="$STOP_AFTER_COARSE_MESH" \
+RUN_CONSENSUS_CROP="$RUN_CONSENSUS_CROP" \
+SUGAR_RUN_TAG="$SUGAR_RUN_TAG" \
+SUGAR_MESH_EXPORT_NAME="$SUGAR_MESH_EXPORT_NAME" \
+FILTERED_PLY="data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud_filtered_opacity999999.ply" \
+./run_masked_sugar.sh
 
 # Step 5: Post-Processing & Georeferencing (DGtal & Python & GDAL)
 echo "[Step 5/5] Extracting centerline and georeferencing to UTM..."
-docker compose run --rm post-processing /app/src/scripts/postprocess.sh
+docker compose run --rm -e INPUT_MESH="/data/06_mesh/${SUGAR_MESH_EXPORT_NAME}/refined.obj" post-processing /app/src/scripts/postprocess.sh
 
 echo "=== Pipeline (STS to Georeferencing) Completed Successfully. Final outputs saved in data/08_gis/ ==="

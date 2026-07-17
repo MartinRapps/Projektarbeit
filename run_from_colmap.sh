@@ -75,23 +75,61 @@ docker compose run --rm sts-training python3 train.py \
     --test_iterations "$ITERATIONS" \
     $ON_THE_FLY
 
-# Step 3.5: Filter STS point cloud targeting only the cable (Value=0) on Medium Level (obj_id_m)
-echo "[Step 3.5/5] Backing up and filtering STS point cloud for target cable..."
-docker compose run --rm sts-training python3 /app/src/python/filter_cable_pc.py \
-    --input_ply "/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud.ply" \
-    --output_ply "/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud_cable.ply" \
-    --level m \
-    --object_id 0
+# Step 3.5: Preserve the full STS cloud and prepare the geometry-oriented
+# object input for mask-aware SuGaR without replacing point_cloud.ply.
+echo "[Step 3.5/5] Preparing the standard SuGaR geometry input..."
+docker compose run --rm sts-training python3 -c "import os, shutil; base='/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}'; src=f'{base}/point_cloud.ply'; dst=f'{base}/point_cloud_full_scene.ply'; os.path.exists(src) or (_ for _ in ()).throw(FileNotFoundError(src)); shutil.copy2(src, dst)"
+FILTER_MIN_OPACITY="${FILTER_MIN_OPACITY:-0.01}"
+FILTER_BLACK_THRESHOLD="${FILTER_BLACK_THRESHOLD:-0.08}"
+SUGAR_INPUT_ALPHA="${SUGAR_INPUT_ALPHA:-0.999999}"
+ITERATIONS="$ITERATIONS" \
+FILTER_MIN_OPACITY="$FILTER_MIN_OPACITY" \
+FILTER_BLACK_THRESHOLD="$FILTER_BLACK_THRESHOLD" \
+SUGAR_INPUT_ALPHA="$SUGAR_INPUT_ALPHA" \
+./prepare_sugar_input.sh
 
-echo "[Step 3.5/5] Enforcing filtered cable-only point cloud as standard input for SuGaR..."
-docker compose run --rm sts-training python3 -c "import os, shutil, sys; base='/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}'; src=f'{base}/point_cloud_cable.ply'; orig=f'{base}/point_cloud.ply'; bak=f'{base}/point_cloud_original.ply'; (shutil.copy(orig, bak), shutil.copy(src, orig)) if os.path.exists(src) else (print(f'Error: filtered point cloud not found: {src}'), sys.exit(1))"
+REGULARIZATION="${REGULARIZATION:-dn_consistency}"
+REFINEMENT_TIME="${REFINEMENT_TIME:-medium}"
+MESH_VERTICES="${MESH_VERTICES:-200000}"
+SURFACE_SAMPLE_COUNT="${SURFACE_SAMPLE_COUNT:-5000000}"
+MASK_LEVEL="${MASK_LEVEL:-default}"
+MASK_DILATION_PX="${MASK_DILATION_PX:-0}"
+NORMAL_MASK_LEVEL="${NORMAL_MASK_LEVEL:-default}"
+TEXTURE_MASK_LEVEL="${TEXTURE_MASK_LEVEL:-default}"
+TEXTURE_MASK_DILATION_PX="${TEXTURE_MASK_DILATION_PX:-0}"
+STOP_AFTER_COARSE_MESH="${STOP_AFTER_COARSE_MESH:-0}"
+RUN_CONSENSUS_CROP="${RUN_CONSENSUS_CROP:-0}"
+if [[ "$REGULARIZATION" == "dn_consistency" ]]; then
+    COARSE_ITERATIONS="${COARSE_ITERATIONS:-9001}"
+else
+    COARSE_ITERATIONS=""
+fi
+SUGAR_RUN_TAG="${SUGAR_RUN_TAG:-colmap_i${ITERATIONS}_${REGULARIZATION}_${REFINEMENT_TIME}}"
+SUGAR_MESH_EXPORT_NAME="${SUGAR_MESH_EXPORT_NAME:-$SUGAR_RUN_TAG}"
 
-# Step 4: Meshing (SuGaR regularized mesh extraction)
-echo "[Step 4/5] Running SuGaR Mesh Reconstruction..."
-docker compose run --rm sugar-meshing python3 extract_mesh.py --regularization dn_consistency
+# Step 4: Run the local mask-aware SuGaR route.
+echo "[Step 4/5] Running mask-aware SuGaR (Coarse Training -> Mesh Extraction -> Refinement)..."
+MASKED_SUGAR_INTERACTIVE=0 \
+ITERATIONS="$ITERATIONS" \
+REGULARIZATION="$REGULARIZATION" \
+COARSE_ITERATIONS="$COARSE_ITERATIONS" \
+REFINEMENT_TIME="$REFINEMENT_TIME" \
+MESH_VERTICES="$MESH_VERTICES" \
+SURFACE_SAMPLE_COUNT="$SURFACE_SAMPLE_COUNT" \
+MASK_LEVEL="$MASK_LEVEL" \
+MASK_DILATION_PX="$MASK_DILATION_PX" \
+NORMAL_MASK_LEVEL="$NORMAL_MASK_LEVEL" \
+TEXTURE_MASK_LEVEL="$TEXTURE_MASK_LEVEL" \
+TEXTURE_MASK_DILATION_PX="$TEXTURE_MASK_DILATION_PX" \
+STOP_AFTER_COARSE_MESH="$STOP_AFTER_COARSE_MESH" \
+RUN_CONSENSUS_CROP="$RUN_CONSENSUS_CROP" \
+SUGAR_RUN_TAG="$SUGAR_RUN_TAG" \
+SUGAR_MESH_EXPORT_NAME="$SUGAR_MESH_EXPORT_NAME" \
+FILTERED_PLY="data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud_filtered_opacity999999.ply" \
+./run_masked_sugar.sh
 
 # Step 5: Post-Processing & Georeferencing (DGtal & Python & GDAL)
 echo "[Step 5/5] Extracting centerline and georeferencing to UTM..."
-docker compose run --rm post-processing /app/src/scripts/postprocess.sh
+docker compose run --rm -e INPUT_MESH="/data/06_mesh/${SUGAR_MESH_EXPORT_NAME}/refined.obj" post-processing /app/src/scripts/postprocess.sh
 
 echo "=== Pipeline (COLMAP to Georeferencing) Completed Successfully. Final outputs saved in data/08_gis/ ==="

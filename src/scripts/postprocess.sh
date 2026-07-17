@@ -2,7 +2,7 @@
 set -e
 
 echo "=== Post-Processing and Georeferencing ==="
-INPUT_MESH="/data/06_mesh/sugar_output.ply"
+INPUT_MESH="${INPUT_MESH:-/data/06_mesh/sugar_output.obj}"
 OUTPUT_CENTERLINE="/data/07_centerline/centerline.txt"
 OUTPUT_GIS="/data/08_gis/final_output.geojson"
 
@@ -10,6 +10,7 @@ mkdir -p /data/07_centerline
 mkdir -p /data/08_gis
 
 echo "1. Running DGtal Centerline Extraction (C++)..."
+echo "Using mesh: $INPUT_MESH"
 # Replace with actual C++ binary call
 # /app/src/cpp/build/extract_centerline $INPUT_MESH $OUTPUT_CENTERLINE
 echo "Mock extraction to $OUTPUT_CENTERLINE"

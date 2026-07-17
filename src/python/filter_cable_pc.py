@@ -23,14 +23,19 @@ def _id_pth_path(iteration, level):
     return f"/data/05_3dgs/output/{base_name}_{iteration}.pth"
 
 def main():
-    parser = argparse.ArgumentParser(description="Filter out the background and quality-defects (like black or transparent splats) from the Segment-then-Splat point cloud.")
+    parser = argparse.ArgumentParser(description="Filter background and optional quality defects from the Segment-then-Splat point cloud.")
     parser.add_argument("--input_ply", default="/data/05_3dgs/output/point_cloud/iteration_15000/point_cloud.ply", help="Path to raw Point Cloud from STS")
-    parser.add_argument("--output_ply", default="/data/05_3dgs/output/point_cloud/iteration_15000/point_cloud_cable.ply", help="Path to save filtered Point Cloud")
+    parser.add_argument("--output_ply", default="/data/05_3dgs/output/point_cloud/iteration_15000/point_cloud_filtered.ply", help="Path to save filtered Point Cloud")
     parser.add_argument("--level", default="m", choices=["s", "m", "l"], help="Granularity level: s, m, l")
     parser.add_argument("--object_id", type=int, default=0, help="The target object ID to retain (default is 0 for single segment)")
-    parser.add_argument("--min_opacity", type=float, default=0.01, help="Minimum sigmoid opacity threshold to remove transparent floaters")
+    parser.add_argument("--min_opacity", type=float, default=0.0, help="Minimum sigmoid opacity threshold; 0 disables opacity-based rejection")
     parser.add_argument("--black_threshold", type=float, default=0.08, help="Threshold below which R, G, B are all considered too dark (black splats)")
     args = parser.parse_args()
+
+    if not 0.0 <= args.min_opacity < 1.0:
+        parser.error("--min_opacity must be in the interval [0, 1).")
+    if not 0.0 <= args.black_threshold <= 1.0:
+        parser.error("--black_threshold must be in the interval [0, 1].")
 
     if not os.path.exists(args.input_ply):
          # Try automatic resolve of point_cloud.ply if iteration was not 15000
@@ -44,7 +49,7 @@ def main():
              if os.path.exists(candidate):
                  found_ply = candidate
                  args.input_ply = candidate
-                 args.output_ply = os.path.join(base_dir, subdir, "point_cloud_cable.ply")
+                 args.output_ply = os.path.join(base_dir, subdir, "point_cloud_filtered.ply")
                  break
          
          if not found_ply:
@@ -122,16 +127,21 @@ def main():
     print(f"Points after segment filter: {initial_filtered_count}")
 
     keep_mask = np.ones(len(filtered_data), dtype=bool)
+    opacity_mask = np.ones(len(filtered_data), dtype=bool)
+    black_mask = np.ones(len(filtered_data), dtype=bool)
 
     # 1. Opacity filtering
     if 'opacity' in filtered_data.dtype.names:
         op = np.asarray(filtered_data['opacity'])
-        # Sigmoid opacity
-        sig_op = 1.0 / (1.0 + np.exp(-op))
-        opacity_mask = sig_op >= args.min_opacity
+        if args.min_opacity == 0.0:
+            opacity_mask = np.ones(len(filtered_data), dtype=bool)
+            print(" - Opacity filter disabled (min_opacity=0.0): retained all segment-specific points")
+        else:
+            sig_op = 1.0 / (1.0 + np.exp(-op))
+            opacity_mask = sig_op >= args.min_opacity
+            removed_opacity = np.count_nonzero(~opacity_mask)
+            print(f" - Opacity filter (sigmoid_opacity >= {args.min_opacity}): removed {removed_opacity} points")
         keep_mask &= opacity_mask
-        removed_opacity = np.count_nonzero(~opacity_mask)
-        print(f" - Opacity filter (sigmoid_opacity >= {args.min_opacity}): removed {removed_opacity} near-transparent points")
     else:
         print(" - Opacity filter skipped: 'opacity' property not found in point cloud data")
 
@@ -149,6 +159,14 @@ def main():
         print(f" - Black filter (RGB channels >= {args.black_threshold}): removed {removed_black} black/dark points")
     else:
         print(" - Black filter skipped: 'f_dc_0', 'f_dc_1', 'f_dc_2' properties not found in point cloud data")
+
+    retained_after_opacity = np.count_nonzero(opacity_mask)
+    retained_after_black = np.count_nonzero(black_mask)
+    retained_after_both = np.count_nonzero(keep_mask)
+    print(
+        " - Retained by opacity / color / both: "
+        f"{retained_after_opacity} / {retained_after_black} / {retained_after_both}"
+    )
 
     if len(filtered_data[keep_mask]) == 0:
         print("Warning: Advanced quality filtering (opacity and black filters) would remove ALL points!")

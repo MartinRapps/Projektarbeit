@@ -17,6 +17,7 @@ readonly MESH_DIR="data/06_mesh"
 readonly CENTERLINE_DIR="data/07_centerline"
 readonly GIS_DIR="data/08_gis"
 readonly EVAL_DIR="data/09_evaluation"
+readonly PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Pipeline state (set by configure_* functions, consumed by run_* functions)
 AUTOPILOT="${AUTOPILOT:-false}"
@@ -25,6 +26,20 @@ TEXT_PROMPT=""
 ITERATIONS=7000
 STAGE2_ITERS=5000
 ON_THE_FLY=""
+FILTER_MIN_OPACITY="${FILTER_MIN_OPACITY:-0.01}"
+FILTER_BLACK_THRESHOLD="${FILTER_BLACK_THRESHOLD:-0.08}"
+SUGAR_INPUT_ALPHA="${SUGAR_INPUT_ALPHA:-0.999999}"
+REGULARIZATION="${REGULARIZATION:-dn_consistency}"
+REFINEMENT_TIME="${REFINEMENT_TIME:-medium}"
+MESH_VERTICES="${MESH_VERTICES:-200000}"
+SURFACE_SAMPLE_COUNT="${SURFACE_SAMPLE_COUNT:-5000000}"
+MASK_LEVEL="${MASK_LEVEL:-default}"
+MASK_DILATION_PX="${MASK_DILATION_PX:-0}"
+NORMAL_MASK_LEVEL="${NORMAL_MASK_LEVEL:-default}"
+TEXTURE_MASK_LEVEL="${TEXTURE_MASK_LEVEL:-default}"
+TEXTURE_MASK_DILATION_PX="${TEXTURE_MASK_DILATION_PX:-0}"
+STOP_AFTER_COARSE_MESH="${STOP_AFTER_COARSE_MESH:-0}"
+RUN_CONSENSUS_CROP="${RUN_CONSENSUS_CROP:-0}"
 
 # --- Logging -----------------------------------------------------------------
 _log() {
@@ -439,40 +454,49 @@ run_step_sts_train() {
 }
 
 run_step_filter_cable() {
-    log_step "[Step 3.5/5] Filtering STS point cloud for target cable..."
+    log_step "[Step 3.5/5] Preparing the standard SuGaR geometry input..."
 
-    docker compose run --rm sts-training python3 /app/src/python/filter_cable_pc.py \
-        --input_ply "/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud.ply" \
-        --output_ply "/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud_cable.ply" \
-        --level m \
-        --object_id 0
-
-    log_info "Enforcing filtered cable-only point cloud as standard input for SuGaR..."
-    docker compose run --rm sts-training python3 -c "
-import os, shutil, sys
-base = '/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}'
-src = f'{base}/point_cloud_cable.ply'
-orig = f'{base}/point_cloud.ply'
-bak = f'{base}/point_cloud_original.ply'
-if os.path.exists(src):
-    shutil.copy(orig, bak)
-    shutil.copy(src, orig)
-    print(f'Backup: {bak}')
-    print(f'Cable-only point cloud enforced as {orig}')
-else:
-    print(f'Error: filtered point cloud not found: {src}')
-    sys.exit(1)
-"
+    docker compose run --rm sts-training python3 -c "import os, shutil; base='/data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}'; src=f'{base}/point_cloud.ply'; dst=f'{base}/point_cloud_full_scene.ply'; os.path.exists(src) or (_ for _ in ()).throw(FileNotFoundError(src)); shutil.copy2(src, dst)"
+    ITERATIONS="$ITERATIONS" \
+    FILTER_MIN_OPACITY="$FILTER_MIN_OPACITY" \
+    FILTER_BLACK_THRESHOLD="$FILTER_BLACK_THRESHOLD" \
+    SUGAR_INPUT_ALPHA="$SUGAR_INPUT_ALPHA" \
+    "$PROJECT_ROOT/prepare_sugar_input.sh"
 }
 
 run_step_sugar() {
-    log_step "[Step 4/5] Running SuGaR Mesh Reconstruction..."
-    docker compose run --rm sugar-meshing python3 extract_mesh.py --regularization dn_consistency
+    log_step "[Step 4/5] Running mask-aware SuGaR Mesh Reconstruction..."
+    if [[ "$REGULARIZATION" == "dn_consistency" ]]; then
+        COARSE_ITERATIONS="${COARSE_ITERATIONS:-9001}"
+    else
+        COARSE_ITERATIONS=""
+    fi
+    SUGAR_RUN_TAG="${SUGAR_RUN_TAG:-library_i${ITERATIONS}_c${COARSE_ITERATIONS:-default}_v${MESH_VERTICES}}"
+    SUGAR_MESH_EXPORT_NAME="${SUGAR_MESH_EXPORT_NAME:-$SUGAR_RUN_TAG}"
+
+    MASKED_SUGAR_INTERACTIVE=0 \
+    ITERATIONS="$ITERATIONS" \
+    REGULARIZATION="$REGULARIZATION" \
+    COARSE_ITERATIONS="$COARSE_ITERATIONS" \
+    REFINEMENT_TIME="$REFINEMENT_TIME" \
+    MESH_VERTICES="$MESH_VERTICES" \
+    SURFACE_SAMPLE_COUNT="$SURFACE_SAMPLE_COUNT" \
+    MASK_LEVEL="$MASK_LEVEL" \
+    MASK_DILATION_PX="$MASK_DILATION_PX" \
+    NORMAL_MASK_LEVEL="$NORMAL_MASK_LEVEL" \
+    TEXTURE_MASK_LEVEL="$TEXTURE_MASK_LEVEL" \
+    TEXTURE_MASK_DILATION_PX="$TEXTURE_MASK_DILATION_PX" \
+    STOP_AFTER_COARSE_MESH="$STOP_AFTER_COARSE_MESH" \
+    RUN_CONSENSUS_CROP="$RUN_CONSENSUS_CROP" \
+    SUGAR_RUN_TAG="$SUGAR_RUN_TAG" \
+    SUGAR_MESH_EXPORT_NAME="$SUGAR_MESH_EXPORT_NAME" \
+    FILTERED_PLY="data/05_3dgs/output/point_cloud/iteration_${ITERATIONS}/point_cloud_filtered_opacity999999.ply" \
+    "$PROJECT_ROOT/run_masked_sugar.sh"
 }
 
 run_step_postprocess() {
     log_step "[Step 5/5] Extracting centerline and georeferencing to UTM..."
-    docker compose run --rm post-processing /app/src/scripts/postprocess.sh
+    docker compose run --rm -e INPUT_MESH="/data/06_mesh/${SUGAR_MESH_EXPORT_NAME}/refined.obj" post-processing /app/src/scripts/postprocess.sh
 }
 
 # --- Composite Runners -------------------------------------------------------

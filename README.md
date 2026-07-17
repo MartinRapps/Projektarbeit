@@ -42,24 +42,39 @@ chmod +x run_from_sts.sh
 
 For a segmented cable or pipe, an object-only Gaussian cloud must not be
 optimized against unmasked full-frame RGB images. The standard pipeline now
-keeps `point_cloud.ply` as the full-scene baseline and additionally exports the
-filtered cloud as `point_cloud_cable.ply`. Use the isolated mask-aware SuGaR
-runner for the object reconstruction:
+keeps `point_cloud.ply` as the full-scene baseline, exports the genuinely
+filtered object cloud as `point_cloud_filtered.ply`, and creates
+`point_cloud_filtered_opacity999999.ply` as the geometry-oriented SuGaR input.
+The latter deliberately overwrites the retained Gaussian opacities with
+`alpha=0.999999`; it is an initialization policy for geometry optimization,
+not a claim that the object is physically opaque. Use the guided master runner
+for the complete workflow:
 
 ```bash
-chmod +x run_masked_sugar.sh run_multiview_crop.sh
+chmod +x run_pipeline.sh
+./run_pipeline.sh
+```
+
+After STS, the runner confirms or edits the filter thresholds and the
+high-opacity alpha, then confirms or edits the mask-aware SuGaR settings.
+`EXPLAIN` is accepted at each configuration prompt. The current geometry-first
+defaults are `min_opacity=0.01`, `black_threshold=0.08`,
+`alpha=0.999999`, `dn_consistency` at coarse counter `9001`, 200,000 mesh
+vertices, 5,000,000 surface samples, `medium` refinement, zero RGB/UV
+dilation, and no consensus crop. The full-scene STS checkpoint is never
+overwritten; SuGaR stages a private checkpoint and exports the refined PLY/OBJ
+under `data/06_mesh/<export-name>/`.
+
+For a standalone object-only run after STS, prepare the standard input first
+and then launch the mask-aware runner:
+
+```bash
+./prepare_sugar_input.sh
 ./run_masked_sugar.sh
 ```
 
-The runner stages a private copy of the filtered cloud, applies semantic masks
-to RGB, depth-normal, and UV-texture supervision, and then performs a
-conservative occlusion-aware multi-view consensus crop. It writes SuGaR
-checkpoints below `data/sugar_output/masked_*/` and the final mesh below
-`data/06_mesh/`; no standard STS checkpoint is overwritten. Its defaults are
-`dn_consistency`, medium refinement, a two-pixel RGB/UV dilation, and the
-middle mask level for depth-normal consistency. Set `SUGAR_RUN_TAG` to keep
-several experiments, or use `REPLACE=1` only when deliberately replacing the
-same tagged result.
+The runner keeps separate tagged checkpoints below `data/sugar_output/` and
+refuses to overwrite an existing tag unless `REPLACE=1` is set deliberately.
 
 The project keeps a pinned SuGaR checkout in `third_party/SuGaR`. The runner
 automatically applies `docker-compose.sugar-dev.yml`, which mounts that local
@@ -67,6 +82,22 @@ checkout over `/opt/sugar` in the existing SuGaR container. Thus changing the
 local fork needs neither a fresh clone nor an image rebuild during development.
 After validation, the same tracked source can be baked into the Docker image
 for a release build.
+
+For a focused Coarse-mesh extraction from an existing completed run, use:
+
+```bash
+SOURCE_RUN_TAG=masked_7000_dn_consistency_medium \
+COARSE_MESH_ABLATION_TAG=depth8_v50000 \
+MESH_VERTICES=50000 \
+POISSON_DEPTH=8 \
+./run_coarse_mesh_ablation.sh
+```
+
+This does not retrain SuGaR and does not run refinement, UV baking, or crop.
+The default source checkpoint is preserved and every ablation requires a new
+output tag. To run a new full Coarse optimization but stop immediately after
+the resulting Coarse mesh, set `STOP_AFTER_COARSE_MESH=1` on
+`run_masked_sugar.sh`.
 
 To crop an already exported textured SuGaR OBJ without retraining, run:
 

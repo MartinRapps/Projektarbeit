@@ -159,10 +159,10 @@ add_if_selected "$DELETE_STS" "$DATA_DIR/05_3dgs"
 
 ask_delete \
   "Meshing/Postprocess/Evaluation zuruecksetzen" \
-  "Sinnvoll wenn du ab Mesh-Schritt oder Postprocess komplett neu rechnen willst. Betrifft 06, 07, 08, 09." \
+  "Sinnvoll wenn du ab Mesh-Schritt oder Postprocess komplett neu rechnen willst. Betrifft 06, 07, 08, 09 und sugar_output (Coarse/Refined/PLY-Artefakte)." \
   "$(default_answer y y)" \
   "DELETE_LATE"
-add_if_selected "$DELETE_LATE" "$DATA_DIR/06_mesh" "$DATA_DIR/07_centerline" "$DATA_DIR/08_gis" "$DATA_DIR/09_evaluation"
+add_if_selected "$DELETE_LATE" "$DATA_DIR/06_mesh" "$DATA_DIR/07_centerline" "$DATA_DIR/08_gis" "$DATA_DIR/09_evaluation" "$DATA_DIR/sugar_output"
 
 ask_delete \
   "Komprimiertes Arbeitsvideo output.mp4 loeschen" \
