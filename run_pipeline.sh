@@ -434,9 +434,14 @@ echo "=== Starting Scan-to-BIM Reconstruction Pipeline ==="
 
 # Step 0: GCP Coordinate Preparation (Relative Coordinates)
 echo "[Step 0/5] Preparing relative GCP coordinates..."
+SKIP_GCP_PREP="false"
 while true; do
     if [ -f "data/01_raw/gcp_relative.csv" ]; then
         echo "Hinweis: Es existieren bereits relative GCP-Koordinaten (gcp_relative.csv) im raw-Verzeichnis."
+        if [[ "$AUTOPILOT" == "true" ]]; then
+            echo "Autopilot mode: reusing existing relative GCP coordinates."
+            break
+        fi
         read -p "Moechten Sie diese bestehenden relative Koordinaten weiterverwenden? (y/n) [Default: y]: " USE_EXISTING
         USE_EXISTING=${USE_EXISTING:-y}
         if [[ "$USE_EXISTING" =~ ^[Yy]$ ]]; then
@@ -444,6 +449,10 @@ while true; do
         fi
     elif compgen -G "data/01_raw/*.csv" > /dev/null; then
         echo "Gefunden: Mindestens eine CSV-Datei im raw-Verzeichnis ist hochgeladen."
+        break
+    elif [[ "$AUTOPILOT" == "true" ]]; then
+        echo "Autopilot mode: no GCP data found, skipping GCP prep (translation-only fallback will be used at the end)."
+        SKIP_GCP_PREP="true"
         break
     fi
 
@@ -455,7 +464,9 @@ while true; do
     read -p "Sobald die CSV-Datei unter 'data/01_raw/' hochgeladen ist, druecke [Enter]..."
 done
 
-docker compose run --rm sam3-preprocess python3 /app/src/python/prepare_gcp.py
+if [[ "$SKIP_GCP_PREP" != "true" ]]; then
+    docker compose run --rm sam3-preprocess python3 /app/src/python/prepare_gcp.py
+fi
 
 # Load environment variables if .env exists
 if [ -f .env ]; then
@@ -510,60 +521,23 @@ echo "=========================================================="
 echo "BREAKPOINT: Please open the sparse point cloud in CloudCompare"
 echo "on the host system. Pick the GCP coordinate points, compute"
 echo "the 4x4 transformation matrix."
+echo ""
+echo "Georeferencing happens at the END of the pipeline (after the"
+echo "centerline + GeoJSON). You can provide inputs now or later:"
+echo "  - Save the 4x4 matrix to data/04_sfm/matrix.txt, OR drop a"
+echo "    screenshot of the matrix as data/01_raw/matrix_screenshot.png"
+echo "    (OCR via tesseract runs automatically at the end)."
+echo "  - anchor.txt is created by prepare_gcp.py from the GCP CSV."
+echo "  - If neither matrix nor anchor is present at the end, a"
+echo "    translation-only fallback (UTM 567028.563, 5516784.082, 177)"
+echo "    is applied and outputs are named *_fallback_georeferenced."
 echo "=========================================================="
-
-while true; do
-    read -p "Moechten Sie die Matrix per OCR aus einem Screenshot einlesen? (y/n) [Default: n]: " USER_OCR
-    if [[ "$USER_OCR" =~ ^[Yy]$ ]]; then
-        echo ""
-        echo "--> Anleitung fuer OCR-Einlesen:"
-        echo "    1. Mache einen Screenshot von dem gesamten Matrix-Ausgabefeld in CloudCompare."
-        echo "    2. Speichere das Bild als PNG oder JPG unter dem Namen:"
-        echo "       data/01_raw/matrix_screenshot.png (oder .jpg)"
-        echo ""
-        
-        while true; do
-            read -p "Haben Sie den Screenshot unter 'data/01_raw/matrix_screenshot.png' abgelegt? (y/n): " SCREENSHOT_OK
-            if [[ "$SCREENSHOT_OK" =~ ^[Yy]$ ]]; then
-                echo "Starte OCR-Einlesevorgang mit Tesseract in Container A..."
-                # Run OCR in Container A and write output directly to data/04_sfm/matrix.txt
-                if docker compose run --rm sam3-preprocess python3 /app/src/python/ocr_matrix.py /data/01_raw/matrix_screenshot.png /data/04_sfm/matrix.txt; then
-                    echo ""
-                    echo "--- Eingelesene Transformationsmatrix ---"
-                    cat data/04_sfm/matrix.txt
-                    echo "----------------------------------------"
-                    echo ""
-                    
-                    read -p "Ist diese Matrix fehlerfrei erkannt und korrekt eingelesen worden? (y/n): " MATRIX_OK
-                    if [[ "$MATRIX_OK" =~ ^[Yy]$ ]]; then
-                        echo "Matrix erfolgreich geprueft und uebernommen!"
-                        break 2
-                    else
-                        echo "Schade, OCR war ungenau. Sie koennen das Bild korrigieren/besser zuschneiden und es erneut versuchen, oder die Datei data/04_sfm/matrix.txt jetzt manuell bearbeiten."
-                        read -p "Moechten Sie es erneut mit OCR versuchen? (y/n) [Default: y]: " RETRY_OCR
-                        if [[ ! "$RETRY_OCR" =~ ^[Nn]$ ]]; then
-                            continue
-                        fi
-                    fi
-                else
-                    echo "Fehler bei der OCR-Verarbeitung des Screenshots!"
-                fi
-            fi
-            
-            # If they don't want to retry or OCR failed and they chose not to retry
-            echo "Wechsle zur manuellen Kontrolle..."
-            echo "Bitte trage die Transformationsmatrix manuell unter 'data/04_sfm/matrix.txt' ein."
-            read -p "Haben Sie die Datei 'data/04_sfm/matrix.txt' kontrolliert/manuell gespeichert? Druecken Sie [Enter] zum Fortfahren..."
-            break 2
-        done
-    else
-        echo "Manuelle Eingabe gewaehlt (kein OCR)."
-        echo "Bitte speichere die 4x4-Transformationsmatrix aus CloudCompare zeilenweise (kommagetrennt) unter:"
-        echo "data/04_sfm/matrix.txt"
-        read -p "Sobald die Matrix-Datei gespeichert ist, druecken Sie [Enter] zum Fortfahren..."
-        break
-    fi
-done
+if [[ "$AUTOPILOT" == "true" ]]; then
+    echo "Autopilot mode: skipping CloudCompare breakpoint (no manual GCP picking)."
+    echo "Without matrix.txt/anchor.txt the pipeline will use the translation-only fallback."
+else
+    read -p "Press [Enter] once the matrix is ready (or to skip and use the fallback)..."
+fi
 
 # Step 3: Object-Specific 3DGS (Segment-then-Splat STS)
 echo "[Step 3/5] Setting up Segment-then-Splat (STS) workspace structure..."

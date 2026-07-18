@@ -15,7 +15,10 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     libgmp-dev \
     zlib1g-dev \
+    tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip install --no-cache-dir pytesseract pillow
 
 # Build and install DGtal from source
 RUN git clone https://github.com/DGtal-team/DGtal.git /tmp/DGtal && \
@@ -27,4 +30,9 @@ RUN git clone https://github.com/DGtal-team/DGtal.git /tmp/DGtal && \
     rm -rf /tmp/DGtal
 
 WORKDIR /app
-# Compile C++ DGtal app and setup Python script requirements
+COPY src/cpp /app/src/cpp
+
+RUN cmake -S /app/src/cpp -B /tmp/centerline-build -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build /tmp/centerline-build --parallel "$(nproc)" && \
+    install -m 0755 /tmp/centerline-build/extractor /usr/local/bin/extractor && \
+    rm -rf /tmp/centerline-build /app/src/cpp

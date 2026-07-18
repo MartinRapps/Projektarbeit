@@ -184,6 +184,31 @@ Nach **Schritt 2 (SfM - COLMAP)** pausiert das Skript automatisch:
 3. 👤 **[BENUTZER]** Führen Sie das Point Picking anhand Ihrer GCPs durch, berechnen Sie die 4x4-Transformationsmatrix (relative Georeferenzierung) und speichern Sie diese als Textdatei in `data/04_sfm/matrix.txt`.
 4. 👤 **[BENUTZER]** Gehen Sie zurück ins Ubuntu-Terminal und drücken Sie **[Enter]**, um das Training (STS) und Meshing (SuGaR) fortzusetzen.
 
+Nach erfolgreichem Abschluss erzeugt Container E den rohen Centerline-Pfad
+unter `data/07_centerline/centerline_local_raw.csv`, die an echten
+Richtungswechseln segmentierten und B-Spline-geglätteten Äste unter
+`data/07_centerline/centerline_local.csv`, ein lokales GeoJSON unter
+`data/08_gis/local_output.geojson` und – sofern `matrix.txt` und `anchor.txt`
+vorliegen – die transformierte CSV unter `data/07_centerline/centerline_utm.csv`
+und eine GeoJSON mit einem 3D-LineString je Ast unter
+`data/08_gis/final_output.geojson`. Fehlen Matrix und Anker, wird automatisch
+eine reine Translation (Standard: UTM 567028.563, 5516784.082, 177) angewendet
+und die Ausgaben mit `_fallback_georeferenced` gekennzeichnet. Ist
+`matrix.txt` nicht vorhanden, aber ein Screenshot unter
+`data/01_raw/matrix_screenshot.png`, wird dieser per Tesseract OCR automatisch
+eingelesen. Standardmäßig läuft die Extraktion im robusten Modus
+`CENTERLINE_MODE=single` (Durchmesser-Pfad der größten Skelettkomponente) mit
+anschließender Eckensegmentierung (`SEGMENT_CORNERS=1`,
+`SEGMENT_CORNER_WINDOW=4`, `SEGMENT_CORNER_ANGLE=30` Grad);
+`BSPLINE_DEGREE=3` wählt den Grad des geklemmten uniformen B-Splines
+(1 = linear, 2 = quadratisch, 3 = kubisch) und
+`BSPLINE_SAMPLES_PER_SEGMENT` steuert die Punktdichte der geglätteten Kurven.
+Der Modus `CENTERLINE_MODE=network` zerlegt alternativ den gesamten
+Skelettgraphen in Einzeläste, liefert bei verrauschten dünnen Meshes aber oft
+nur Mikroäste unterhalb von `MIN_PATH_LENGTH` und damit ein leeres Ergebnis.
+Nach Änderungen am DGtal-Extractor oder am Container-E-Dockerfile muss das
+Image mit `docker compose build post-processing` neu gebaut werden.
+
 ---
 
 ## 📝 Hinweis zu SAM 3.1

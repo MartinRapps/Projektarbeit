@@ -89,8 +89,18 @@ docker compose run --rm sugar-meshing python3 train.py \
     --refinement_time "$REFINEMENT_TIME" \
     --eval True
 
+MESH_HOST_PATH="$(find data/sugar_output/refined_mesh/05_3dgs \
+    -type f -name '*.obj' -printf '%T@ %p\n' 2>/dev/null \
+    | sort -nr | head -n 1 | cut -d' ' -f2-)"
+if [[ -z "$MESH_HOST_PATH" || ! -s "$MESH_HOST_PATH" ]]; then
+    echo "Error: Stock SuGaR produced no refined OBJ under data/sugar_output/refined_mesh/05_3dgs." >&2
+    exit 1
+fi
+MESH_CONTAINER_PATH="/data/${MESH_HOST_PATH#data/}"
+echo "Using refined Stock SuGaR mesh: $MESH_HOST_PATH"
+
 # Step 5: Post-Processing & Georeferencing (DGtal & Python & GDAL)
 echo "[Step 5/5] Extracting centerline and georeferencing to UTM..."
-docker compose run --rm post-processing /app/src/scripts/postprocess.sh
+docker compose run --rm -e INPUT_MESH="$MESH_CONTAINER_PATH" post-processing /app/src/scripts/postprocess.sh
 
 echo "=== Pipeline (SuGaR to Georeferencing) Completed Successfully. Final outputs saved in data/08_gis/ ==="

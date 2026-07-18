@@ -462,6 +462,16 @@ if [[ -f data/05_3dgs/output/cfg_args ]]; then
 fi
 cp "$FILTERED_PLY" "$CHECKPOINT_HOST_DIR/point_cloud/iteration_${ITERATIONS}/point_cloud.ply"
 
+# SuGaR independently derives its train/eval split from cameras.json. Keep
+# empty semantic-mask views out of this private checkpoint without changing
+# the STS checkpoint or the original camera metadata.
+docker compose -f docker-compose.yml -f docker-compose.sugar-dev.yml run --rm --no-deps sugar-meshing \
+    python3 /app/src/python/filter_sugar_cameras_by_mask.py \
+    --input "$CHECKPOINT_CONTAINER_DIR/cameras.json" \
+    --output "$CHECKPOINT_CONTAINER_DIR/cameras.json" \
+    --masks-dir /data/03_masks \
+    --levels "$MASK_LEVEL" "$NORMAL_MASK_LEVEL" "$TEXTURE_MASK_LEVEL"
+
 COARSE_ARGUMENTS=()
 if [[ -n "$COARSE_ITERATIONS" ]]; then
     COARSE_ARGUMENTS+=(--coarse-iterations "$COARSE_ITERATIONS")

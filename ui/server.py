@@ -367,7 +367,7 @@ PIPELINE_STEPS = [
         "label": "07 DGtal Centerline",
         "dir": "07_centerline",
         "container": "Container E (Post-Processing)",
-        "scripts": ["postprocess.sh"],
+        "scripts": ["postprocess.sh", "centerline_bspline.py"],
         "outputs": ["*.csv", "*.ply"],
     },
     {

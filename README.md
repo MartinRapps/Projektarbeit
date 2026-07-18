@@ -76,6 +76,55 @@ and then launch the mask-aware runner:
 The runner keeps separate tagged checkpoints below `data/sugar_output/` and
 refuses to overwrite an existing tag unless `REPLACE=1` is set deliberately.
 
+### Centerline and GIS export
+
+Container E reads the refined OBJ and performs a real DGtal voxelization,
+interior fill, and topology-preserving thinning. On noisy thin meshes the
+voxel skeleton is bushy (2D medial sheets and spur twigs), so the default
+`CENTERLINE_MODE=single` deliberately reduces the largest skeleton component
+to its diameter path, which robustly follows the structure. The postprocessing
+then splits that path at real direction changes (window-based corner
+detection that suppresses the voxel staircase) and fits a clamped cubic
+B-spline to every retained segment. The postprocessing step writes:
+
+- `data/07_centerline/centerline_local_raw.csv` for the raw diameter path.
+- `data/07_centerline/centerline_local.csv` for the segmented B-spline branches.
+- `data/08_gis/local_output.geojson` for the local (pre-georeferencing) 3D GeoJSON.
+- `data/07_centerline/centerline_utm.csv` and `data/08_gis/final_output.geojson`
+  after the CloudCompare transform and anchor are applied (EPSG:25832).
+  If `matrix.txt`/`anchor.txt` are missing, a translation-only fallback
+  (default UTM 567028.563, 5516784.082, 177) produces
+  `centerline_fallback_georeferenced.csv` and
+  `final_output_fallback_georeferenced.geojson` instead.
+
+Georeferencing runs at the END of the step (after the local GeoJSON). If
+`matrix.txt` is missing but `data/01_raw/matrix_screenshot.png` exists,
+tesseract OCR runs automatically to produce `matrix.txt`. The fallback
+anchor is configurable via `FALLBACK_ANCHOR`.
+
+All CSV rows carry `branch_id` and `component_id`; segments connect exactly at
+their shared corner points, so corners stay sharp. Tunables:
+`BSPLINE_DEGREE=3` sets the degree of the clamped uniform B-spline
+(1 = linear, 2 = quadratic, 3 = cubic), `BSPLINE_SAMPLES_PER_SEGMENT=4`
+controls the point density, and `SEGMENT_CORNERS=1` with
+`SEGMENT_CORNER_WINDOW=4` and `SEGMENT_CORNER_ANGLE=30` (degrees) controls
+the corner split. `MIN_PATH_LENGTH`, `MIN_PATH_POINTS`, `MIN_CYCLE_LENGTH`
+and `PERSISTENCE` are extractor-side filters.
+
+`CENTERLINE_MODE=network` instead decomposes the full skeleton graph into
+junction-to-junction branches. On noisy meshes most of those micro-branches
+fall below `MIN_PATH_LENGTH=0.75`, which can leave an empty result. The
+extractor flag `--one-isthmus` (1D-only thinning) and
+`src/python/centerline_graph_simplify.py` (spur pruning, junction clustering,
+chain merging) exist for experiments in that direction.
+
+The matrix must be saved as `data/04_sfm/matrix.txt`, and
+`src/python/prepare_gcp.py` creates `data/01_raw/anchor.txt` from the GCP CSV.
+Postprocessing fails explicitly when either input or the mesh is missing; it no
+longer creates empty placeholder files.
+After changing the C++ extractor or Container E image, rebuild it with
+`docker compose build post-processing` before running the pipeline.
+
 The project keeps a pinned SuGaR checkout in `third_party/SuGaR`. The runner
 automatically applies `docker-compose.sugar-dev.yml`, which mounts that local
 checkout over `/opt/sugar` in the existing SuGaR container. Thus changing the

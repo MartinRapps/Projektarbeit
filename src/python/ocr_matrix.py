@@ -14,10 +14,13 @@ def extract_matrix_from_image(img_path):
         # Load the image
         img = Image.open(img_path)
         
-        # Run OCR with config to support floats (+, -, ., Numbers, space, comma)
-        # --psm 6 or 11 works best for structured blocks/tables of numbers
-        # We must add space ( ) to the whitelist, otherwise numbers on the same line get joined!
-        custom_config = r'--psm 6 -c tessedit_char_whitelist=0123456789.,-+ \n\r'
+        # --psm 6 treats the image as a uniform block of text, which matches the
+        # CloudCompare matrix output (4 lines of numbers). No character whitelist:
+        # a whitelist drops the space character and makes tesseract concatenate all
+        # numbers on a line into one string, and the literal "\n\r" some configs
+        # pass further corrupts recognition. The default model already recognises
+        # digits, signs, dots, commas and spaces reliably here.
+        custom_config = r'--psm 6'
         raw_text = pytesseract.image_to_string(img, config=custom_config)
         
         print("\n--- OCR Raw Text Detected ---")
@@ -29,9 +32,11 @@ def extract_matrix_from_image(img_path):
         matrix_rows = []
         
         for line in lines:
+            # Strip CloudCompare console prefixes like "[17:11:04]" and stray colons
+            line = re.sub(r'\[[^\]]*\]', ' ', line)
+            line = line.replace(':', ' ')
             # Clean string and find all numbers resembling floats
             line = line.replace(' ', ',').replace(';', ',').replace('\t', ',')
-            # Look for optional minus/plus, followed by digits, optional dot, optional digits.
             # Handle common OCR misread of dot as comma, or double commas.
             line = line.replace(',.', '.').replace('.,', '.').replace(',', '.')
             tokens = re.findall(r'[\-+]?\d+(?:\.\d+)?', line)
